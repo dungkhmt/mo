@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body>
+<div>A= <input id="a"/><br> B= <input id="b"></div>
+Sum =<div id="sum"></div>
+<button onclick="send()">Add</button>
+</body>
+<script>
+    function send() {
+        var data={ 'a':$('#a').val(),
+            'b':$('#b').val()};
+
+        $.ajax({
+            type: "POST",
+            contentType: "application/json",
+            url: "/add",
+            data: JSON.stringify(data),
+            dataType: 'json',
+            cache: false,
+            timeout: 600000,
+            success: function (data) {
+
+                console.log(data);
+                $('#sum').text(data);
+            },
+            error: function (e) {
+
+
+
+                console.log("ERROR : ", e);
+
+
+            }
+        });
+    }
+
+</script>
+</html>
