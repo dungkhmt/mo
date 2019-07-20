@@ -18,7 +18,8 @@ Sum =<div id="sum"></div>
         $.ajax({
             type: "POST",
             contentType: "application/json",
-            url: "/add",
+            //url: "/add",
+            url: "localhost:8080/add",
             data: JSON.stringify(data),
             dataType: 'json',
             cache: false,
