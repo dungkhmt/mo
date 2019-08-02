@@ -7,8 +7,11 @@ import com.dailyopt.mo.components.maps.Path;
 import com.dailyopt.mo.components.maps.Point;
 import com.dailyopt.mo.components.movingobjects.MovingObject;
 import com.dailyopt.mo.components.objectmanager.ObjectManager;
+import com.dailyopt.mo.components.routeplanner.vrp.VRPPlanner;
 import com.dailyopt.mo.model.AddModel;
 import com.dailyopt.mo.model.modelFindPath.ShortestPathInput;
+import com.dailyopt.mo.model.routevrp.RouteVRPInput;
+import com.dailyopt.mo.model.routevrp.RouteVRPSolution;
 import com.google.gson.Gson;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApiController {
 	private static Integer count = 0; 
     private static ObjectManager mgr = new ObjectManager();
-    private static GISMap gismap = new GISMap();
+    public static GISMap gismap = new GISMap();
 	
 	@PostMapping("/add")
     public Integer home(@RequestBody AddModel addModel) {
@@ -44,6 +47,10 @@ public class ApiController {
 			objects[i] = l_objects.get(i);
 		String json = gson.toJson(objects);
 		return json;
+	}
+	@PostMapping("/getCoordinateWindow")
+	public String getCoordinateWindow(){
+		return gismap.computeCoordinateWindows();
 	}
 	@PostMapping("/createObject")
     public String createObject(@RequestBody MovingObject obj) {
@@ -69,14 +76,32 @@ public class ApiController {
     
 	@PostMapping("/findShortestPath")
     public String findShortestPath(@RequestBody ShortestPathInput input) {
-		Path path = gismap.findPath(input.getFromID(), input.getToID());
+		Gson gson = new Gson();
+		String inputJson = gson.toJson(input);
+		//System.out.println(name() + "::findShortestPath, input = " + inputJson);
+		
+		//Path path = gismap.findPath(input.getFromID(), input.getToID());
+		Path path = gismap.findPath(input.getFromPoint(),input.getToPoint());
 		if(path == null){
-			System.out.println(name() + "::findShortestPath, findPath(" + input.getFromID() + "," + input.getToID() + "), NOT FOUND");;
+			//System.out.println(name() + "::findShortestPath, findPath(" + input.getFromPoint() + "," + input.getToPoint() + "), NOT FOUND");;
 			return "{}";
 		}
-		Gson gson = new Gson();
+		
 		String json = gson.toJson(path);
+		//System.out.println(name() + "::findShortestPath, result path = " + json);
 		return json;
 	}
+	@PostMapping("/computeRouteVRP")
+	public String computeRouteVRP(@RequestBody RouteVRPInput input){
+		String json = "{}";
+		Gson gson = new Gson();
 		
+		System.out.println("computeRouteVRP, input = " + gson.toJson(input));
+		VRPPlanner planner = new VRPPlanner();
+		RouteVRPSolution sol = planner.computeRoute(input);
+		json = gson.toJson(sol);
+		System.out.println("computeRouteVRP, output = " + json);
+		return json;
+		
+	}
 }

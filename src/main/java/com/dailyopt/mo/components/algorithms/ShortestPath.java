@@ -77,7 +77,9 @@ public class ShortestPath {
 	    }
 	    buildHeap();
 	}
-
+	public double getShortestLength(){
+		return d[idx[t]];
+	}
 	public int[] solve(int s, int t){
 		this.s = s;
 		this.t = t;
@@ -90,6 +92,7 @@ public class ShortestPath {
 	    while(N > 0){
 	        int v = selectMin();
 	        found[v] = true;// fix node v
+	        if(v == t) break;
 	        for(Arc a: A[v]){
 	            int u = a.getEndPoint();
 	            if(found[u] == false){// 

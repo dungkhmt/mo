@@ -3,6 +3,29 @@ package com.dailyopt.mo.model.modelFindPath;
 public class ShortestPathInput {
 	private int fromID;
 	private int toID;
+	private String fromPoint;// lat,lng
+	private String toPoint;// lat,lng
+	
+	public ShortestPathInput(int fromID, int toID, String fromPoint,
+			String toPoint) {
+		super();
+		this.fromID = fromID;
+		this.toID = toID;
+		this.fromPoint = fromPoint;
+		this.toPoint = toPoint;
+	}
+	public String getFromPoint() {
+		return fromPoint;
+	}
+	public void setFromPoint(String fromPoint) {
+		this.fromPoint = fromPoint;
+	}
+	public String getToPoint() {
+		return toPoint;
+	}
+	public void setToPoint(String toPoint) {
+		this.toPoint = toPoint;
+	}
 	public int getFromID() {
 		return fromID;
 	}

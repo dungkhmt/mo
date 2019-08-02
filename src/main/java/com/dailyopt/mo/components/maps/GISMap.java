@@ -7,11 +7,15 @@ import java.util.Scanner;
 import com.dailyopt.mo.components.algorithms.ShortestPath;
 import com.dailyopt.mo.components.maps.graphs.Arc;
 import com.dailyopt.mo.components.maps.graphs.Graph;
+import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
+import com.dailyopt.mo.model.modelmap.MapWindow;
+import com.google.gson.Gson;
 
 import java.util.*;
 public class GISMap {
 	private ArrayList<Point> points;
 	private HashMap<Integer, Integer> mID2Index;
+	public static GoogleMapsQuery G = new GoogleMapsQuery();
 	
 	private Graph g;
 	
@@ -21,6 +25,47 @@ public class GISMap {
 	}
 	public String name(){
 		return "GISMap";
+	}
+	public String computeCoordinateWindows(){
+		String json = "{";
+		double minLat = Integer.MAX_VALUE;
+		double minLng = Integer.MAX_VALUE;
+		double maxLat = 1-minLat;
+		double maxLng = 1-minLng;
+		for(int i = 1; i < points.size(); i++){
+			Point p = points.get(i);
+			if(p.getLat() > maxLat) maxLat = p.getLat();
+			if(p.getLat() < minLat) minLat = p.getLat();
+			if(p.getLng() > maxLng) maxLng = p.getLng();
+			if(p.getLng() < minLng) minLng = p.getLng();
+		}
+		json = json + "\"minlat\":" + minLat
+				+ ",\"maxlat\":" + maxLat
+				+ ",\"minlng\":" + minLng
+				+ ",\"maxlng\":" + maxLng
+				+ "}";
+		
+		MapWindow mw = new MapWindow(minLat, minLng, maxLat, maxLng);
+		Gson gson = new Gson();
+		json = gson.toJson(mw);
+		System.out.println("computeCoordinateWindows, " + minLat + "," + minLng + "  " + maxLat + "," + maxLng + ", json = " + json);
+		return json;
+	}
+	public Point findNearestPoint(String latlng){
+		
+		String[] s = latlng.split(",");
+		double lat = Double.valueOf(s[0].trim());
+		double lng = Double.valueOf(s[1].trim());
+		double minD = Integer.MAX_VALUE;
+		Point sel_p = null;		
+		for(int i = 1; i < points.size(); i++){
+			double d = G.computeDistanceHaversine(lat, lng, points.get(i).getLat(), points.get(i).getLng());
+			if(d < minD){
+				minD = d;
+				sel_p = points.get(i);
+			}
+		}
+		return sel_p;
 	}
 	public void loadMap(String filename){
 		System.out.println(name() + "::loadMap start.....");
@@ -75,8 +120,13 @@ public class GISMap {
 			ex.printStackTrace();
 		}
 	}
+	public Path findPath(String fromLatLng, String toLatLng){
+		Point fromPoint = findNearestPoint(fromLatLng);
+		Point toPoint = findNearestPoint(toLatLng);
+		return findPath(fromPoint.getId(), toPoint.getId());
+	}
 	public Path findPath(int fromID, int toID){
-		System.out.println(name() + "::findPath(" + fromID + "," + toID + ")");
+		//System.out.println(name() + "::findPath(" + fromID + "," + toID + ")");
 		
 		ShortestPath app = new ShortestPath(g);
 		int s = mID2Index.get(fromID);
@@ -87,8 +137,10 @@ public class GISMap {
 		for(int i = 0; i < path.length; i++){
 			path[i] = points.get(p[i]);
 		}
-		System.out.println(name() + "::findPath(" + fromID + "," + toID + ") finished, path.length = " + path.length);
-		return new Path(path);
+		//System.out.println(name() + "::findPath(" + fromID + "," + toID + ") finished, path.length = " + path.length);
+		Path rs = new Path(path);
+		rs.setLength(app.getShortestLength());
+		return rs;
 	}
 	public Point getNearestPoint(double lat, double lng){
 		return null;
