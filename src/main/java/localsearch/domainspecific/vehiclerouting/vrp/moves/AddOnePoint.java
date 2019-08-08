@@ -12,7 +12,7 @@ public class AddOnePoint implements IVRMove {
 	private Point y;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
-	
+	public boolean verbose = false;
 	public AddOnePoint(VRManager mgr, LexMultiValues eval, Point x, Point y, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -32,6 +32,7 @@ public class AddOnePoint implements IVRMove {
 	
 	public void move() {
 		// TODO Auto-generated method stub
+		if(verbose)
 		System.out.println(name() + "::move(" + x + "," + y + ") " + eval);
 		mgr.performAddOnePoint(x, y);
 		if(NE != null) NE.performMove(this);

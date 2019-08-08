@@ -20,7 +20,7 @@ public class NeighbohoodExplorerManager {
 	private HashMap<INeighborhoodExplorer, Boolean> active;// active[i] = true, INeighborhoodExplorer[i] is active
 	//private ArrayList<INeighborhoodExplorer> selected;// selected[i] = J means that neighborhood J is selected at iteration i 
 	private Random R = new Random();
-	
+	public boolean verbose = true;
 	public NeighbohoodExplorerManager(){
 		neighborhoodExplorers = new ArrayList<INeighborhoodExplorer>();
 		//selected = new ArrayList<INeighborhoodExplorer>();
@@ -122,7 +122,8 @@ public class NeighbohoodExplorerManager {
 				break;
 			}
 		}
-		System.out.println(name() + "::exploreNeighborhoodFirstImprovement, countActives = " + countActives + ", moves.sz = " + N.getMoves().size());
+		if(verbose)
+			System.out.println(name() + "::exploreNeighborhoodFirstImprovement, countActives = " + countActives + ", moves.sz = " + N.getMoves().size());
 		for(IVRMove m: N.getMoves()){
 			INeighborhoodExplorer ne = m.getNeighborhoodExplorer();
 			lastIterationUsed.put(ne, currentIteration);
@@ -142,8 +143,8 @@ public class NeighbohoodExplorerManager {
 				disable(ne);
 			}
 		}
-		
-		System.out.println(name() + "::adaptNeighborhoods, len = " + len + ", curentIter = " + currentIteration + ", actives = " + 
+		if(verbose)
+			System.out.println(name() + "::adaptNeighborhoods, len = " + len + ", curentIter = " + currentIteration + ", actives = " + 
 		getNbActiveNeighborhoods() + ", lastVisited = " + lastVisited);
 		
 		/*

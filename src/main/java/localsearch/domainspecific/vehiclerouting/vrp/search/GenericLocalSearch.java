@@ -72,7 +72,9 @@ public class GenericLocalSearch implements ISearch {
 	public void setKnownOptimal(LexMultiValues o){
 		this.knownOptimal = o;
 	}
-	
+	public NeighbohoodExplorerManager getNeighbohoodExplorerManager(){
+		return NEM;
+	}
 	public void perturbNeighborhoodExplorer(){
 		NEM.perturb();
 		/*
@@ -95,6 +97,7 @@ public class GenericLocalSearch implements ISearch {
 	public void setObjectiveFunction(LexMultiFunctions F){
 		this.F = F;
 	}
+	
 	public void setNeighborhoodExplorer(ArrayList<INeighborhoodExplorer> NE){
 		NEM.setNeighborhoodExplorers(NE);
 		/*

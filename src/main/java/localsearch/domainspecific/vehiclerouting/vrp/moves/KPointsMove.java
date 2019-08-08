@@ -11,6 +11,7 @@ public class KPointsMove implements IVRMove {
 	private ArrayList<Point> y;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
+	public boolean verbose = false;
 	public KPointsMove(VRManager mgr, LexMultiValues eval, ArrayList<Point> x, ArrayList<Point> y, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -39,10 +40,13 @@ public class KPointsMove implements IVRMove {
 	
 	public void move() {
 		// TODO Auto-generated method stub
+		if(verbose)
 		System.out.println(name() + "::move(" + x + "," + y + ") " + eval);
 		for(int i = 0; i < x.size(); i++){
 			if(!mgr.getVarRoutesVR().contains(x.get(i)) && !mgr.getVarRoutesVR().contains(y.get(i))){
-				System.out.println(name() + "::move failed"); System.exit(-1);
+				if(verbose)
+				System.out.println(name() + "::move failed"); 
+				//System.exit(-1);
 			}
 		}
 		mgr.performKPointsMove(x, y);

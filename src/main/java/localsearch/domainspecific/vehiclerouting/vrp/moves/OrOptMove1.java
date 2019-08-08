@@ -13,6 +13,7 @@ public class OrOptMove1 implements IVRMove {
 	private Point y;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
+	public boolean verbose = false;
 	public OrOptMove1(VRManager mgr, LexMultiValues eval, Point x1, Point x2, Point y, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -36,6 +37,7 @@ public class OrOptMove1 implements IVRMove {
 	
 	
 	public void move() {
+		if(verbose)
 		System.out.println(name() + "::move(" + x1 + ", " + x2 + ", " + y + ") " + eval);
 		mgr.performOrOptMove1(x1, x2, y);
 		if(NE != null) NE.performMove(this);

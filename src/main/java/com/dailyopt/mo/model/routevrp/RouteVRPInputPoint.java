@@ -1,15 +1,15 @@
 package com.dailyopt.mo.model.routevrp;
 
 public class RouteVRPInputPoint {
-	private int id;
+	private String id;
 	private double lat;
 	private double lng;
 	private String type;
 	private int info;
-	public int getId() {
+	public String getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	public double getLat() {
@@ -36,7 +36,10 @@ public class RouteVRPInputPoint {
 	public void setInfo(int info) {
 		this.info = info;
 	}
-	public RouteVRPInputPoint(int id, double lat, double lng, String type,
+	public String getLatLng(){
+		return lat + "," + lng;
+	}
+	public RouteVRPInputPoint(String id, double lat, double lng, String type,
 			int info) {
 		super();
 		this.id = id;

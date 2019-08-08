@@ -14,7 +14,7 @@ public class AddTwoPoints implements IVRMove {
 	private Point y2;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
-	
+	public boolean verbose = false;
 	public AddTwoPoints(VRManager mgr, LexMultiValues eval, Point x1, Point y1, Point x2, Point y2, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -38,6 +38,7 @@ public class AddTwoPoints implements IVRMove {
 	
 	public void move() {
 		// TODO Auto-generated method stub
+		if(verbose)
 		System.out.println(name() + "::move(" + x1 + "," + y1 + ", " + x2 + ", " + y2 + ") " + eval);
 		mgr.performAddTwoPoints(x1, y1, x2, y2);
 		if(NE != null) NE.performMove(this);

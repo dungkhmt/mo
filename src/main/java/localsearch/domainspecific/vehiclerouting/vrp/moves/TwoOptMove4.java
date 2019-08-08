@@ -13,6 +13,7 @@ public class TwoOptMove4 implements IVRMove {
 	private Point y;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
+	public boolean verbose = false;
 	public TwoOptMove4(VRManager mgr, LexMultiValues eval, Point x, Point y, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -34,6 +35,7 @@ public class TwoOptMove4 implements IVRMove {
 	
 	
 	public void move() {
+		if(verbose)
 		System.out.println(name() + "::move(" + x + "," + y + ") " + eval);
 		mgr.performTwoOptMove4(x, y);
 		if(NE != null) NE.performMove(this);

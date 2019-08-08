@@ -2,11 +2,15 @@ package com.dailyopt.mo.components.routeplanner.vrp;
 
 import com.dailyopt.mo.components.maps.Path;
 import com.dailyopt.mo.controller.ApiController;
+import com.dailyopt.mo.model.modelFindPath.ShortestPathSolution;
+import com.dailyopt.mo.model.routevrp.DistanceElement;
 import com.dailyopt.mo.model.routevrp.Route;
 import com.dailyopt.mo.model.routevrp.RouteVRPInput;
 import com.dailyopt.mo.model.routevrp.RouteVRPInputPoint;
 import com.dailyopt.mo.model.routevrp.RouteVRPSolution;
+import com.google.gson.Gson;
 
+import java.io.PrintWriter;
 import java.util.*;
 
 import localsearch.domainspecific.vehiclerouting.vrp.ConstraintSystemVR;
@@ -38,6 +42,8 @@ import localsearch.domainspecific.vehiclerouting.vrp.neighborhoodexploration.Gre
 import localsearch.domainspecific.vehiclerouting.vrp.neighborhoodexploration.INeighborhoodExplorer;
 import localsearch.domainspecific.vehiclerouting.vrp.search.GenericLocalSearch;
 public class VRPPlanner {
+	public static String routeVRPInputFilename = "RouteVRPInput.json";
+	
 	private RouteVRPInput input;
 	
 	// raw data input
@@ -103,14 +109,38 @@ public class VRPPlanner {
 		nbVehicles = (int)(totalW/capacity);
 		if(nbVehicles*capacity < totalW) nbVehicles += 1;
 		cost = new double[N][N];
+		ArrayList<DistanceElement> l_distances = new ArrayList<DistanceElement>();
 		for(int i = 0; i < N; i++){
 			for(int j = 0; j < N; j++){
-				Path P = ApiController.gismap.findPath(x[i] + "," + y[i], x[j] + "," + y[j]);
-				cost[i][j] = P.getLength();
-				System.out.println("mapRawData, path(" + i + "," + j + ") = " + P.toString());
+				RouteVRPInputPoint pi = mID2InputPoint.get(i);
+				RouteVRPInputPoint pj = mID2InputPoint.get(j);
+				DistanceElement de = input.getDistanceElement(pi.getId(), pj.getId());
+				if(de == null){
+					Path P = ApiController.gismap.findPath(x[i] + "," + y[i], x[j] + "," + y[j]);
+					cost[i][j] = P.getLength();
+					System.out.println("mapRawData, compute path(" + i + "," + j + ") = " + P.toString());
+					de = new DistanceElement(pi.getId(), pj.getId(),cost[i][j]);
+				}else{
+					cost[i][j] = de.getDistance();
+				}
+				l_distances.add(de);
 			}
 		}
-
+		DistanceElement[] distances = new DistanceElement[l_distances.size()];
+		for(int i = 0; i < l_distances.size(); i++)
+			distances[i] = l_distances.get(i);
+		input.setDistances(distances);
+		
+		// store to external files
+		try{
+		Gson gson = new Gson();
+			String json = gson.toJson(input);
+			PrintWriter out = new PrintWriter(routeVRPInputFilename);
+			out.print(json);
+			out.close();
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
 	}
 	public void greedySearch(){
 		greedyConstructive();
@@ -137,7 +167,12 @@ public class VRPPlanner {
 				Point p = arr.get(i);
 				points[i] = mID2InputPoint.get(p.ID);
 			}
-			routes[k-1] = new Route(points);
+			Path[] paths = new Path[points.length-1];
+			for(int i = 0; i < paths.length; i++){
+				paths[i] = ApiController.gismap.findPath(points[i].getLat() + "," + points[i].getLng(), 
+						points[i+1].getLat() + "," + points[i+1].getLng());
+			}
+			routes[k-1] = new Route(points, distance[k-1].getValue(),paths);
 		}
 		for(Point p1: allPoints){
 			int i = mPoint2ID.get(p1);
@@ -344,6 +379,9 @@ public class VRPPlanner {
 		//NE.add(new GreedyTwoOptMoveOneRouteExplorer(XR, F));
 		
 		GenericLocalSearch se = new GenericLocalSearch(mgr);
+		se.verbose = false;
+		se.getNeighbohoodExplorerManager().verbose = false;
+		
 		se.setNeighborhoodExplorer(NE);
 		se.setObjectiveFunction(F);
 		se.setMaxStable(50);

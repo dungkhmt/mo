@@ -14,6 +14,7 @@ public class ThreeOptMove2 implements IVRMove {
 	private Point z;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
+	public boolean verbose = false;
 	public ThreeOptMove2(VRManager mgr, LexMultiValues eval, Point x, Point y, Point z, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -37,7 +38,8 @@ public class ThreeOptMove2 implements IVRMove {
 	
 	
 	public void move() {
-		//System.out.println(name() + "::move(" + x + "," + y + "," + z + ") " + eval);
+		if(verbose)
+			System.out.println(name() + "::move(" + x + "," + y + "," + z + ") " + eval);
 		mgr.performThreeOptMove2(x, y, z);
 		if(NE != null) NE.performMove(this);
 	}

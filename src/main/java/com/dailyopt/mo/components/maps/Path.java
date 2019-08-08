@@ -1,5 +1,7 @@
 package com.dailyopt.mo.components.maps;
 
+import com.dailyopt.mo.controller.ApiController;
+
 public class Path {
 	private Point[] points;
 	private double length;
@@ -9,7 +11,14 @@ public class Path {
 		this.points = points;
 		this.length = length;
 	}
-
+	public double getLengthOfSegment(int idx){
+		if(points == null) return 0;
+		if(points.length <= 1) return 0;
+		if(idx >= points.length-1) return 0;
+		Point p1 = points[idx];
+		Point p2 = points[idx+1];
+		return ApiController.GMQ.computeDistanceHaversine(p1.getLat(), p1.getLng(), p2.getLat(), p2.getLng());
+	}
 	public double getLength() {
 		return length;
 	}

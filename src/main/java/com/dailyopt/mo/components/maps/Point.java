@@ -31,5 +31,7 @@ public class Point {
 	public void setLng(double lng) {
 		this.lng = lng;
 	}
-	
+	public String getLatLng(){
+		return this.lat + "," + this.lng;
+	}
 }

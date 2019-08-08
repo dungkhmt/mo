@@ -15,6 +15,7 @@ public class CrossExchangeMove implements IVRMove {
 	private Point y2;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
+	public boolean verbose = false;
 	public CrossExchangeMove(VRManager mgr, LexMultiValues eval, Point x1, Point y1, Point x2, Point y2, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -40,6 +41,7 @@ public class CrossExchangeMove implements IVRMove {
 	
 	
 	public void move() {
+		if(verbose)
 		System.out.println(name() + "::move(" + x1 + "," + y1 + "," + x2 + "," + y2 + ") " + eval);
 		mgr.performCrossExchangeMove(x1, y1, x2, y2);
 		if(NE != null) NE.performMove(this);

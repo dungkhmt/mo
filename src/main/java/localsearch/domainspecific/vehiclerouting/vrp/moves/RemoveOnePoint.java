@@ -11,7 +11,7 @@ public class RemoveOnePoint implements IVRMove {
 	private Point x;
 	private LexMultiValues eval;
 	private INeighborhoodExplorer NE;
-	
+	public boolean verbose = false;
 	public RemoveOnePoint(VRManager mgr, LexMultiValues eval, Point x, INeighborhoodExplorer NE){
 		this.mgr = mgr;
 		this.eval = eval;
@@ -29,6 +29,7 @@ public class RemoveOnePoint implements IVRMove {
 	@Override
 	public void move() {
 		// TODO Auto-generated method stub
+		if(verbose)
 		System.out.println(name() + "::move(" + x +  ") " + eval);
 		mgr.performRemoveOnePoint(x);
 		if(NE != null) NE.performMove(this);
