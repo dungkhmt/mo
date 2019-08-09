@@ -57,6 +57,7 @@ public class ObjectManager implements ObjectManagerInterface{
 		obj.setLng(lng);
 		return obj;
 	}
+	/*
 	public String updateServicePoints(UpdateServicePointsInput input){
 		MovingObject o = mID2Object.get(input.getObjectId());
 		if(o == null) return null;
@@ -69,28 +70,35 @@ public class ObjectManager implements ObjectManagerInterface{
 		}
 		return "{}";
 	}
+	*/
 	public String updatePlannedRouteTruck(UpdatePlannedRouteTruckInput input){
 		Truck t = (Truck)mID2Object.get(input.getId());
 		if(t == null) return "{}";
 		
 		Route route = input.getRoute();
 		RouteSegmentToServicePoint[] routeSegments = new RouteSegmentToServicePoint[route.getPaths().length];
+		
 		for(int i = 0; i < routeSegments.length; i++){
-			RouteVRPInputPoint p = route.getPoints()[i];
+			RouteVRPInputPoint p = route.getPoints()[i+1];
 			Point[] mapPoints = route.getPaths()[i].getPoints();
 			IServicePoint servicePoint = new ServicePointDelivery(p.getId(),p.getLat(),p.getLng());
 			double length = route.getPaths()[i].getLength();
 			routeSegments[i]=new RouteSegmentToServicePoint(mapPoints, servicePoint, length);
 		}
 		t.setSpecifiedRoutes(routeSegments);
-		
+		IServicePoint[] servicePoints = new IServicePoint[routeSegments.length];
+		for(int i = 0; i < servicePoints.length; i++){
+			servicePoints[i] = routeSegments[i].getServicePoint();
+		}
+		t.setServicePoints(servicePoints);
+
 		return ApiController.gson.toJson(t);
 		
 	}
 	public Truck getTruckById(String id){
 		
     	MovingObject o = mID2Object.get(id);
-    	System.out.println(name() + "::getTruckById, id = " + id + " o = " + (o != null ? o.getId() : "NULL"));
+    	//System.out.println(name() + "::getTruckById, id = " + id + " o = " + (o != null ? o.getId() : "NULL"));
     	if(o instanceof Truck) return (Truck)o;
     	return null;
     }

@@ -13,6 +13,7 @@ import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
 import com.dailyopt.mo.components.movingobjects.IServicePoint;
 import com.dailyopt.mo.components.movingobjects.MovingObject;
 import com.dailyopt.mo.components.movingobjects.agent.Agent;
+import com.dailyopt.mo.components.movingobjects.truck.PositionTypeAction;
 import com.dailyopt.mo.components.movingobjects.truck.Truck;
 import com.dailyopt.mo.components.objectmanager.ObjectManager;
 import com.dailyopt.mo.components.routeplanner.onlinevrp.OnlineVRPPlanner;
@@ -110,19 +111,26 @@ public class ApiController {
     public String updateLocation(@RequestBody MovingObject obj) {
     	synchronized(mgr){
     		count = count + 1;
-    		System.out.println(name() + "::updateLocation, object " + obj.getId() + ", count = " + count);
+    		//System.out.println(name() + "::updateLocation, object " + obj.getId() + ", count = " + count);
+    		/*
     		MovingObject n_obj = mgr.updateLocation(obj.getId(), obj.getLat(), obj.getLng());
     		if(n_obj == null){
     			return "{}";
     		}
     		return "{\"id\":\"" + n_obj.getId() + "\",\"lat\":" + n_obj.getLat() + ",\"lng\":" + n_obj.getLng() + "}";
+    		*/
+    		Truck t = mgr.getTruckById(obj.getId());
+    		PositionTypeAction rs = t.updateLocation(obj.getLat(), obj.getLng());
+    		return gson.toJson(rs);
     	}
         //return "{}";
     }
+	/*
 	@PostMapping("/updateServicePoints")
 	public String updateServicePoints(@RequestBody UpdateServicePointsInput input){
 		return mgr.updateServicePoints(input);		
 	}
+	*/
 	@PostMapping("/updatePlannededRouteTruck")
 	public String updatePlannedRouteTruck(@RequestBody UpdatePlannedRouteTruckInput input){
 		
@@ -192,13 +200,13 @@ public class ApiController {
 	}
 	@PostMapping("/insertNewRequestsVRP")
 	public String insertNewRequestsVRP(@RequestBody RouteVRPInput input){
-		List<MovingObject> objects = mgr.getObjects();
+		List<Truck> trucks = mgr.getTrucks();
 		
-		ExecuteRoute[] routes = new ExecuteRoute[objects.size()];
+		ExecuteRoute[] routes = new ExecuteRoute[trucks.size()];
 		for(int i = 0; i < routes.length; i++){
-			Truck o = (Truck)objects.get(i);
+			Truck o = trucks.get(i);
 			String vehicleCode = o.getId();
-			IServicePoint[] servicePoints = o.collectServicePoints();
+			IServicePoint[] servicePoints = o.getServicePoints();//o.collectServicePoints();
 			String currentLatLng = o.getLat() + "," + o.getLng();
 			o.estimateNextPositionLatLng(ConfigParams.estimateTimeSecond);
 			String changeFromLatLng = o.getEstimatedNextLat() + "," + o.getEstimatedNextLng();
@@ -213,6 +221,18 @@ public class ApiController {
 		OnlineVRPInput inp = new OnlineVRPInput(routes,newRequests);
 		OnlineVRPPlanner planner = new OnlineVRPPlanner();
 		OnlineVRPSolution sol = planner.computeOnlineInsertion(inp);
+		for(int i = 0; i < sol.getRoutes().length; i++){
+			ExecuteRoute r = sol.getRoutes()[i];
+			if(planner.routeChange(r.getVehicleCode())){
+				
+				Truck t = mgr.getTruckById(r.getVehicleCode());
+				System.out.println(name() + "::insertNewRequestsVRP, before update vehicle " + t.getId() + ", service points = " + t.getServicePointString());
+				//t.setServicePoints(r.getServicePoints());
+				t.updateServicePoints(r.getServicePoints());
+				System.out.println(name() + "::insertNewRequestsVRP, after update vehicle " + t.getId() + ", service points = " + t.getServicePointString());
+			}
+		}
+		
 		Gson gson = new Gson();
 		String json = gson.toJson(sol);
 		return json;

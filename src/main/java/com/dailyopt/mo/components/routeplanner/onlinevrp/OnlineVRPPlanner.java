@@ -1,6 +1,7 @@
 package com.dailyopt.mo.components.routeplanner.onlinevrp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.dailyopt.mo.components.maps.Path;
 import com.dailyopt.mo.components.maps.Point;
@@ -20,6 +21,7 @@ public class OnlineVRPPlanner {
 	private OnlineVRPInput input;
 	private ExecuteRoute[] routes;
 	private RouteVRPInputPoint[] newRequests;
+	private HashMap<String, Boolean> routeChanged = new HashMap<String, Boolean>();
 	
 	private double evaluateExtraDistanceInsert(ExecuteRoute r, int routeSegmentIndex, RouteVRPInputPoint p){
 		// return extra distance when inserting point p into routeSegment r[routeSegmentIndex]
@@ -33,8 +35,7 @@ public class OnlineVRPPlanner {
 			Path p1 = ApiController.gismap.findPath(rs.getFirstPoint().getLatLng(), p.getLatLng());
 			Path p2 = ApiController.gismap.findPath(p.getLatLng(), rs.getLastPoint().getLatLng());
 			return p1.getLength() + p2.getLength() - rs.getLength();
-		}
-		
+		}		
 	}
 	private void greedyInsertPoint(IServicePoint p){
 		double minExtraDistance = Integer.MAX_VALUE;
@@ -70,6 +71,11 @@ public class OnlineVRPPlanner {
 		// update route
 		ExecuteRoute r = routes[sel_i];
 		r.insertServicePoint(sel_j, p);
+		routeChanged.put(r.getVehicleCode(), true);
+		System.out.println(name() + "::greedyInsertPoint, CHANGE route of vehicle " + r.getVehicleCode());
+	}
+	public String name(){
+		return "OnlineVRPPlanner";
 	}
 	private void greedyInsert(RouteVRPInputPoint p){
 		double minExtraDistance = Integer.MAX_VALUE;
@@ -125,14 +131,20 @@ public class OnlineVRPPlanner {
 			r.replaceRouteSegment(sel_j, new_rs1, new_rs2);
 		}
 	}
+	public boolean routeChange(String vehicleId){
+		if(routeChanged.get(vehicleId) != null) return true;
+		return false;
+	}
 	public OnlineVRPSolution computeOnlineInsertion(OnlineVRPInput input){
 		this.input = input;
 		routes = input.getRoutes();
 		newRequests = input.getNewRequests();
+		routeChanged.clear();
 		for(RouteVRPInputPoint p: newRequests){
 			ServicePointDelivery pp = new ServicePointDelivery(p.getId(), p.getLat(), p.getLng());
 			greedyInsertPoint(pp);
 		}
-		return null;
+		OnlineVRPSolution sol = new OnlineVRPSolution(routes);
+		return sol;
 	}
 }
