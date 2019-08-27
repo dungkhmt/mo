@@ -29,3 +29,20 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### hoangnt ###
+src/main/java/core/
+src/main/java/localsearch/applications/
+src/main/java/localsearch/baitap/
+src/main/java/localsearch/common/
+src/main/java/localsearch/constraints/
+src/main/java/localsearch/functions/
+src/main/java/localsearch/invariants/
+src/main/java/localsearch/model/
+src/main/java/localsearch/search/
+src/main/java/localsearch/selectors/
+
+lib/
+client-html/
+RouteVRPInput.json
+RouteVRPInput-37.json
