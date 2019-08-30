@@ -42,6 +42,7 @@ src/main/java/localsearch/model/
 src/main/java/localsearch/search/
 src/main/java/localsearch/selectors/
 src/main/java/localsearch/domainspecific/vehiclerouting/apps/ai4vn/CHOCO/
+classes/
 
 lib/
 client-html/

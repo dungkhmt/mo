@@ -20,6 +20,7 @@ import com.dailyopt.mo.components.routeplanner.onlinevrp.OnlineVRPPlanner;
 import com.dailyopt.mo.components.routeplanner.onlinevrp.model.ExecuteRoute;
 import com.dailyopt.mo.components.routeplanner.onlinevrp.model.OnlineVRPInput;
 import com.dailyopt.mo.components.routeplanner.onlinevrp.model.OnlineVRPSolution;
+import com.dailyopt.mo.components.routeplanner.vrp.CWPlanner;
 import com.dailyopt.mo.components.routeplanner.vrp.VRPPlanner;
 import com.dailyopt.mo.model.AddModel;
 import com.dailyopt.mo.model.modelFindPath.ShortestPathInput;
@@ -170,7 +171,9 @@ public class ApiController {
 		Gson gson = new Gson();
 		
 		System.out.println("computeRouteVRP, input = " + gson.toJson(input));
-		VRPPlanner planner = new VRPPlanner();
+//		VRPPlanner planner = new VRPPlanner();
+		System.out.println("CWPlanner");
+		CWPlanner planner = new CWPlanner();
 		RouteVRPSolution sol = planner.computeRoute(input);
 		json = gson.toJson(sol);
 		System.out.println("computeRouteVRP, output = " + json);

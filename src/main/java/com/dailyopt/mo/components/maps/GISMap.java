@@ -21,7 +21,11 @@ public class GISMap {
 	
 	public GISMap(){
 		//loadMap("data/SanfranciscoRoad-connected-contracted-5.txt");
-		loadMap("data/SanfranciscoRoad-connected.txt");
+		try {
+			loadMap("data/HanoiRoad-connected.txt");
+		} catch (Exception e) {
+
+		}
 	}
 	public String name(){
 		return "GISMap";

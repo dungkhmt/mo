@@ -142,6 +142,7 @@ public class VRPPlanner {
 			ex.printStackTrace();
 		}
 	}
+
 	public void greedySearch(){
 		greedyConstructive();
 		optimizeTwoOptMove();
