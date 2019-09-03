@@ -34,4 +34,7 @@ public class Point {
 	public String getLatLng(){
 		return this.lat + "," + this.lng;
 	}
+	public String toString() {
+		return "Point(" + getLatLng() + ")";
+	}
 }

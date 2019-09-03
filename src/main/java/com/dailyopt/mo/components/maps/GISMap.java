@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import com.dailyopt.mo.components.algorithms.nearestlocation.KDTree;
 import com.dailyopt.mo.components.algorithms.shortestpath.PQShortestPath;
 import com.dailyopt.mo.components.algorithms.shortestpath.ShortestPath;
 import com.dailyopt.mo.components.maps.graphs.Arc;
@@ -14,6 +15,7 @@ import com.google.gson.Gson;
 
 import java.util.*;
 public class GISMap {
+	private KDTree kdTree;
 	private ArrayList<Point> points;
 	private HashMap<Integer, Integer> mID2Index;
 	public static GoogleMapsQuery G = new GoogleMapsQuery();
@@ -57,20 +59,26 @@ public class GISMap {
 		return json;
 	}
 	public Point findNearestPoint(String latlng){
-		
-		String[] s = latlng.split(",");
-		double lat = Double.valueOf(s[0].trim());
-		double lng = Double.valueOf(s[1].trim());
-		double minD = Integer.MAX_VALUE;
-		Point sel_p = null;		
-		for(int i = 1; i < points.size(); i++){
-			double d = G.computeDistanceHaversine(lat, lng, points.get(i).getLat(), points.get(i).getLng());
-			if(d < minD){
-				minD = d;
-				sel_p = points.get(i);
-			}
-		}
-		return sel_p;
+		return kdTree.findNearestPoint(latlng);
+
+//		String[] s = latlng.split(",");
+//		double lat = Double.valueOf(s[0].trim());
+//		double lng = Double.valueOf(s[1].trim());
+//		double minD = Integer.MAX_VALUE;
+//		Point sel_p = null;
+//		for(int i = 1; i < points.size(); i++){
+//			double d = G.computeDistanceHaversine(lat, lng, points.get(i).getLat(), points.get(i).getLng());
+//			if(d < minD){
+//				minD = d;
+//				sel_p = points.get(i);
+//			}
+//		}
+//
+//		Point kd_point = kdTree.findNearestPoint(lat, lng);
+//		if (kd_point != sel_p) {
+//			System.out.println("wtfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff kd:: " + kd_point + "; sel:: " + sel_p);
+//		}
+//		return sel_p;
 	}
 	public void loadMap(String filename){
 		System.out.println(name() + "::loadMap start.....");
@@ -118,7 +126,8 @@ public class GISMap {
 			}
 			double t = System.currentTimeMillis() - t0;
 			System.out.println(name() + "::loadMap finished, time = " + (t*0.001) + "s");
-			
+
+			kdTree = new KDTree(points);
 			g = new Graph(n,A);
 			in.close();
 		}catch(Exception ex){
