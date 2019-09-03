@@ -1,4 +1,4 @@
-package com.dailyopt.mo.components.algorithms;
+package com.dailyopt.mo.components.algorithms.shortestpath;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -4,7 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import com.dailyopt.mo.components.algorithms.ShortestPath;
+import com.dailyopt.mo.components.algorithms.shortestpath.PQShortestPath;
+import com.dailyopt.mo.components.algorithms.shortestpath.ShortestPath;
 import com.dailyopt.mo.components.maps.graphs.Arc;
 import com.dailyopt.mo.components.maps.graphs.Graph;
 import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
@@ -131,8 +132,8 @@ public class GISMap {
 	}
 	public Path findPath(int fromID, int toID){
 		//System.out.println(name() + "::findPath(" + fromID + "," + toID + ")");
-		
-		ShortestPath app = new ShortestPath(g);
+
+		PQShortestPath app = new PQShortestPath(g);//ShortestPath(g);
 		int s = mID2Index.get(fromID);
 		int t = mID2Index.get(toID);
 		int[] p = app.solve(s, t);
