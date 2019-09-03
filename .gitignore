@@ -44,7 +44,6 @@ src/main/java/localsearch/selectors/
 src/main/java/localsearch/domainspecific/vehiclerouting/apps/ai4vn/CHOCO/
 classes/
 
-full-date/
 lib/
 client-html/
 RouteVRPInput.json
