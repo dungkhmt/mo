@@ -4,8 +4,11 @@ import com.dailyopt.mo.components.maps.Point;
 import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
 import lombok.Getter;
 import lombok.Setter;
+import org.chocosolver.solver.constraints.nary.nValue.amnv.mis.F;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 @Getter
 @Setter
@@ -16,18 +19,56 @@ public class Block {
     private double latLower;
     private double lngUpper;
     private double lngLower;
-    private ArrayList<Point> points;
+    private Collection<Point> points;
 
-    public Block(ArrayList<Point> points) {
+    public Block(Collection<Point> points) {
         this.points = points;
-        latLower = latUpper = points.get(0).getLat();
-        lngLower = lngUpper = points.get(0).getLng();
+        Point fp = points.iterator().next();
+        latLower = latUpper = fp.getLat();
+        lngLower = lngUpper = fp.getLng();
         for (Point p : points) {
             latLower = Math.min(latLower, p.getLat());
             latUpper = Math.max(latUpper, p.getLat());
             lngLower = Math.min(lngLower, p.getLng());
             lngUpper = Math.max(lngUpper, p.getLng());
         }
+    }
+
+    public Block(Collection<Point> points, double latLower, double lngLower, double latUpper, double lngUpper) {
+        this.points = points;
+        this.latLower = latLower;
+        this.latUpper = latUpper;
+        this.lngLower = lngLower;
+        this.lngUpper = lngUpper;
+    }
+
+    public void add(Point p) {
+        points.add(p);
+    }
+
+    public void remove(Point p) {
+        points.remove(p);
+    }
+
+    public boolean isEmpty() {
+        return points.isEmpty();
+    }
+
+    public int size() {
+        return points.size();
+    }
+
+    public boolean isInRange(Point p) {
+        double lat = p.getLat();
+        double lng = p.getLng();
+        return latLower <= lat && lat <= latUpper && lngLower <= lng && lng <= lngUpper;
+    }
+
+    public boolean contains(Point p) {
+        if (isInRange(p)) {
+            return points.contains(p);
+        }
+        return false;
     }
 
     public Pair<Point, Double> findNearestPoint(double lat, double lng) {

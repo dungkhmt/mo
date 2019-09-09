@@ -4,20 +4,19 @@ import com.dailyopt.mo.components.maps.Point;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.*;
 
 @Getter
 @Setter
 public class KDTree {
+    public static int MIN_NB_POINT_PER_BLOCK = 5;
+
     private TreeNode root;
     private ArrayList<Point> points;
     public static LatCmp latCmp = new LatCmp();
     public static LngCmp lngCmp = new LngCmp();
 
-    public KDTree(ArrayList<Point> points) {
+    public KDTree(Collection<Point> points) {
         this.points = new ArrayList<>(points);
         initTree();
 
@@ -38,7 +37,7 @@ public class KDTree {
                 return 0;
             }
         });
-        pq.add(new Pair<>(root, root.getBlock().estimateMinDist(lat, lng)));
+        pq.add(new Pair<>(root, root.estimateMinDist(lat, lng)));
         while (!pq.isEmpty()) {
             Pair<TreeNode, Double> td = pq.poll();
             if (td.second >= minDist) {
@@ -46,14 +45,14 @@ public class KDTree {
             }
             TreeNode t = td.first;
             if (t.getChildNodes().isEmpty()) {
-                Pair<Point, Double> bestPoint = t.getBlock().findNearestPoint(lat, lng);
+                Pair<Point, Double> bestPoint = t.findNearestPoint(lat, lng);
                 if (bestPoint.second < minDist) {
                     minDist = bestPoint.second;
                     nearestPoint = bestPoint.first;
                 }
             } else {
                 for (TreeNode c : t.getChildNodes()) {
-                    pq.add(new Pair<>(c, c.getBlock().estimateMinDist(lat, lng)));
+                    pq.add(new Pair<>(c, c.estimateMinDist(lat, lng)));
                 }
             }
         }
@@ -77,7 +76,7 @@ public class KDTree {
 
     private TreeNode buildTree(ArrayList<Point> points, boolean latCoorDiv) {
         TreeNode p = new TreeNode(points);
-        if (points.size() == 1) {
+        if (points.size() <= MIN_NB_POINT_PER_BLOCK) {
             return p;
         }
         if (latCoorDiv) {

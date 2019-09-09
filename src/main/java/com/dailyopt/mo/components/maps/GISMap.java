@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import com.dailyopt.mo.components.algorithms.nearestlocation.KDTree;
+import com.dailyopt.mo.components.algorithms.nearestlocation.QuadTree;
 import com.dailyopt.mo.components.algorithms.shortestpath.PQShortestPath;
 import com.dailyopt.mo.components.algorithms.shortestpath.ShortestPath;
 import com.dailyopt.mo.components.maps.graphs.Arc;
@@ -16,6 +17,7 @@ import com.google.gson.Gson;
 import java.util.*;
 public class GISMap {
 	private KDTree kdTree;
+	private QuadTree quadTree;
 	private ArrayList<Point> points;
 	private HashMap<Integer, Integer> mID2Index;
 	public static GoogleMapsQuery G = new GoogleMapsQuery();
@@ -124,10 +126,43 @@ public class GISMap {
 				A[beginIndex].add(a);
 				
 			}
+			List<Point> ps = points.subList(1, points.size());
 			double t = System.currentTimeMillis() - t0;
 			System.out.println(name() + "::loadMap finished, time = " + (t*0.001) + "s");
+			kdTree = new KDTree(ps);
+			quadTree = new QuadTree(ps);
 
-			kdTree = new KDTree(points);
+			Random rand = new Random();
+			double latLen = quadTree.getLatUpper() - quadTree.getLatLower();
+			double lngLen = quadTree.getLngUpper() - quadTree.getLngLower();
+			double kdTime = 0;
+			double quadTime = 0;
+			for (int test = 0; test < 1000000; test++) {
+				double lat = rand.nextDouble() * latLen + quadTree.getLatLower();
+				double lng = rand.nextDouble() * lngLen + quadTree.getLngLower();
+//				Point bestPoint = null;
+//				double minDist = 1e18;
+//				for (Point q : points) {
+//					double dist = G.computeDistanceHaversine(lat, lng, q.getLat(), q.getLng());
+//					if (dist < minDist) {
+//						minDist = dist;
+//						bestPoint = q;
+//					}
+//				}
+				System.out.println(test + ": " + lat + " " + lng + " " );
+				t0 = System.currentTimeMillis();
+				Point kd = kdTree.findNearestPoint(lat, lng);
+				kdTime += System.currentTimeMillis() - t0;
+				t0 = System.currentTimeMillis();
+				Point qu = quadTree.findNearestPoint(lat, lng);
+				quadTime += System.currentTimeMillis() - t0;
+				if (kd.getLat() != qu.getLat() || kd.getLng() != qu.getLng()) {
+//				if (kd != qu) {
+					System.out.println("kd " + kd + " qu " + qu);
+					System.exit(-1);
+				}
+			}
+			System.out.println("kdTime = " + (kdTime / 1000) + " quadTime = " + (quadTime / 1000));
 			g = new Graph(n,A);
 			in.close();
 		}catch(Exception ex){
