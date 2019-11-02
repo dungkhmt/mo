@@ -52,14 +52,15 @@ public class CWPlanner {
         double bestViolation = 1e18;
         double bestMinMax = 1e18;
         double bestTotalDis = 1e18;
-        Route[] bestRoutes = null;
+//        Route[] bestRoutes = null;
+        ArrayList<Integer> bestOrderedID = null;
         for (int i = 0; i < nbClients; i++) {
             System.out.println("ordered_id: " + ordered_id_arr);
             double total_dis = 0;
             double minVal = 1e18;
             double maxVal = 0;
             double violation = 1e18;
-            Route[] routes = new Route[nbVehicles];
+//            Route[] routes = new Route[nbVehicles];
             for (int k = 0, j = 0; k < nbVehicles; k++) {
                 int d = j;
                 if (k < nbVehicles - 1) {
@@ -97,33 +98,68 @@ public class CWPlanner {
                 }
                 minVal = Math.min(minVal, val);
                 maxVal = Math.max(maxVal, val);
-                Path[] paths = new Path[points.length-1];
-                for(int u = 0; u < paths.length; u++){
-                    paths[u] = ApiController.gismap.findPath(points[u].getLat() + "," + points[u].getLng(),
-                            points[u + 1].getLat() + "," + points[u + 1].getLng());
-                }
-                routes[k] = new Route(points, total_dis, paths);
+//                Path[] paths = new Path[points.length-1];
+//                for(int u = 0; u < paths.length; u++){
+//                    paths[u] = ApiController.gismap.findPath(points[u].getLat() + "," + points[u].getLng(),
+//                            points[u + 1].getLat() + "," + points[u + 1].getLng());
+//                }
+//                routes[k] = new Route(points, total_dis, paths);
                 j = d;
             }
             if (bestViolation > violation) {
                 bestViolation = violation;
                 bestMinMax = maxVal - minVal;
                 bestTotalDis = total_dis;
-                bestRoutes = routes;
+                bestOrderedID = new ArrayList<>(ordered_id_arr);
             } else if (bestViolation == violation) {
                 if (maxVal - minVal < bestMinMax) {
                     bestMinMax = maxVal - minVal;
                     bestTotalDis = total_dis;
-                    bestRoutes = routes;
+                    bestOrderedID = new ArrayList<>(ordered_id_arr);
                 } else if (maxVal - minVal == bestMinMax && bestTotalDis > total_dis) {
                     bestTotalDis = total_dis;
-                    bestRoutes = routes;
+                    bestOrderedID = new ArrayList<>(ordered_id_arr);
                 }
             }
             Collections.rotate(ordered_id_arr, 1);
         }
 
-        RouteVRPSolution sol = new RouteVRPSolution(bestRoutes);
+        ordered_id_arr = bestOrderedID;
+        Route[] routes = new Route[nbVehicles];
+        for (int k = 0, j = 0; k < nbVehicles; k++) {
+            int d = j;
+            if (k < nbVehicles - 1) {
+                int sum = 0;
+                while (d < nbClients && sum + demand[ordered_id_arr.get(d)] <= capacity) {
+                    sum += demand[ordered_id_arr.get(d)];
+                    d++;
+                }
+            } else {
+                d = nbClients;
+            }
+            int[] arr = new int[d - j + 2];
+            RouteVRPInputPoint[] points = new RouteVRPInputPoint[d - j + 2];
+            points[0] = mID2InputPoint.get(depot);
+            arr[0] = depot;
+            for (int u = j, v = 1; u < d; u++, v++) {
+                arr[v] = ordered_id_arr.get(u);
+                points[v] = mID2InputPoint.get(ordered_id_arr.get(u));
+            }
+            arr[d - j + 1] = depot;
+            points[d - j + 1] = mID2InputPoint.get(depot);
+            double val = 0;
+            for (int u = 0; u < points.length - 1; u++) {
+                val += cost[arr[u]][arr[u + 1]];
+            }
+            Path[] paths = new Path[points.length - 1];
+            for (int u = 0; u < paths.length; u++) {
+                paths[u] = ApiController.gismap.findPath(points[u].getLat() + "," + points[u].getLng(),
+                        points[u + 1].getLat() + "," + points[u + 1].getLng());
+            }
+            routes[k] = new Route(points, val, paths);
+            j = d;
+        }
+        RouteVRPSolution sol = new RouteVRPSolution(routes);
         return sol;
     }
 
@@ -137,7 +173,7 @@ public class CWPlanner {
 
     private double calcAngle(RouteVRPInputPoint r, RouteVRPInputPoint p) {
         double angle = (float) Math.toDegrees(Math.atan2(p.getLat() - r.getLat(), p.getLng() - r.getLng()));
-        if (angle < 0){
+        if (angle < 0) {
             angle += 360;
         }
         return angle;
@@ -153,7 +189,7 @@ public class CWPlanner {
     }
 
     private void mapRawData() {
-        nbClients = input.getPoints().length-1;
+        nbClients = input.getPoints().length - 1;
         double totalW = 0;
         int N = nbClients + 1;
         demand = new double[N];
@@ -163,15 +199,15 @@ public class CWPlanner {
         depot = 0;
         mID2InputPoint = new HashMap<Integer, RouteVRPInputPoint>();
 
-        for(int i = 0; i<input.getPoints().length; i++){
+        for (int i = 0; i < input.getPoints().length; i++) {
             RouteVRPInputPoint p = input.getPoints()[i];
-            if(p.getType().equals("Depot")){
+            if (p.getType().equals("Depot")) {
                 capacity = p.getInfo();
                 demand[depot] = 0;
                 x[depot] = p.getLat();
                 y[depot] = p.getLng();
                 mID2InputPoint.put(depot, p);
-            }else{
+            } else {
                 totalW += p.getInfo();
                 idx++;
                 demand[idx] = p.getInfo();
@@ -180,28 +216,28 @@ public class CWPlanner {
                 mID2InputPoint.put(idx, p);
             }
         }
-        nbVehicles = (int)(totalW/capacity);
-        if(nbVehicles*capacity < totalW) nbVehicles += 1;
+        nbVehicles = (int) (totalW / capacity);
+        if (nbVehicles * capacity < totalW) nbVehicles += 1;
         cost = new double[N][N];
         ArrayList<DistanceElement> l_distances = new ArrayList<DistanceElement>();
-        for(int i = 0; i < N; i++){
-            for(int j = 0; j < N; j++){
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
                 RouteVRPInputPoint pi = mID2InputPoint.get(i);
                 RouteVRPInputPoint pj = mID2InputPoint.get(j);
                 DistanceElement de = input.getDistanceElement(pi.getId(), pj.getId());
-                if(de == null){
+                if (de == null) {
                     Path P = ApiController.gismap.findPath(x[i] + "," + y[i], x[j] + "," + y[j]);
                     cost[i][j] = P.getLength();
                     System.out.println("mapRawData, compute path(" + i + "," + j + ") = " + P.toString());
-                    de = new DistanceElement(pi.getId(), pj.getId(),cost[i][j]);
-                }else{
+                    de = new DistanceElement(pi.getId(), pj.getId(), cost[i][j]);
+                } else {
                     cost[i][j] = de.getDistance();
                 }
                 l_distances.add(de);
             }
         }
         DistanceElement[] distances = new DistanceElement[l_distances.size()];
-        for(int i = 0; i < l_distances.size(); i++)
+        for (int i = 0; i < l_distances.size(); i++)
             distances[i] = l_distances.get(i);
         input.setDistances(distances);
 

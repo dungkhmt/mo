@@ -4,15 +4,28 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Scanner;
 
+<<<<<<< HEAD:src/main/java/com/socolabs/mo/components/maps/GISMap.java
 import com.socolabs.mo.components.algorithms.ShortestPath;
 import com.socolabs.mo.components.maps.graphs.Arc;
 import com.socolabs.mo.components.maps.graphs.Graph;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
 import com.socolabs.mo.model.modelmap.MapWindow;
+=======
+import com.dailyopt.mo.components.algorithms.nearestlocation.KDTree;
+import com.dailyopt.mo.components.algorithms.nearestlocation.QuadTree;
+import com.dailyopt.mo.components.algorithms.shortestpath.PQShortestPath;
+import com.dailyopt.mo.components.algorithms.shortestpath.ShortestPath;
+import com.dailyopt.mo.components.maps.graphs.Arc;
+import com.dailyopt.mo.components.maps.graphs.Graph;
+import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
+import com.dailyopt.mo.model.modelmap.MapWindow;
+>>>>>>> 69cc541470b38b633f18a036b2863382b829b490:src/main/java/com/dailyopt/mo/components/maps/GISMap.java
 import com.google.gson.Gson;
 
 import java.util.*;
 public class GISMap {
+	private KDTree kdTree;
+	private QuadTree quadTree;
 	private ArrayList<Point> points;
 	private HashMap<Integer, Integer> mID2Index;
 	public static GoogleMapsQuery G = new GoogleMapsQuery();
@@ -56,20 +69,26 @@ public class GISMap {
 		return json;
 	}
 	public Point findNearestPoint(String latlng){
-		
-		String[] s = latlng.split(",");
-		double lat = Double.valueOf(s[0].trim());
-		double lng = Double.valueOf(s[1].trim());
-		double minD = Integer.MAX_VALUE;
-		Point sel_p = null;		
-		for(int i = 1; i < points.size(); i++){
-			double d = G.computeDistanceHaversine(lat, lng, points.get(i).getLat(), points.get(i).getLng());
-			if(d < minD){
-				minD = d;
-				sel_p = points.get(i);
-			}
-		}
-		return sel_p;
+		return kdTree.findNearestPoint(latlng);
+
+//		String[] s = latlng.split(",");
+//		double lat = Double.valueOf(s[0].trim());
+//		double lng = Double.valueOf(s[1].trim());
+//		double minD = Integer.MAX_VALUE;
+//		Point sel_p = null;
+//		for(int i = 1; i < points.size(); i++){
+//			double d = G.computeDistanceHaversine(lat, lng, points.get(i).getLat(), points.get(i).getLng());
+//			if(d < minD){
+//				minD = d;
+//				sel_p = points.get(i);
+//			}
+//		}
+//
+//		Point kd_point = kdTree.findNearestPoint(lat, lng);
+//		if (kd_point != sel_p) {
+//			System.out.println("??????????????????????????????????????????????????????????????????????????????????????????? kd:: " + kd_point + "; sel:: " + sel_p);
+//		}
+//		return sel_p;
 	}
 	public void loadMap(String filename){
 		System.out.println(name() + "::loadMap start.....");
@@ -115,9 +134,43 @@ public class GISMap {
 				A[beginIndex].add(a);
 				
 			}
+			List<Point> ps = points.subList(1, points.size());
 			double t = System.currentTimeMillis() - t0;
 			System.out.println(name() + "::loadMap finished, time = " + (t*0.001) + "s");
-			
+			kdTree = new KDTree(ps);
+			quadTree = new QuadTree(ps);
+
+			Random rand = new Random();
+			double latLen = quadTree.getLatUpper() - quadTree.getLatLower();
+			double lngLen = quadTree.getLngUpper() - quadTree.getLngLower();
+			double kdTime = 0;
+			double quadTime = 0;
+			for (int test = 0; test < 1000000; test++) {
+				double lat = rand.nextDouble() * latLen + quadTree.getLatLower();
+				double lng = rand.nextDouble() * lngLen + quadTree.getLngLower();
+//				Point bestPoint = null;
+//				double minDist = 1e18;
+//				for (Point q : points) {
+//					double dist = G.computeDistanceHaversine(lat, lng, q.getLat(), q.getLng());
+//					if (dist < minDist) {
+//						minDist = dist;
+//						bestPoint = q;
+//					}
+//				}
+				System.out.println(test + ": " + lat + " " + lng + " " );
+				t0 = System.currentTimeMillis();
+				Point kd = kdTree.findNearestPoint(lat, lng);
+				kdTime += System.currentTimeMillis() - t0;
+				t0 = System.currentTimeMillis();
+				Point qu = quadTree.findNearestPoint(lat, lng);
+				quadTime += System.currentTimeMillis() - t0;
+				if (kd.getLat() != qu.getLat() || kd.getLng() != qu.getLng()) {
+//				if (kd != qu) {
+					System.out.println("kd " + kd + " qu " + qu);
+					System.exit(-1);
+				}
+			}
+			System.out.println("kdTime = " + (kdTime / 1000) + " quadTime = " + (quadTime / 1000));
 			g = new Graph(n,A);
 			in.close();
 		}catch(Exception ex){
@@ -131,8 +184,8 @@ public class GISMap {
 	}
 	public Path findPath(int fromID, int toID){
 		//System.out.println(name() + "::findPath(" + fromID + "," + toID + ")");
-		
-		ShortestPath app = new ShortestPath(g);
+
+		PQShortestPath app = new PQShortestPath(g);//ShortestPath(g);
 		int s = mID2Index.get(fromID);
 		int t = mID2Index.get(toID);
 		int[] p = app.solve(s, t);

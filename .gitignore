@@ -48,3 +48,5 @@ lib/
 client-html/
 RouteVRPInput.json
 RouteVRPInput-37.json
+mo_server_connect.bat
+scp_mo_jar_to_server.bat
