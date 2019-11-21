@@ -11,6 +11,7 @@ import com.dailyopt.mo.components.algorithms.shortestpath.ShortestPath;
 import com.dailyopt.mo.components.maps.graphs.Arc;
 import com.dailyopt.mo.components.maps.graphs.Graph;
 import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
+import com.dailyopt.mo.components.maps.utils.LatLng;
 import com.dailyopt.mo.model.modelmap.MapWindow;
 import com.google.gson.Gson;
 
@@ -27,7 +28,7 @@ public class GISMap {
 	public GISMap(){
 		//loadMap("data/SanfranciscoRoad-connected-contracted-5.txt");
 		try {
-			loadMap("data/HanoiRoad-connected.txt");
+			loadMap("data/HoChiMinhRoad-connected.txt");
 		} catch (Exception e) {
 
 		}
@@ -124,51 +125,85 @@ public class GISMap {
 				//		+ ", endIndex = " + endIndex + ", n = " + n);
 				
 				A[beginIndex].add(a);
-				
+				Arc b = new Arc(beginIndex, length);
+				A[endIndex].add(b);
 			}
 			List<Point> ps = points.subList(1, points.size());
 			double t = System.currentTimeMillis() - t0;
 			System.out.println(name() + "::loadMap finished, time = " + (t*0.001) + "s");
 			kdTree = new KDTree(ps);
-			quadTree = new QuadTree(ps);
+//			quadTree = new QuadTree(ps);
 
-			Random rand = new Random();
-			double latLen = quadTree.getLatUpper() - quadTree.getLatLower();
-			double lngLen = quadTree.getLngUpper() - quadTree.getLngLower();
-			double kdTime = 0;
-			double quadTime = 0;
-			for (int test = 0; test < 1000000; test++) {
-				double lat = rand.nextDouble() * latLen + quadTree.getLatLower();
-				double lng = rand.nextDouble() * lngLen + quadTree.getLngLower();
-//				Point bestPoint = null;
-//				double minDist = 1e18;
-//				for (Point q : points) {
-//					double dist = G.computeDistanceHaversine(lat, lng, q.getLat(), q.getLng());
-//					if (dist < minDist) {
-//						minDist = dist;
-//						bestPoint = q;
-//					}
+//			Random rand = new Random();
+//			double latLen = quadTree.getLatUpper() - quadTree.getLatLower();
+//			double lngLen = quadTree.getLngUpper() - quadTree.getLngLower();
+//			double kdTime = 0;
+//			double quadTime = 0;
+//			for (int test = 0; test < 1000000; test++) {
+//				double lat = rand.nextDouble() * latLen + quadTree.getLatLower();
+//				double lng = rand.nextDouble() * lngLen + quadTree.getLngLower();
+////				Point bestPoint = null;
+////				double minDist = 1e18;
+////				for (Point q : points) {
+////					double dist = G.computeDistanceHaversine(lat, lng, q.getLat(), q.getLng());
+////					if (dist < minDist) {
+////						minDist = dist;
+////						bestPoint = q;
+////					}
+////				}
+//				System.out.println(test + ": " + lat + " " + lng + " " );
+//				t0 = System.currentTimeMillis();
+//				Point kd = kdTree.findNearestPoint(lat, lng);
+//				kdTime += System.currentTimeMillis() - t0;
+//				t0 = System.currentTimeMillis();
+//				Point qu = quadTree.findNearestPoint(lat, lng);
+//				quadTime += System.currentTimeMillis() - t0;
+//				if (kd.getLat() != qu.getLat() || kd.getLng() != qu.getLng()) {
+////				if (kd != qu) {
+//					System.out.println("kd " + kd + " qu " + qu);
+//					System.exit(-1);
 //				}
-				System.out.println(test + ": " + lat + " " + lng + " " );
-				t0 = System.currentTimeMillis();
-				Point kd = kdTree.findNearestPoint(lat, lng);
-				kdTime += System.currentTimeMillis() - t0;
-				t0 = System.currentTimeMillis();
-				Point qu = quadTree.findNearestPoint(lat, lng);
-				quadTime += System.currentTimeMillis() - t0;
-				if (kd.getLat() != qu.getLat() || kd.getLng() != qu.getLng()) {
-//				if (kd != qu) {
-					System.out.println("kd " + kd + " qu " + qu);
-					System.exit(-1);
-				}
-			}
-			System.out.println("kdTime = " + (kdTime / 1000) + " quadTime = " + (quadTime / 1000));
+//			}
+//			System.out.println("kdTime = " + (kdTime / 1000) + " quadTime = " + (quadTime / 1000));
 			g = new Graph(n,A);
 			in.close();
 		}catch(Exception ex){
 			ex.printStackTrace();
 		}
 	}
+
+	public DistanceElement[] getDistanceElements(LatLngInput input) {
+		HashMap<String, Integer> mCode2Id = new HashMap<>();
+		for (LatLng latLng : input.getLatLngList()) {
+			Point point = findNearestPoint(latLng.getLat() +"," + latLng.getLng());
+			System.out.println("latlng Code: " + latLng.getCode() + " id: " + point.getId());
+			mCode2Id.put(latLng.getCode(), point.getId());
+		}
+		int[] t = new int[mCode2Id.size()];
+		HashMap<String, Integer> mCode2Tid = new HashMap<>();
+		for (int i = 0; i < input.getLatLngList().length; i++) {
+			System.out.println(input.getLatLngList()[i].getCode());
+			t[i] = mCode2Id.get(input.getLatLngList()[i].getCode());
+			mCode2Tid.put(input.getLatLngList()[i].getCode(), i);
+		}
+		double[][] dist = new double[t.length][];
+		PQShortestPath shortestPath = new PQShortestPath(g);
+		for (int i = 0; i < t.length; i++) {
+			dist[i] = shortestPath.solve(t[i], t);
+		}
+		ArrayList<DistanceElement> distanceElements = new ArrayList<>();
+		for (String from : mCode2Id.keySet()) {
+			int i = mCode2Tid.get(from);
+			for (String to : mCode2Id.keySet()) {
+				int j = mCode2Tid.get(to);
+				distanceElements.add(new DistanceElement(from, to, dist[i][j]));
+			}
+		}
+		DistanceElement[] arr = new DistanceElement[distanceElements.size()];
+		distanceElements.toArray(arr);
+		return arr;
+	}
+
 	public Path findPath(String fromLatLng, String toLatLng){
 		Point fromPoint = findNearestPoint(fromLatLng);
 		Point toPoint = findNearestPoint(toLatLng);

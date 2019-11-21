@@ -30,6 +30,51 @@ public class PQShortestPath {
         return shortestLength;
     }
 
+    public double[] solve(int s, int[] t) {
+        double[] res = new double[t.length];
+        HashMap<Integer, Integer> mark = new HashMap<>();
+        for (int i = 0; i < t.length; i++) {
+            mark.put(t[i], i);
+        }
+        HashMap<Integer, Double> d = new HashMap<>();
+        PriorityQueue<Pair> pq = new PriorityQueue<>(new Comparator<Pair>() {
+            @Override
+            public int compare(Pair o1, Pair o2) {
+                if (o1.d - o2.d < 0) {
+                    return -1;
+                } else if (o1.d - o2.d > 0) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+        pq.add(new Pair(s, 0));
+        d.put(s, .0);
+        while (!d.isEmpty()) {
+            Pair p = pq.poll();
+            int u = p.u;
+            if (mark.containsKey(u)) {
+                int idx = mark.get(u);
+                mark.remove(u);
+                res[idx] = p.d;
+                if (mark.size() == 0) {
+                    return res;
+                }
+            }
+            if (d.get(u) == p.d) {
+                for (Arc a : A[u]) {
+                    int v = a.getEndPoint();
+                    double w = a.getLength();
+                    if ((!d.containsKey(v)) || (d.get(v) > p.d + w)) {
+                        pq.add(new Pair(v, p.d + w));
+                        d.put(v, p.d + w);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public int[] solve(int s, int t){
         shortestLength = 1e18;
         HashMap<Integer, Double> d = new HashMap<>();

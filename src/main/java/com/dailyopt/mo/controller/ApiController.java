@@ -7,7 +7,9 @@ import java.util.Scanner;
 import com.dailyopt.mo.components.api.performservicetruck.PerformServiceTruckInput;
 import com.dailyopt.mo.components.api.updateplannedroutetruck.UpdatePlannedRouteTruckInput;
 import com.dailyopt.mo.components.api.updateservicepoints.UpdateServicePointsInput;
+import com.dailyopt.mo.components.maps.DistanceElement;
 import com.dailyopt.mo.components.maps.GISMap;
+import com.dailyopt.mo.components.maps.LatLngInput;
 import com.dailyopt.mo.components.maps.Path;
 import com.dailyopt.mo.components.maps.utils.GoogleMapsQuery;
 import com.dailyopt.mo.components.movingobjects.IServicePoint;
@@ -30,6 +32,7 @@ import com.dailyopt.mo.model.routevrp.RouteVRPSolution;
 import com.dailyopt.mo.model.routevrp.RunRouteInput;
 import com.google.gson.Gson;
 
+import com.google.gson.GsonBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -238,6 +241,14 @@ public class ApiController {
 		
 		Gson gson = new Gson();
 		String json = gson.toJson(sol);
+		return json;
+	}
+
+	@PostMapping("/get-distances")
+	public String getDistances(@RequestBody LatLngInput input){
+		DistanceElement[] res = gismap.getDistanceElements(input);
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String json = gson.toJson(res);
 		return json;
 	}
 }
