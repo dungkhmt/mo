@@ -2,7 +2,6 @@ package com.socolabs.mo.components.routeplanner.vrp;
 
 import com.socolabs.mo.components.maps.Path;
 import com.socolabs.mo.controller.ApiController;
-import com.dailyopt.mo.model.routevrp.*;
 import com.socolabs.mo.model.routevrp.*;
 
 import java.util.*;

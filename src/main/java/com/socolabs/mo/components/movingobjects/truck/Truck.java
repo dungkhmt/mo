@@ -9,7 +9,6 @@ import com.socolabs.mo.components.movingobjects.IServicePoint;
 import com.socolabs.mo.components.movingobjects.MovingObject;
 import com.socolabs.mo.components.movingobjects.RouteSegmentToServicePoint;
 import com.socolabs.mo.controller.ApiController;
-
 @Getter
 @Setter
 public class Truck extends MovingObject {

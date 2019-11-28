@@ -2,7 +2,6 @@ package com.socolabs.mo.components.api.updateservicepoints;
 
 import lombok.Getter;
 import lombok.Setter;
-
 import com.socolabs.mo.model.routevrp.RouteVRPInputPoint;
 @Getter
 @Setter

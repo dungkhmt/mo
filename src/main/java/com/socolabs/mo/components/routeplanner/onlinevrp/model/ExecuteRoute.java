@@ -1,5 +1,4 @@
 package com.socolabs.mo.components.routeplanner.onlinevrp.model;
-
 import lombok.Getter;
 import lombok.Setter;
 
