@@ -40,7 +40,7 @@ public class ApiController {
 	private static Integer count = 0; 
     private static ObjectManager mgr = new ObjectManager();
     public static GISMap gismap;// = new GISMap();
-    public static String city = "";
+    public static String region = "";
 
 	public static GoogleMapsQuery GMQ = new GoogleMapsQuery();
 	public static Gson gson = new Gson();
@@ -241,15 +241,12 @@ public class ApiController {
 		return json;
 	}
 
-	@PostMapping("/{city}/get-distances")
-	public String getDistances(@RequestBody LatLngInput input, @PathVariable String city){
-		if (!this.city.equals(city)) {
-			if (city.equals("HN")) {
-				gismap = new GISMap("data/HanoiRoad-connected.txt");
-			} else {
-				gismap = new GISMap("data/HoChiMinhRoad-connected.txt");
-			}
-			this.city = city;
+	@PostMapping("/{region}/get-distances")
+	public String getDistances(@RequestBody LatLngInput input, @PathVariable String region){
+		if (!this.region.equals(region)) {
+			gismap = null;
+			gismap = new GISMap("data/" + region + "Road-connected.txt");
+			this.region = region;
 		}
 		DistanceElement[] res = gismap.getDistanceElements(input);
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();

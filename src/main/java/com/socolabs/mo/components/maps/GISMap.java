@@ -195,6 +195,9 @@ public class GISMap {
 			t[i] = mCode2Id.get(input.getLatLngList()[i].getCode());
 			mCode2Tid.put(input.getLatLngList()[i].getCode(), i);
 		}
+		for (String code : mCode2Tid.keySet()) {
+			System.out.println("code: " + code + " " + mCode2Tid.get(code));
+		}
 		double[][] dist = new double[t.length][];
 		PQShortestPath shortestPath = new PQShortestPath(g);
 		for (int i = 0; i < t.length; i++) {

@@ -32,9 +32,9 @@ public class PQShortestPath {
 
     public double[] solve(int s, int[] t) {
         double[] res = new double[t.length];
-        HashMap<Integer, Integer> mark = new HashMap<>();
+        HashSet<Integer> mark = new HashSet<>();
         for (int i = 0; i < t.length; i++) {
-            mark.put(t[i], i);
+            mark.add(t[i]);
         }
         HashMap<Integer, Double> d = new HashMap<>();
         PriorityQueue<Pair> pq = new PriorityQueue<>(new Comparator<Pair>() {
@@ -53,10 +53,13 @@ public class PQShortestPath {
         while (!d.isEmpty()) {
             Pair p = pq.poll();
             int u = p.u;
-            if (mark.containsKey(u)) {
-                int idx = mark.get(u);
+            if (mark.contains(u)) {
                 mark.remove(u);
-                res[idx] = p.d;
+                for (int idx = 0; idx < t.length; idx++) {
+                    if (t[idx] == u) {
+                        res[idx] = p.d;
+                    }
+                }
                 if (mark.size() == 0) {
                     return res;
                 }
