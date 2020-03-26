@@ -4,15 +4,15 @@ import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
-import com.socolabs.mo.vrplib.entities.IWeightManager;
+import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 
 public class ServiceTravelTimeManager implements IDistanceManager {
 
     private VRPVarRoutes vr;
     private IDistanceManager travelTimeManager;
-    private IWeightManager serviceTimeManager;
+    private INodeWeightManager serviceTimeManager;
 
-    public ServiceTravelTimeManager(IDistanceManager travelTimeManager, IWeightManager serviceTimeManager) {
+    public ServiceTravelTimeManager(IDistanceManager travelTimeManager, INodeWeightManager serviceTimeManager) {
         this.vr = travelTimeManager.getVarRoutes();
         this.travelTimeManager = travelTimeManager;
         this.serviceTimeManager = serviceTimeManager;

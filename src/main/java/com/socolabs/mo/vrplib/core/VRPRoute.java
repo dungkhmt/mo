@@ -11,7 +11,23 @@ public class VRPRoute {
 
     private VRPPoint startPoint;
     private VRPPoint endPoint;
-    private int nbPoint;
+    private int nbPoints;
 
-    private int tmpNbPoint;
+    private int tmpNbPoints;
+
+    public void propagate() {
+        nbPoints = tmpNbPoints;
+    }
+
+    public void initTmp() {
+        tmpNbPoints = nbPoints;
+    }
+
+    public void increaseTmpNbPoints(int k) {
+        tmpNbPoints += k;
+    }
+
+    public void decreaseTmpNbPoints(int k) {
+        tmpNbPoints -= k;
+    }
 }

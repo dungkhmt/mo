@@ -125,13 +125,15 @@ public class VRPVarRoutes {
             }
         }
 
+        clearTmpData();
+
         x.setTmpNext(y.getNext());
         y.getNext().setTmpPrev(x);
         x.setTmpPrev(y);
         y.setTmpNext(x);
         x.setTmpRoute(yRoute);
 
-        clearTmpData();
+        yRoute.increaseTmpNbPoints(1);
 
         // map route bị thay đổi và point đầu tiên bị thay đổi
         // cân nhắc vị trí bắt đầu thay đổi là x hay y ??????
@@ -194,6 +196,9 @@ public class VRPVarRoutes {
     private void clearTmpData() {
         for (VRPPoint p : changedPoints) {
             p.initTmp();
+        }
+        for (VRPRoute r : mChangedRouteToAddedPoints.keySet()) {
+            r.initTmp();
         }
         changedPoints.clear();
         mChangedRouteToFirstTmpPoint.clear();

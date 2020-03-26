@@ -4,14 +4,13 @@ import com.socolabs.mo.vrplib.core.IVRPConstraint;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
-import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
-import com.socolabs.mo.vrplib.entities.IWeightManager;
+import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.ArrivalTimeCalculator;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.TWViolationCalculator;
 import com.socolabs.mo.vrplib.entities.distancemanagers.ServiceTravelTimeManager;
 import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
-import com.socolabs.mo.vrplib.entities.weightmanagers.ServiceTimeManager;
+import com.socolabs.mo.vrplib.entities.nodeweightmanagers.ServiceTimeManager;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 
 import java.util.HashMap;
@@ -61,7 +60,7 @@ public class TimeWindowsConstraint implements IVRPConstraint {
 
     public TimeWindowsConstraint(VRPVarRoutes vr,
                                  IDistanceManager travelTimeManager,
-                                 IWeightManager serviceTimeManager,
+                                 INodeWeightManager serviceTimeManager,
                                  HashMap<VRPPoint, Integer> earliestArrivalTimeMap,
                                  HashMap<VRPPoint, Integer> lastestArrivalTimeMap) {
         this.vr = vr;

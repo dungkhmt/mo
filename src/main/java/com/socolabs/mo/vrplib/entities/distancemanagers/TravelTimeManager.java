@@ -4,7 +4,6 @@ import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
-import com.socolabs.mo.vrplib.entities.IWeightManager;
 
 import java.util.HashMap;
 
