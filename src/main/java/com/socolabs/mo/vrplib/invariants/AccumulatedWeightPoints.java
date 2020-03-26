@@ -1,0 +1,171 @@
+package com.socolabs.mo.vrplib.invariants;
+
+import com.socolabs.mo.vrplib.core.IVRPInvariant;
+import com.socolabs.mo.vrplib.core.VRPPoint;
+import com.socolabs.mo.vrplib.core.VRPRoute;
+import com.socolabs.mo.vrplib.core.VRPVarRoutes;
+import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
+public class AccumulatedWeightPoints implements IVRPInvariant {
+
+    private VRPVarRoutes vr;
+    private IAccumulatedCalculator accCalculator;
+
+    private double[] accWeightArr;
+    private double[] tmpAccWeightArr;
+
+    private ArrayList<VRPPoint> changedPoints;
+
+    private int stt;
+
+    public AccumulatedWeightPoints(VRPVarRoutes vr, IAccumulatedCalculator accCalculator) {
+        this.vr = vr;
+        this.accCalculator = accCalculator;
+        vr.post(this);
+        init();
+    }
+
+    public double getWeightValueOfPoint(VRPPoint point) {
+        return accWeightArr[point.getStt()];
+    }
+
+    public double getTmpWeightValueOfPoint(VRPPoint point) {
+        return tmpAccWeightArr[point.getStt()];
+    }
+
+    private void init() {
+        int maxStt = 0;
+        for (VRPPoint point : vr.getAllPoints()) {
+            maxStt = Math.max(maxStt, point.getStt());
+        }
+        accWeightArr = new double[maxStt + 1];
+        tmpAccWeightArr = new double[maxStt + 1];
+        for (VRPRoute route : vr.getAllRoutes()) {
+            VRPPoint point = route.getStartPoint();
+            VRPPoint prev = point.getPrev();
+            if (prev == null) {
+                accWeightArr[point.getStt()] = 0;
+                prev = point;
+                point = point.getNext();
+                while (point != null) {
+                    int stt = point.getStt();
+                    accWeightArr[stt] = accCalculator.caclAccWeightAtPoint(accWeightArr[prev.getStt()], point);
+                    tmpAccWeightArr[stt] = accWeightArr[stt];
+                    prev = point;
+                    point = point.getNext();
+                }
+            }
+        }
+        System.arraycopy(accWeightArr, 0, tmpAccWeightArr, 0, maxStt);
+        changedPoints = new ArrayList<>();
+    }
+
+    private void clearTmpData() {
+        for (VRPPoint point : changedPoints) {
+            int stt = point.getStt();
+            tmpAccWeightArr[stt] = accWeightArr[stt];
+        }
+        changedPoints.clear();
+    }
+
+    @Override
+    public void explore() {
+        clearTmpData();
+        HashMap<VRPRoute, VRPPoint> mRouteToFirstTmpPoint = vr.getMChangedRouteToFirstTmpPoint();
+        for (Map.Entry<VRPRoute, VRPPoint> e : mRouteToFirstTmpPoint.entrySet()) {
+            VRPPoint cur = e.getValue();
+            VRPPoint prev = cur.getTmpPrev();
+            while (cur != null) {
+                int stt = cur.getStt();
+                tmpAccWeightArr[stt] = accCalculator.calcTmpAccWeightAtPoint(tmpAccWeightArr[prev.getStt()], cur);
+                changedPoints.add(cur);
+                prev = cur;
+                cur = cur.getTmpNext();
+            }
+        }
+        for (VRPPoint p : vr.getRemovedPoints()) {
+            tmpAccWeightArr[p.getStt()] = 0;
+            changedPoints.add(p);
+        }
+    }
+
+    @Override
+    public void propagate() {
+        for (VRPPoint point : changedPoints) {
+            int stt = point.getStt();
+            accWeightArr[stt] = tmpAccWeightArr[stt];
+        }
+    }
+
+    @Override
+    public void addNewPoint(VRPPoint point) {
+        int stt = point.getStt();
+        if (stt >= accWeightArr.length) {
+            int len = accWeightArr.length;
+            int newLen = (stt / len + 1) * len;
+            double[] newArr = new double[newLen];
+            System.arraycopy(accWeightArr, 0, newArr, 0, accWeightArr.length);
+            accWeightArr = newArr;
+            newArr = new double[newLen];
+            System.arraycopy(tmpAccWeightArr, 0, newArr, 0, tmpAccWeightArr.length);
+            tmpAccWeightArr = newArr;
+        }
+    }
+
+    @Override
+    public void removePoint(VRPPoint point) {
+
+    }
+
+    @Override
+    public void addNewRoute(VRPRoute route) {
+
+    }
+
+    @Override
+    public void removeRoute(VRPRoute route) {
+
+    }
+
+    @Override
+    public VRPVarRoutes getVarRoutes() {
+        return vr;
+    }
+
+    @Override
+    public HashSet<VRPPoint> getIndependentPoints() {
+        return null;
+    }
+
+    @Override
+    public int getStt() {
+        return stt;
+    }
+
+    @Override
+    public void setStt(int stt) {
+        this.stt = stt;
+    }
+
+    @Override
+    public boolean verify() {
+        for (int i = 0; i < accWeightArr.length; i++) {
+            if (Math.abs(accWeightArr[i] - tmpAccWeightArr[i]) > CBLSVRP.EPS) {
+                System.out.println("EXCEPTION::" + name() + " -> accWeightArr != tmpAccWeightArr");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String name() {
+        return "AccumulatedWeightPoints";
+    }
+}

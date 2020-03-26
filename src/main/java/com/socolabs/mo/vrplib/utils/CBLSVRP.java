@@ -1,7 +1,5 @@
 package com.socolabs.mo.vrplib.utils;
 
-import com.socolabs.mo.vrplib.core.PointVRP;
-
 public class CBLSVRP {
-    public static PointVRP NULL_POINT = new PointVRP();
+    public final static double EPS = 1e-6;
 }
