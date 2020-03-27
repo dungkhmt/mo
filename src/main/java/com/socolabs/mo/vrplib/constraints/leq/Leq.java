@@ -1,16 +1,13 @@
 package com.socolabs.mo.vrplib.constraints.leq;
 
-import com.socolabs.mo.vrplib.core.IVRPConstraint;
-import com.socolabs.mo.vrplib.core.IVRPFunction;
-import com.socolabs.mo.vrplib.core.VRPPoint;
-import com.socolabs.mo.vrplib.core.VRPVarRoutes;
+import com.socolabs.mo.vrplib.core.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class Leq implements IVRPConstraint {
+public class Leq implements IVRPFunction {
 
-    private IVRPConstraint f;
+    private IVRPFunction f;
 
     private int stt;
 
@@ -43,13 +40,33 @@ public class Leq implements IVRPConstraint {
     }
 
     @Override
+    public void addNewPoint(VRPPoint point) {
+
+    }
+
+    @Override
+    public void removePoint(VRPPoint point) {
+
+    }
+
+    @Override
+    public void addNewRoute(VRPRoute route) {
+
+    }
+
+    @Override
+    public void removeRoute(VRPRoute route) {
+
+    }
+
+    @Override
     public VRPVarRoutes getVarRoutes() {
         return f.getVarRoutes();
     }
 
     @Override
     public HashSet<VRPPoint> getIndependentPoints() {
-        return null;
+        return f.getIndependentPoints();
     }
 
     @Override

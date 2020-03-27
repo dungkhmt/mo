@@ -1,19 +1,18 @@
 package com.socolabs.mo.vrplib.constraints.capacity;
 
-import com.socolabs.mo.vrplib.core.IVRPConstraint;
+import com.socolabs.mo.vrplib.core.IVRPFunction;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
-import localsearch.domainspecific.vehiclerouting.vrp.CBLSVR;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class CapacityConstraint implements IVRPConstraint {
+public class CapacityConstraint implements IVRPFunction {
 
     private VRPVarRoutes vr;
     private INodeWeightManager nodeWeightManager;

@@ -32,4 +32,8 @@ public class VRPPoint {
         tmpPrev = prev;
         tmpRoute = route;
     }
+
+    public boolean isDepot() {
+        return !(route != null && (route.getStartPoint() == this || route.getEndPoint() == this));
+    }
 }

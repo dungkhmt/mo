@@ -1,6 +1,6 @@
 package com.socolabs.mo.vrplib.constraints.timewindows;
 
-import com.socolabs.mo.vrplib.core.IVRPConstraint;
+import com.socolabs.mo.vrplib.core.IVRPFunction;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
@@ -16,7 +16,7 @@ import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class TimeWindowsConstraint implements IVRPConstraint {
+public class TimeWindowsConstraint implements IVRPFunction {
 
     private VRPVarRoutes vr;
     private AccumulatedWeightPoints accViolationPoints;
@@ -153,7 +153,7 @@ public class TimeWindowsConstraint implements IVRPConstraint {
 
     @Override
     public boolean verify() {
-        return true;
+        return value == tmpValue;
     }
 
     @Override

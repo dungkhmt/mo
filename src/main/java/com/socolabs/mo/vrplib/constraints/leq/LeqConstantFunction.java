@@ -1,13 +1,10 @@
 package com.socolabs.mo.vrplib.constraints.leq;
 
-import com.socolabs.mo.vrplib.core.IVRPConstraint;
-import com.socolabs.mo.vrplib.core.IVRPFunction;
-import com.socolabs.mo.vrplib.core.VRPPoint;
-import com.socolabs.mo.vrplib.core.VRPVarRoutes;
+import com.socolabs.mo.vrplib.core.*;
 
 import java.util.HashSet;
 
-public class LeqConstantFunction implements IVRPConstraint {
+public class LeqConstantFunction implements IVRPFunction {
 
     private IVRPFunction f;
     private double v;
@@ -43,6 +40,26 @@ public class LeqConstantFunction implements IVRPConstraint {
     }
 
     @Override
+    public void addNewPoint(VRPPoint point) {
+
+    }
+
+    @Override
+    public void removePoint(VRPPoint point) {
+
+    }
+
+    @Override
+    public void addNewRoute(VRPRoute route) {
+
+    }
+
+    @Override
+    public void removeRoute(VRPRoute route) {
+
+    }
+
+    @Override
     public VRPVarRoutes getVarRoutes() {
         return f.getVarRoutes();
     }
@@ -66,6 +83,10 @@ public class LeqConstantFunction implements IVRPConstraint {
 
     @Override
     public boolean verify() {
+        if (value != tmpValue) {
+            System.out.println("EXCEPTION::" + name() + " -> value != tmpValue");
+            return false;
+        }
         return true;
     }
 
