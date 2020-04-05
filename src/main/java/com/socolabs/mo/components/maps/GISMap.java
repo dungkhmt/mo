@@ -7,6 +7,10 @@ import java.util.Scanner;
 import com.socolabs.mo.components.algorithms.nearestlocation.KDTree;
 import com.socolabs.mo.components.algorithms.nearestlocation.QuadTree;
 import com.socolabs.mo.components.algorithms.shortestpath.PQShortestPath;
+import com.socolabs.mo.components.maps.distanceelementquery.DistanceElement;
+import com.socolabs.mo.components.maps.distanceelementquery.DistanceElementQuery;
+import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceElement;
+import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.graphs.Arc;
 import com.socolabs.mo.components.maps.graphs.Graph;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
@@ -178,6 +182,43 @@ public class GISMap {
 			in.close();
 		}catch(Exception ex){
 			ex.printStackTrace();
+		}
+	}
+
+	public void calcDistanceElements(DistanceElementQuery input) {
+		HashMap<String, HashMap<String, GeneralDistanceElement>> mFrom2To2Element = new HashMap<>();
+		HashMap<String, Point> mLatLgng2Point = new HashMap<>();
+		HashMap<String, String> mId2LatLng = new HashMap<>();
+		for (GeneralDistanceElement e : input.getElements()) {
+			if (!mFrom2To2Element.containsKey(e.getFromId())) {
+				mFrom2To2Element.put(e.getFromId(), new HashMap<>());
+			}
+			mFrom2To2Element.get(e.getFromId()).put(e.getToId(), e);
+			String fromLatLng = e.getFromLng() + "," + e.getFromLng();
+			String toLatLng = e.getToLat() + "," + e.getToLng();
+			mId2LatLng.put(e.getFromId(), fromLatLng);
+			mId2LatLng.put(e.getToId(), toLatLng);
+			if (!mLatLgng2Point.containsKey(fromLatLng)) {
+				mLatLgng2Point.put(fromLatLng, findNearestPoint(fromLatLng));
+			}
+			if (!mLatLgng2Point.containsKey(toLatLng)) {
+				mLatLgng2Point.put(toLatLng, findNearestPoint(toLatLng));
+			}
+		}
+		PQShortestPath shortestPath = new PQShortestPath(g);
+		for (Map.Entry<String, HashMap<String, GeneralDistanceElement>> firstEntry : mFrom2To2Element.entrySet()) {
+			int startId = mLatLgng2Point.get(mId2LatLng.get(firstEntry.getKey())).getId();
+			int[] endIds = new int[firstEntry.getValue().size()];
+			int l = 0;
+			for (Map.Entry<String, GeneralDistanceElement> secondEntry : firstEntry.getValue().entrySet()) {
+				endIds[l++] = mLatLgng2Point.get(mId2LatLng.get(secondEntry.getKey())).getId();
+			}
+			double[] distances = shortestPath.solve(startId, endIds);
+			l = 0;
+			for (Map.Entry<String, GeneralDistanceElement> secondEntry : firstEntry.getValue().entrySet()) {
+				secondEntry.getValue().setDistance(distances[l++]);
+//				endIds[l++] = mLatLgng2Point.get(mId2LatLng.get(secondEntry.getKey())).getId();
+			}
 		}
 	}
 

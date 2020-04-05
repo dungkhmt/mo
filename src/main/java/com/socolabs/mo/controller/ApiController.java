@@ -6,9 +6,11 @@ import java.util.Scanner;
 
 import com.socolabs.mo.components.api.performservicetruck.PerformServiceTruckInput;
 import com.socolabs.mo.components.api.updateplannedroutetruck.UpdatePlannedRouteTruckInput;
-import com.socolabs.mo.components.maps.DistanceElement;
+import com.socolabs.mo.components.maps.distanceelementquery.DistanceElement;
 import com.socolabs.mo.components.maps.GISMap;
-import com.socolabs.mo.components.maps.LatLngInput;
+import com.socolabs.mo.components.maps.distanceelementquery.DistanceElementQuery;
+import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceElement;
+import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.Path;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
 import com.socolabs.mo.components.movingobjects.IServicePoint;
@@ -251,6 +253,19 @@ public class ApiController {
 		DistanceElement[] res = gismap.getDistanceElements(input);
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		String json = gson.toJson(res);
+		return json;
+	}
+
+	@PostMapping("/{region}/get-distance-elements")
+	public String getDistanceElements(@RequestBody DistanceElementQuery input, @PathVariable String region){
+		if (!this.region.equals(region)) {
+			gismap = null;
+			gismap = new GISMap("data/" + region + "Road-connected.txt");
+			this.region = region;
+		}
+		gismap.calcDistanceElements(input);
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String json = gson.toJson(input);
 		return json;
 	}
 }

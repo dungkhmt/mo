@@ -1,4 +1,4 @@
-package com.socolabs.mo.components.maps;
+package com.socolabs.mo.components.maps.distanceelementquery;
 
 import lombok.AllArgsConstructor;
 
