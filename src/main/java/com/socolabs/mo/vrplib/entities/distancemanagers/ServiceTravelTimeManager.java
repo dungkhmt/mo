@@ -29,7 +29,7 @@ public class ServiceTravelTimeManager implements IDistanceManager {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
 
     }
 
@@ -39,7 +39,7 @@ public class ServiceTravelTimeManager implements IDistanceManager {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 

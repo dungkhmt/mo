@@ -16,7 +16,7 @@ public class ServiceTimeManager implements INodeWeightManager {
     public ServiceTimeManager(VRPVarRoutes vr, HashMap<VRPPoint, Integer> serviceTimeMap) {
         this.vr = vr;
         int maxStt = 0;
-        for (VRPPoint p : serviceTimeMap.keySet()) {
+        for (VRPPoint p : vr.getAllPoints()) {
             maxStt = Math.max(maxStt, p.getStt());
         }
         serviceTimes = new int[maxStt + 1];
@@ -38,7 +38,7 @@ public class ServiceTimeManager implements INodeWeightManager {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
         int stt = point.getStt();
         if (stt >= serviceTimes.length) {
             int len = serviceTimes.length;
@@ -59,7 +59,7 @@ public class ServiceTimeManager implements INodeWeightManager {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 

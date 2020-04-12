@@ -1,9 +1,9 @@
 package com.socolabs.mo.vrplib.core;
 
 public interface IVRPBasicEntity {
-    void addNewPoint(VRPPoint point);
+    void createPoint(VRPPoint point);
     void removePoint(VRPPoint point);
-    void addNewRoute(VRPRoute route);
+    void createRoute(VRPRoute route);
     void removeRoute(VRPRoute route);
     VRPVarRoutes getVarRoutes();
     String name();

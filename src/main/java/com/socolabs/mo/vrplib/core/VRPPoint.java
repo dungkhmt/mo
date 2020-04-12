@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 public class VRPPoint {
     private int stt;
-    private String location;
+    private String locationCode;
 
     private int index;
     private VRPPoint next;
@@ -18,6 +18,10 @@ public class VRPPoint {
     private VRPPoint tmpNext;
     private VRPPoint tmpPrev;
     private VRPRoute tmpRoute;
+
+    public VRPPoint(String locationCode) {
+        this.locationCode = locationCode;
+    }
 
     public void propagate() {
         index = tmpIndex;
@@ -34,6 +38,6 @@ public class VRPPoint {
     }
 
     public boolean isDepot() {
-        return !(route != null && (route.getStartPoint() == this || route.getEndPoint() == this));
+        return (route != null && (route.getStartPoint() == this || route.getEndPoint() == this));
     }
 }

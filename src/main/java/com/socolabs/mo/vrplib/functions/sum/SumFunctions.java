@@ -81,7 +81,7 @@ public class SumFunctions implements IVRPFunction {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
 
     }
 
@@ -91,7 +91,7 @@ public class SumFunctions implements IVRPFunction {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 

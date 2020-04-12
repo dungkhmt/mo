@@ -5,6 +5,7 @@ import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
+import com.socolabs.mo.vrplib.entities.nodeweightmanagers.NodeWeightManager;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
 import java.util.ArrayList;
@@ -29,6 +30,13 @@ public class CapacityConstraint implements IVRPFunction {
     public CapacityConstraint(VRPVarRoutes vr, INodeWeightManager nodeWeightManager, HashMap<VRPRoute, Double> mRoute2Capacity) {
         this.vr = vr;
         this.nodeWeightManager = nodeWeightManager;
+        this.mRoute2Capacity = mRoute2Capacity;
+        init();
+    }
+
+    public CapacityConstraint(VRPVarRoutes vr, HashMap<VRPPoint, Double> nodeWeightMap, HashMap<VRPRoute, Double> mRoute2Capacity) {
+        this.vr = vr;
+        this.nodeWeightManager = new NodeWeightManager(vr, nodeWeightMap);
         this.mRoute2Capacity = mRoute2Capacity;
         init();
     }
@@ -115,7 +123,7 @@ public class CapacityConstraint implements IVRPFunction {
     public void propagate() {
         for (VRPRoute route : changedRoutes) {
             int stt = route.getStt();
-            tmpTotalWeightOfRoutes[stt] = totalWeightOfRoutes[stt];
+            totalWeightOfRoutes[stt] = tmpTotalWeightOfRoutes[stt];
         }
         violations = tmpViolations;
     }
@@ -147,6 +155,10 @@ public class CapacityConstraint implements IVRPFunction {
                 totalWeight += nodeWeightManager.getWeight(p);
                 p = p.getNext();
             }
+            if (Math.abs(totalWeight - totalWeightOfRoutes[route.getStt()]) > CBLSVRP.EPS) {
+                System.out.println("EXCEPTION::" + name() + " -> calculating weight of routes is incorrect");
+                return false;
+            }
             verifiyingViolations += getViolation(mRoute2Capacity.get(route), totalWeight);
         }
         if (Math.abs(verifiyingViolations - violations) > CBLSVRP.EPS) {
@@ -157,7 +169,7 @@ public class CapacityConstraint implements IVRPFunction {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
 
     }
 
@@ -167,7 +179,7 @@ public class CapacityConstraint implements IVRPFunction {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
         int stt = route.getStt();
         if (stt > capacities.length) {
             int len = capacities.length;

@@ -19,7 +19,7 @@ public class TWViolationCalculator implements IAccumulatedCalculator {
         vr = arrivalTimeCalculator.getVarRoutes();
         this.arrivalTimeCalculator = arrivalTimeCalculator;
         int maxStt = 0;
-        for (VRPPoint p : lastestArrivalTimeMap.keySet()) {
+        for (VRPPoint p : vr.getAllPoints()) {
             maxStt = Math.max(maxStt, p.getStt());
         }
         lastestArrivalTimes = new int[maxStt + 1];
@@ -41,7 +41,7 @@ public class TWViolationCalculator implements IAccumulatedCalculator {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
         int stt = point.getStt();
         if (stt >= lastestArrivalTimes.length) {
             int len = lastestArrivalTimes.length;
@@ -62,7 +62,7 @@ public class TWViolationCalculator implements IAccumulatedCalculator {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 
@@ -73,7 +73,7 @@ public class TWViolationCalculator implements IAccumulatedCalculator {
 
     @Override
     public VRPVarRoutes getVarRoutes() {
-        return null;
+        return vr;
     }
 
     @Override

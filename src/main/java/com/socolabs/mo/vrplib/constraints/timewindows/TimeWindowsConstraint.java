@@ -12,6 +12,7 @@ import com.socolabs.mo.vrplib.entities.distancemanagers.ServiceTravelTimeManager
 import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
 import com.socolabs.mo.vrplib.entities.nodeweightmanagers.ServiceTimeManager;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,10 +33,10 @@ public class TimeWindowsConstraint implements IVRPFunction {
         // một calculator tính thời điểm đến 1 point
         ArrivalTimeCalculator arrivalTimeCalculator = new ArrivalTimeCalculator(new TravelTimeManager(vr, travelTimeMap), earliestArrivalTimeMap);
         // một AccumulatedWeightPoints để lưu trữ thời điểm đến của từng point
-        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(vr, arrivalTimeCalculator);
+        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(arrivalTimeCalculator);
         // TWViolationCalculator sẽ tính độ vi phạm của từng point
         // accViolationPoints là accumulated violation của các points trên path
-        accViolationPoints = new AccumulatedWeightPoints(vr, new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
+        accViolationPoints = new AccumulatedWeightPoints(new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
         init();
     }
 
@@ -51,10 +52,10 @@ public class TimeWindowsConstraint implements IVRPFunction {
         // một calculator tính thời điểm đến 1 point
         ArrivalTimeCalculator arrivalTimeCalculator = new ArrivalTimeCalculator(serviceTravelTimeManager, earliestArrivalTimeMap);
         // một AccumulatedWeightPoints để lưu trữ thời điểm đến của từng point
-        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(vr, arrivalTimeCalculator);
+        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(arrivalTimeCalculator);
         // TWViolationCalculator sẽ tính độ vi phạm của từng point
         // accViolationPoints là accumulated violation của các points trên path
-        accViolationPoints = new AccumulatedWeightPoints(vr, new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
+        accViolationPoints = new AccumulatedWeightPoints(new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
         init();
     }
 
@@ -68,10 +69,10 @@ public class TimeWindowsConstraint implements IVRPFunction {
         // một calculator tính thời điểm đến 1 point
         ArrivalTimeCalculator arrivalTimeCalculator = new ArrivalTimeCalculator(serviceTravelTimeManager, earliestArrivalTimeMap);
         // một AccumulatedWeightPoints để lưu trữ thời điểm đến của từng point
-        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(vr, arrivalTimeCalculator);
+        AccumulatedWeightPoints accArrivalTimePoints = new AccumulatedWeightPoints(arrivalTimeCalculator);
         // TWViolationCalculator sẽ tính độ vi phạm của từng point
         // accViolationPoints là accumulated violation của các points trên path
-        accViolationPoints = new AccumulatedWeightPoints(vr, new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
+        accViolationPoints = new AccumulatedWeightPoints(new TWViolationCalculator(accArrivalTimePoints, lastestArrivalTimeMap));
         init();
     }
 
@@ -110,7 +111,7 @@ public class TimeWindowsConstraint implements IVRPFunction {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
 
     }
 
@@ -120,7 +121,7 @@ public class TimeWindowsConstraint implements IVRPFunction {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 
@@ -153,7 +154,16 @@ public class TimeWindowsConstraint implements IVRPFunction {
 
     @Override
     public boolean verify() {
-        return value == tmpValue;
+        double testValue = 0;
+        for (VRPRoute route : vr.getAllRoutes()) {
+            VRPPoint endPoint = route.getEndPoint();
+            testValue += accViolationPoints.getWeightValueOfPoint(endPoint);
+        }
+        if (Math.abs(value - testValue) > CBLSVRP.EPS) {
+            System.out.println("EXCEPTION::" + name() + " -> value != tmpValue");
+            return false;
+        }
+        return true;
     }
 
     @Override

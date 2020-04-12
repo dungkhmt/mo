@@ -17,7 +17,7 @@ public class LeqFunctionConstant implements IVRPFunction {
         this.f = f;
         this.v = v;
         f.getVarRoutes().post(this);
-        value = Math.max(0, v - f.getValue());
+        value = Math.max(0, f.getValue() - v);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class LeqFunctionConstant implements IVRPFunction {
 
     @Override
     public void explore() {
-        tmpValue = Math.max(0, v - f.getTmpValue());
+        tmpValue = Math.max(0, f.getTmpValue() - v);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class LeqFunctionConstant implements IVRPFunction {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
 
     }
 
@@ -51,7 +51,7 @@ public class LeqFunctionConstant implements IVRPFunction {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 

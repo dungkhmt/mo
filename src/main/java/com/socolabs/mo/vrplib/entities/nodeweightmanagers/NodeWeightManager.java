@@ -16,7 +16,7 @@ public class NodeWeightManager implements INodeWeightManager {
     public NodeWeightManager(VRPVarRoutes vr, HashMap<VRPPoint, Double> nodeWeightMap) {
         this.vr = vr;
         int maxStt = 0;
-        for (VRPPoint p : nodeWeightMap.keySet()) {
+        for (VRPPoint p : vr.getAllPoints()) {
             maxStt = Math.max(maxStt, p.getStt());
         }
         nodeWeights = new double[maxStt + 1];
@@ -38,7 +38,7 @@ public class NodeWeightManager implements INodeWeightManager {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
         int stt = point.getStt();
         if (stt >= nodeWeights.length) {
             int len = nodeWeights.length;
@@ -59,7 +59,7 @@ public class NodeWeightManager implements INodeWeightManager {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 

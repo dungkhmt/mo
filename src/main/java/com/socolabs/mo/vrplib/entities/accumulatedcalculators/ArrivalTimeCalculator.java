@@ -19,13 +19,13 @@ public class ArrivalTimeCalculator implements IAccumulatedCalculator {
         this.vr = timer.getVarRoutes();
         this.timer = timer;
         int maxStt = 0;
-        for (VRPPoint p : earliestArrivalTimeMap.keySet()) {
+        for (VRPPoint p : vr.getAllPoints()) {
             maxStt = Math.max(maxStt, p.getStt());
         }
-         earliestArrivalTimes = new int[maxStt + 1];
+        earliestArrivalTimes = new int[maxStt + 1];
         for (Map.Entry<VRPPoint, Integer> e : earliestArrivalTimeMap.entrySet()) {
             int stt = e.getKey().getStt();
-             earliestArrivalTimes[stt] = e.getValue();
+            earliestArrivalTimes[stt] = e.getValue();
         }
         vr.post(this);
     }
@@ -41,7 +41,7 @@ public class ArrivalTimeCalculator implements IAccumulatedCalculator {
     }
 
     @Override
-    public void addNewPoint(VRPPoint point) {
+    public void createPoint(VRPPoint point) {
         int stt = point.getStt();
         if (stt >=  earliestArrivalTimes.length) {
             int len =  earliestArrivalTimes.length;
@@ -62,7 +62,7 @@ public class ArrivalTimeCalculator implements IAccumulatedCalculator {
     }
 
     @Override
-    public void addNewRoute(VRPRoute route) {
+    public void createRoute(VRPRoute route) {
 
     }
 
