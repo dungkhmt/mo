@@ -40,4 +40,8 @@ public class VRPPoint {
     public boolean isDepot() {
         return (route != null && (route.getStartPoint() == this || route.getEndPoint() == this));
     }
+
+    public String toString() {
+        return "Point(" + locationCode + ", " + index + ", " + stt + ")";
+    }
 }

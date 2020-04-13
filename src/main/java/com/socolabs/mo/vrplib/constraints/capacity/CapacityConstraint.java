@@ -105,11 +105,11 @@ public class CapacityConstraint implements IVRPFunction {
         }
         for (Map.Entry<VRPRoute, ArrayList<VRPPoint>> e : vr.getMChangedRouteToRemovedPoints().entrySet()) {
             VRPRoute route = e.getKey();
-            ArrayList<VRPPoint> addedPoints = e.getValue();
+            ArrayList<VRPPoint> removedPoints = e.getValue();
             changedRoutes.add(route);
             int stt = route.getStt();
-            for (VRPPoint point : addedPoints) {
-                tmpTotalWeightOfRoutes[stt] -= nodeWeightManager.getWeight(point);
+            for (VRPPoint point : removedPoints) {
+                tmpTotalWeightOfRoutes[stt] -= nodeWeightManager.getTmpWeight(point);
             }
         }
         for (VRPRoute route : changedRoutes) {
@@ -156,6 +156,14 @@ public class CapacityConstraint implements IVRPFunction {
                 p = p.getNext();
             }
             if (Math.abs(totalWeight - totalWeightOfRoutes[route.getStt()]) > CBLSVRP.EPS) {
+//                p = route.getStartPoint();
+//                System.out.println(route);
+//                while (p != null) {
+//                    System.out.println(p + " -> " + nodeWeightManager.getWeight(p));
+//                    totalWeight += nodeWeightManager.getWeight(p);
+//                    p = p.getNext();
+//                }
+//                System.out.println(totalWeightOfRoutes[route.getStt()]);
                 System.out.println("EXCEPTION::" + name() + " -> calculating weight of routes is incorrect");
                 return false;
             }

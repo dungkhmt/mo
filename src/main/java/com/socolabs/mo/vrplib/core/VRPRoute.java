@@ -11,6 +11,8 @@ public class VRPRoute {
 
     private VRPPoint startPoint;
     private VRPPoint endPoint;
+
+    // khống tính 2 point startPoint và endPoint
     private int nbPoints;
 
     private int tmpNbPoints;
@@ -23,6 +25,7 @@ public class VRPRoute {
         endPoint.setPrev(startPoint);
         startPoint.setRoute(this);
         endPoint.setRoute(this);
+        endPoint.setIndex(1);
         startPoint.initTmp();
         endPoint.initTmp();
     }
@@ -41,5 +44,9 @@ public class VRPRoute {
 
     public void decreaseTmpNbPoints(int k) {
         tmpNbPoints -= k;
+    }
+
+    public String toString() {
+        return "route(" + truckCode + ", " + stt + ")";
     }
 }
