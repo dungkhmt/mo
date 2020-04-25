@@ -13,9 +13,9 @@ public class VRPRoute {
     private VRPPoint endPoint;
 
     // khống tính 2 point startPoint và endPoint
-    private int nbPoints;
-
-    private int tmpNbPoints;
+//    private int nbPoints;
+//
+//    private int tmpNbPoints;
 
     public VRPRoute(VRPPoint startPoint, VRPPoint endPoint, String truckCode) {
         this.startPoint = startPoint;
@@ -31,20 +31,27 @@ public class VRPRoute {
     }
 
     public void propagate() {
-        nbPoints = tmpNbPoints;
+//        nbPoints = tmpNbPoints;
     }
 
     public void initTmp() {
-        tmpNbPoints = nbPoints;
+//        tmpNbPoints = nbPoints;
     }
 
-    public void increaseTmpNbPoints(int k) {
-        tmpNbPoints += k;
+    public int getNbPoints() {
+        return endPoint.getIndex() - startPoint.getIndex() - 1;
     }
 
-    public void decreaseTmpNbPoints(int k) {
-        tmpNbPoints -= k;
+    public int getTmpNbPoints() {
+        return endPoint.getTmpIndex() - startPoint.getTmpIndex() - 1;
     }
+//    public void increaseTmpNbPoints(int k) {
+//        tmpNbPoints += k;
+//    }
+//
+//    public void decreaseTmpNbPoints(int k) {
+//        tmpNbPoints -= k;
+//    }
 
     public String toString() {
         return "route(" + truckCode + ", " + stt + ")";

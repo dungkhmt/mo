@@ -8,6 +8,7 @@ import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedWeightC
 import com.socolabs.mo.vrplib.functions.AccumulatedPointWeightsOnPath;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
+import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
 import lombok.Getter;
 
 import java.io.FileInputStream;
@@ -168,7 +169,7 @@ public class VRPVarRoutes {
         y.setTmpNext(x);
         x.setTmpRoute(routeY);
 
-        routeY.increaseTmpNbPoints(1);
+//        routeY.increaseTmpNbPoints(1);
 
         // các points được thêm vào các routes (point chưa thuộc route nào)
         addedPoints.add(x);
@@ -249,7 +250,7 @@ public class VRPVarRoutes {
         }
         if (routeX != routeY) {
             if (routeX != null) {
-                routeX.decreaseTmpNbPoints(1);
+//                routeX.decreaseTmpNbPoints(1);
                 p = nextX;
                 int index = prevX.getIndex();
                 while (p != null) {
@@ -261,7 +262,7 @@ public class VRPVarRoutes {
                 changedPoints.add(prevX);
             }
 
-            routeY.increaseTmpNbPoints(1);
+//            routeY.increaseTmpNbPoints(1);
             p = x;
             int index = y.getIndex();
             while (p != null) {
@@ -414,6 +415,928 @@ public class VRPVarRoutes {
         }
     }
 
+    public boolean exploreTwoOptMove1(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove1(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint startY = routeY.getStartPoint();
+        // routeX: x->y, routeY: nextX -> nextY
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = x;
+        v = y;
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != startY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endX.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != x) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = y.getNext();
+        while (v != null) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getNext();
+        }
+
+        mChangedRouteToFirstTmpPoint.put(routeX, x);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove1(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove1(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::propagateTwoOptMove1 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove2(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove2(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint startX = routeX.getStartPoint();
+        VRPPoint startY = routeY.getStartPoint();
+        VRPPoint nextY = y.getNext();
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = startX;
+        v = startY.getNext();
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != nextY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        v = x;
+        while (v != startX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endX.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != x) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = y.getNext();
+        while (v != null) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        mChangedRouteToFirstTmpPoint.put(routeX, startX);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+        return explore();
+    }
+
+    public void propagateTwoOptMove2(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove2(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::propagateTwoOptMove2 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove3(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove3(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint startY = routeY.getStartPoint();
+        // routeX: x->y, routeY: nextX -> nextY
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = x;
+        v = y;
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != startY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endY.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != y) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = x.getNext();
+        while (v != endX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, x);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove3(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove3(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::propagateTwoOptMove3 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove4(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove4(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint startX = routeX.getStartPoint();
+        VRPPoint startY = routeY.getStartPoint();
+        VRPPoint nextY = y.getNext();
+        // routeX: y->x, routeY: nextY -> nextX
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = startX;
+        v = startY.getNext();
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != nextY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        v = x;
+        while (v != startX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endY.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != y) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = x.getNext();
+        while (v != endX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, startX);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove4(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove4(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreTwoOptMove4 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove5(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove5(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint nextX = x.getNext();
+        VRPPoint nextY = y.getNext();
+
+        // routeX: y->x, routeY: nextY -> nextX
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = x;
+        v = nextY;
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != endY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = y;
+        v = nextX;
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != endX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, x);
+        mChangedRouteToFirstTmpPoint.put(routeY, y);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove5(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove5(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreTwoOptMove5 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove6(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove6(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint nextX = x.getNext();
+        VRPPoint nextY = y.getNext();
+        VRPPoint startX = routeX.getStartPoint();
+
+        // routeX: y->x, routeY: nextY -> nextX
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = startX;
+        v = endY.getPrev();
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != y) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = x;
+        while (v != startX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = y;
+        v = nextX;
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != endX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, startX);
+        mChangedRouteToFirstTmpPoint.put(routeY, y);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove6(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove6(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreTwoOptMove6 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove7(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove7(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint nextX = x.getNext();
+        VRPPoint nextY = y.getNext();
+        VRPPoint startY = routeY.getStartPoint();
+        // routeX: y->x, routeY: nextY -> nextX
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = x;
+        v = nextY;
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != endY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endX.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != x) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = y;
+        while (v != startY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, x);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove7(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove7(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreTwoOptMove7 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMove8(VRPPoint x, VRPPoint y) {
+        VRPRoute routeX = x.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == routeY || routeX == null || routeY == null) {
+            return false;
+        }
+        if (x.isEndPoint() || y.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMove8(x, y)) {
+                return false;
+            }
+        }
+
+        clearTmpData();
+
+        VRPPoint endX = routeX.getEndPoint();
+        VRPPoint endY = routeY.getEndPoint();
+        VRPPoint startX = routeX.getStartPoint();
+        VRPPoint startY = routeY.getStartPoint();
+        // routeX: y->x, routeY: nextY -> nextX
+
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+        ArrayList<VRPPoint> addedPointsAtRouteX = new ArrayList<>();
+
+        //tmp route x
+        VRPPoint u, v;
+        u = startX;
+        v = endY.getPrev();
+        changedPoints.add(u);
+        int idx = u.getIndex();
+        while (v != y) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeX);
+            changedPoints.add(v);
+            addedPointsAtRouteX.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = x;
+        while (v != startX) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endX);
+        endX.setTmpPrev(u);
+        endX.setTmpIndex(idx + 1);
+        changedPoints.add(endX);
+
+        // tmp route y
+        u = startY;
+        v = endX.getPrev();
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != x) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        v = y;
+        while (v != startY) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(endY);
+        endY.setTmpPrev(u);
+        endY.setTmpIndex(idx + 1);
+        changedPoints.add(endY);
+
+        mChangedRouteToFirstTmpPoint.put(routeX, startX);
+        mChangedRouteToFirstTmpPoint.put(routeY, startY);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToAddedPoints.put(routeX, addedPointsAtRouteX);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeY, addedPointsAtRouteX);
+
+        return explore();
+    }
+
+    public void propagateTwoOptMove8(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMove8(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreTwoOptMove8 !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreTwoOptMoveOneRoute(VRPPoint x, VRPPoint y) {
+        if (x.getRoute() == null || x.getRoute() != y.getRoute() || x.getIndex() >= y.getIndex()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkTwoOptMoveOneRoute(x, y)) {
+                return false;
+            }
+        }
+        clearTmpData();
+        VRPPoint nextY = y.getNext();
+        VRPPoint u = x;
+        VRPPoint v = y;
+        int idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != x) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            u = v;
+            v = v.getPrev();
+        }
+        u.setTmpNext(nextY);
+        nextY.setTmpPrev(u);
+        changedPoints.add(nextY);
+        mChangedRouteToFirstTmpPoint.put(x.getRoute(), x);
+        return explore();
+    }
+
+    public void propagateTwoOptMoveOneRoute(VRPPoint x, VRPPoint y) {
+        boolean status = exploreTwoOptMoveOneRoute(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::propagateTwoOptMoveOneRoute !!!!");
+            System.exit(-1);
+        }
+    }
+
+    public boolean exploreOrOptMove1(VRPPoint x1, VRPPoint x2, VRPPoint y) {
+        if (x1.getRoute() != x2.getRoute() || x1.getIndex() >= x2.getIndex()) {
+            return false;
+        }
+        VRPRoute routeX = x1.getRoute();
+        VRPRoute routeY = y.getRoute();
+        if (routeX == null || routeY == null || routeX == routeY || y.isEndPoint()) {
+            return false;
+        }
+        if (x1.isStartPoint() || x2.isEndPoint()) {
+            return false;
+        }
+        for (IVRPChecker checker : checkers) {
+            if (!checker.checkOrOptMove1(x1, x2, y)) {
+                return false;
+            }
+        }
+        clearTmpData();
+
+        VRPPoint nextX2 = x2.getNext();
+        ArrayList<VRPPoint> addedPointsAtRouteY = new ArrayList<>();
+
+        VRPPoint u = x1.getPrev();
+        VRPPoint v = nextX2;
+        int idx = u.getIndex();
+        changedPoints.add(u);
+        u.setTmpNext(v);
+        v.setTmpPrev(u);
+        while (v != null) {
+            idx++;
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            v = v.getNext();
+        }
+
+        u = y;
+        v = x1;
+        idx = u.getIndex();
+        changedPoints.add(u);
+        while (v != nextX2) {
+            idx++;
+            u.setTmpNext(v);
+            v.setTmpPrev(u);
+            v.setTmpIndex(idx);
+            v.setTmpRoute(routeY);
+            changedPoints.add(v);
+            addedPointsAtRouteY.add(v);
+            u = v;
+            v = v.getNext();
+        }
+        v = y.getNext();
+        u.setTmpNext(v);
+        v.setTmpPrev(u);
+        while (v != null) {
+            idx++;
+            v.setTmpIndex(idx);
+            changedPoints.add(v);
+            v = v.getNext();
+        }
+
+        mChangedRouteToFirstTmpPoint.put(routeX, x1.getPrev());
+        mChangedRouteToFirstTmpPoint.put(routeY, y);
+        mChangedRouteToAddedPoints.put(routeY, addedPointsAtRouteY);
+        mChangedRouteToRemovedPoints.put(routeX, addedPointsAtRouteY);
+        return explore();
+    }
+
+    public void propagateOrOptMove1(VRPPoint x1, VRPPoint x2, VRPPoint y) {
+        boolean status = exploreOrOptMove1(x1, x2, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreOrOptMove1 !!!!");
+            System.exit(-1);
+        }
+    }
+
     private void clearTmpData() {
         for (VRPPoint p : changedPoints) {
             p.initTmp();
@@ -476,12 +1399,16 @@ public class VRPVarRoutes {
         for (VRPRoute route : allRoutes) {
             VRPPoint p = route.getStartPoint();
             if (route.getStartPoint().getRoute() != route || route.getEndPoint().getRoute() != route) {
-                System.out.println("EXCEPTION:: verify -> startPoint and endPoint don't have the same route");
+                System.out.println("EXCEPTION:: verify -> startPoint and endPoint don't have the same route " + route);
                 return false;
             }
             int cnt = 0;
             while (p.getNext() != null) {
                 p = p.getNext();
+                if (p.getRoute() != route) {
+                    System.out.println("EXCEPTION:: verify -> route of " + p + " is not " + route + "; " + p.getRoute());
+                    return false;
+                }
                 cnt++;
             }
             if (route.getNbPoints() != cnt - 1) {
@@ -492,10 +1419,7 @@ public class VRPVarRoutes {
                 System.out.println("EXCEPTION:: verify -> calculating the number of points on route is incorrect" + cnt + " " + route.getEndPoint().getIndex() + " " + route.getStartPoint().getIndex());
                 return false;
             }
-            if (p != route.getEndPoint()) {
-                System.out.println("EXCEPTION:: verify -> startPoint and endPoint don't have the same route");
-                return false;
-            }
+
         }
         for (IVRPInvariant invariant : invariants) {
             if (!invariant.verify()) {
@@ -597,5 +1521,28 @@ public class VRPVarRoutes {
                 vr.propageteTwoPointsMove(x, y);
             }
         }
+
+        for (int step = 0; step < 10000000; step++) {
+            VRPPoint x1 = addPoints.get(rand.nextInt(addPoints.size()));
+            VRPPoint x2 = addPoints.get(rand.nextInt(addPoints.size()));
+            VRPPoint y = insertedPoints.get(rand.nextInt(insertedPoints.size()));
+            if (x1.getIndex() < x2.getIndex() && x1.getRoute() == x2.getRoute() && y.getRoute() != x1.getRoute()) {
+                System.out.println("propagateOrOptMove1 " + x1 + "; " + x2 + " and " + y + " " + x1.getRoute() + " " + y.getRoute());
+//                VRPPoint p = x.getRoute().getStartPoint();
+//                while (p != null) {
+//                    System.out.print(p + " -> ");
+//                    p = p.getNext();
+//                }
+//                System.out.println();
+//                p = y.getRoute().getStartPoint();
+//                while (p != null) {
+//                    System.out.print(p + " -> ");
+//                    p = p.getNext();
+//                }
+//                System.out.println();
+                vr.propagateOrOptMove1(x1, x2, y);
+            }
+        }
+
     }
 }

@@ -41,6 +41,14 @@ public class VRPPoint {
         return (route != null && (route.getStartPoint() == this || route.getEndPoint() == this));
     }
 
+    public boolean isStartPoint() {
+        return (route != null && route.getStartPoint() == this);
+    }
+
+    public boolean isEndPoint() {
+        return (route != null && route.getEndPoint() == this);
+    }
+
     public String toString() {
         return "Point(" + locationCode + ", " + index + ", " + stt + ")";
     }
