@@ -88,6 +88,8 @@ public interface IVRPChecker {
     // z)
     // remove (x, next[x]), (y, next[y]), and (z, next[z])
     // insert (x,z) and (next[y], next[x]) and(y, next[z])
+    // s --> x -> nx --> y -> ny --> z -> nz --> e
+    // s --> x -> z --> ny -> nx --> y -> nz --> e
     boolean checkThreeOptMove1(VRPPoint x, VRPPoint y, VRPPoint z);
 
     // move of type e [Groer et al., 2010]
@@ -95,6 +97,7 @@ public interface IVRPChecker {
     // z)
     // remove (x, next[x]), (y, next[y]), and (z, next[z])
     // insert (z,x) and (next[x], next[y]) and(next[z],y)
+    // ny --> z -> x --> s -> 
     boolean checkThreeOptMove2(VRPPoint x, VRPPoint y, VRPPoint z);
 
     // move of type e [Groer et al., 2010]
@@ -146,7 +149,34 @@ public interface IVRPChecker {
     // remove (x2, next[x2]) and (y2, next[y2])
     // insert (x1, next[x2]) and (y2, next[y1])
     // insert (x2, next[x1]) and (y1, next[y2])
-    boolean checkCrossExchangeMove(VRPPoint x1, VRPPoint y1, VRPPoint x2, VRPPoint y2);
+    boolean checkCrossExchangeMove1(VRPPoint x1, VRPPoint y1, VRPPoint x2, VRPPoint y2);
+
+    // move of type g [Groer et al., 2010]
+    // x1 and y1 are on the same route, x1 is before y1
+    // x2 and y2 are on the same route, x2 is before y2
+    // remove (x1,next[x1]) and (y1, next[y1])
+    // remove (x2, next[x2]) and (y2, next[y2])
+    // insert (x1, y2) and (next[x2], next[y1])
+    // insert (x2, next[x1]) and (y1, next[y2])
+    boolean checkCrossExchangeMove2(VRPPoint x1, VRPPoint y1, VRPPoint x2, VRPPoint y2);
+
+    // move of type g [Groer et al., 2010]
+    // x1 and y1 are on the same route, x1 is before y1
+    // x2 and y2 are on the same route, x2 is before y2
+    // remove (x1,next[x1]) and (y1, next[y1])
+    // remove (x2, next[x2]) and (y2, next[y2])
+    // insert (x1, next[x2]) and (y2, next[y1])
+    // insert (x2, y1) and (next[x1], next[y2])
+    boolean checkCrossExchangeMove3(VRPPoint x1, VRPPoint y1, VRPPoint x2, VRPPoint y2);
+
+    // move of type g [Groer et al., 2010]
+    // x1 and y1 are on the same route, x1 is before y1
+    // x2 and y2 are on the same route, x2 is before y2
+    // remove (x1,next[x1]) and (y1, next[y1])
+    // remove (x2, next[x2]) and (y2, next[y2])
+    // insert (x1, y2) and (next[x2], next[y1])
+    // insert (x2, y1) and (next[x1], next[y2])
+    boolean checkCrossExchangeMove4(VRPPoint x1, VRPPoint y1, VRPPoint x2, VRPPoint y2);
 
     boolean checkKPointsMove(ArrayList<VRPPoint> x, ArrayList<VRPPoint> y);
 }

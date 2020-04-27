@@ -32,11 +32,17 @@ public class ArrivalTimeCalculator implements IAccumulatedCalculator {
 
     @Override
     public double caclAccWeightAtPoint(double prevValue, VRPPoint point) {
+//        System.out.println(point.getPrev() + " -> " + point + " travelTime = " + timer.getDistance(point.getPrev(), point) +
+//                " earliestArrivalTimes = " + earliestArrivalTimes[point.getStt()] + " arrivalTime = " +
+//                Math.max(prevValue + timer.getDistance(point.getPrev(), point),  earliestArrivalTimes[point.getStt()]));
         return Math.max(prevValue + timer.getDistance(point.getPrev(), point),  earliestArrivalTimes[point.getStt()]);
     }
 
     @Override
     public double calcTmpAccWeightAtPoint(double prevValue, VRPPoint point) {
+//        System.out.println(point.getTmpPrev() + " -> " + point + " travelTime = " + timer.getDistance(point.getTmpPrev(), point) +
+//                " earliestArrivalTimes = " + earliestArrivalTimes[point.getStt()] + " arrivalTime = " +
+//                Math.max(prevValue + timer.getDistance(point.getTmpPrev(), point),  earliestArrivalTimes[point.getStt()]));
         return Math.max(prevValue + timer.getDistance(point.getTmpPrev(), point),  earliestArrivalTimes[point.getStt()]);
     }
 

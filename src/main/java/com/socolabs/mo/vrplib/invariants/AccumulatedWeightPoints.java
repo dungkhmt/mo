@@ -76,6 +76,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
 
     @Override
     public void explore() {
+//        System.out.println(accCalculator.name() + " explore: ");
         clearTmpData();
         HashMap<VRPRoute, VRPPoint> mRouteToFirstTmpPoint = vr.getMChangedRouteToFirstTmpPoint();
         for (Map.Entry<VRPRoute, VRPPoint> e : mRouteToFirstTmpPoint.entrySet()) {
@@ -168,11 +169,11 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
             VRPPoint point = route.getStartPoint();
             VRPPoint prev = point.getPrev();
             if (prev == null) {
-//                System.out.println("route " + route.getStt());
+//                System.out.println("route: " + route.getStt());
                 double accWeight = accCalculator.caclAccWeightAtPoint(0, point);
 //                System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                 if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                    System.out.println("EXCEPTION::" + name() + " -> accWeightArr != tmpAccWeightArr");
+                    System.out.println("EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                     return false;
                 }
                 point = point.getNext();
@@ -180,7 +181,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
                     accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
 //                    System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                     if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                        System.out.println("EXCEPTION::" + name() + " -> accWeightArr != tmpAccWeightArr");
+                        System.out.println("EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                         return false;
                     }
                     point = point.getNext();
