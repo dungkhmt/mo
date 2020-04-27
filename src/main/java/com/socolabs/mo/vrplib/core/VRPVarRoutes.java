@@ -2419,12 +2419,14 @@ public class VRPVarRoutes {
                 VRPPoint prevU = u.getTmpPrev();
                 nextU.setTmpPrev(prevU);
                 prevU.setTmpNext(nextU);
-                if (mChangedRouteToFirstTmpPoint.containsKey(routeU)) {
-                    if (prevU.getIndex() < mChangedRouteToFirstTmpPoint.get(routeU).getIndex()) {
+                if (prevU.getRoute() == routeU) {
+                    if (mChangedRouteToFirstTmpPoint.containsKey(routeU)) {
+                        if (prevU.getIndex() < mChangedRouteToFirstTmpPoint.get(routeU).getIndex()) {
+                            mChangedRouteToFirstTmpPoint.put(routeU, prevU);
+                        }
+                    } else {
                         mChangedRouteToFirstTmpPoint.put(routeU, prevU);
                     }
-                } else {
-                    mChangedRouteToFirstTmpPoint.put(routeU, prevU);
                 }
             }
             if (v != CBLSVRP.NULL_POINT) {
@@ -2463,7 +2465,9 @@ public class VRPVarRoutes {
                 }
             }
         }
-        for (VRPPoint u : mChangedRouteToFirstTmpPoint.values()) {
+        for (Map.Entry<VRPRoute, VRPPoint> e : mChangedRouteToFirstTmpPoint.entrySet()) {
+            VRPRoute r = e.getKey();
+            VRPPoint u = e.getValue();
             int idx = u.getIndex();
             while (u != null) {
                 u.setTmpIndex(idx);
@@ -2473,6 +2477,16 @@ public class VRPVarRoutes {
             }
         }
         return explore();
+    }
+
+    public void propagateKPointsMove(ArrayList<VRPPoint> x, ArrayList<VRPPoint> y) {
+        boolean status = exploreKPointsMove(x, y);
+        if (status) {
+            propagate();
+        } else {
+            System.out.println("EXCEPTION::exploreKPointsMove !!!!");
+            System.exit(-1);
+        }
     }
 
     private void clearTmpData() {
@@ -2534,15 +2548,18 @@ public class VRPVarRoutes {
     }
 
     private boolean verify() {
+//        System.out.print("verify: ");
         for (VRPRoute route : allRoutes) {
             VRPPoint p = route.getStartPoint();
             if (route.getStartPoint().getRoute() != route || route.getEndPoint().getRoute() != route) {
                 System.out.println("EXCEPTION:: verify -> startPoint and endPoint don't have the same route " + route);
                 return false;
             }
+//            System.out.print("\n" + route + ": " + p);
             int cnt = 0;
             while (p.getNext() != null) {
                 p = p.getNext();
+//                System.out.print(" -> " + p);
                 if (p.getRoute() != route) {
                     System.out.println("EXCEPTION:: verify -> route of " + p + " is not " + route + "; " + p.getRoute());
                     return false;
@@ -2559,6 +2576,7 @@ public class VRPVarRoutes {
             }
 
         }
+//        System.out.println();
         for (IVRPInvariant invariant : invariants) {
             if (!invariant.verify()) {
                 return false;
@@ -2660,34 +2678,71 @@ public class VRPVarRoutes {
 //            }
 //        }
 
-        for (int step = 0; step < 100000000; step++) {
-            VRPPoint x1 = insertedPoints.get(rand.nextInt(insertedPoints.size()));
-            VRPPoint y1 = addPoints.get(rand.nextInt(addPoints.size()));
-            VRPPoint x2 = insertedPoints.get(rand.nextInt(insertedPoints.size()));
-            VRPPoint y2 = addPoints.get(rand.nextInt(addPoints.size()));
-            if (x1.getRoute() == y1.getRoute() && x1.getIndex() < y1.getIndex() &&
-                    x2.getRoute() == y2.getRoute() && x2.getIndex() < y2.getIndex() && x1.getRoute() != x2.getRoute()) {
-                System.out.println("propagateCrossExchangeMove1 " + x1 + "; " + y1 + "; " + x2 + " and " + y2 + " " + x1.getRoute() + "; " + x2.getRoute());
-                int olcCnt = x1.getRoute().getNbPoints() + x2.getRoute().getNbPoints();
-//                VRPPoint p = x.getRoute().getStartPoint();
-//                while (p != null) {
-//                    System.out.print(p + " -> ");
-//                    p = p.getNext();
-//                }
-//                System.out.println();
-//                p = y.getRoute().getStartPoint();
-//                while (p != null) {
-//                    System.out.print(p + " -> ");
-//                    p = p.getNext();
-//                }
-//                System.out.println();
-                vr.propagateCrossExchangeMove4(x1, y1, x2, y2);
-                int newCnt = x1.getRoute().getNbPoints() + x2.getRoute().getNbPoints();
-                if (olcCnt != newCnt) {
-                    System.out.println("debg");
-                    System.exit(-1);
+        int l = 10;
+        HashSet<VRPPoint> outOfRoutes = new HashSet<>();
+        for (int step = 0; step < 100000; step++) {
+            if (step == 41) {
+                System.out.println("debug");
+            }
+            System.out.println(step);
+            ArrayList<VRPPoint> x = new ArrayList<>();
+            ArrayList<VRPPoint> y = new ArrayList<>();
+            for (int i = 0; i < l; i++) {
+                while (true) {
+                    VRPPoint q = addPoints.get(rand.nextInt(addPoints.size()));
+                    if (!x.contains(q)) {
+                        x.add(q);
+                        break;
+                    }
                 }
             }
+            for (int i = 0; i < l; i++) {
+                VRPPoint p = x.get(i);
+                if (p.getRoute() != null && rand.nextInt(5) == 0) {
+                    y.add(CBLSVRP.NULL_POINT);
+                } else {
+                    while (true) {
+                        VRPPoint q = insertedPoints.get(rand.nextInt(insertedPoints.size()));
+                        if (!x.contains(q) && q.getRoute() != null) {
+                            y.add(q);
+                            break;
+                        }
+                    }
+                }
+            }
+            System.out.println("propagateKPointsMove ");// + x1 + "; " + y1 + "; " + x2 + " and " + y2 + " " + x1.getRoute() + "; " + x2.getRoute());
+//            System.out.print("x: ");
+//            HashSet<VRPRoute> routes = new HashSet<>();
+//            for (VRPPoint p : x) {
+//                System.out.print("(" + p + "; " + p.getRoute() + "); ");
+//                if (p.getRoute() != null) {
+//                    routes.add(p.getRoute());
+//                }
+//            }
+//            System.out.print("\ny: ");
+//            for (VRPPoint p : y) {
+//                System.out.print("(" + p + "; " + p.getRoute() + "); ");
+//                if (p.getRoute() != null) {
+//                    routes.add(p.getRoute());
+//                }
+//            }
+//            //                int olcCnt = x1.getRoute().getNbPoints() + x2.getRoute().getNbPoints();
+//
+//            for (VRPRoute r : routes) {
+//                System.out.print("\n" + r + ": ");
+//                VRPPoint p = r.getStartPoint();
+//                while (p != null) {
+//                    System.out.print(p + " -> ");
+//                    p = p.getNext();
+//                }
+//            }
+//            System.out.println();
+            vr.propagateKPointsMove(x, y);
+//                int newCnt = x1.getRoute().getNbPoints() + x2.getRoute().getNbPoints();
+//                if (olcCnt != newCnt) {
+//                    System.out.println("debg");
+//                    System.exit(-1);
+//                }
         }
 
     }
