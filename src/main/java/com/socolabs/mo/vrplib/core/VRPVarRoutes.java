@@ -17,6 +17,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.*;
 
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+
 @Getter
 public class VRPVarRoutes {
     private ArrayList<VRPPoint> allPoints;
@@ -210,7 +213,7 @@ public class VRPVarRoutes {
         }
     }
 
-    // chèn x sau y, khi cả 2 points này đã thuộc route nào đó
+    // chèn x sau y
     public boolean exploreOnePointMove(VRPPoint x, VRPPoint y) {
         // x không thể là depot
         if (y.getNext() == x) {
@@ -2586,6 +2589,11 @@ public class VRPVarRoutes {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println(dtf.format(now));
+
+        System.exit(0);
         Scanner cin = new Scanner(new FileInputStream("data\\VRPTW"));
         int nbTrucks = cin.nextInt();
         int capacity = cin.nextInt();

@@ -35,7 +35,7 @@ public class Truck extends MovingObject {
 	
 	private void computeRoutes(){
 		specifiedRoutes = new RouteSegmentToServicePoint[servicePoints.length];
-		double lat_i = lat; double lng_i = lng;
+		double lat_i = getLat(); double lng_i = getLng();
 		for(int i = 0; i < servicePoints.length; i++){
 			Path path = ApiController.gismap.findPath(lat_i + "," + lng_i, servicePoints[i].getLatLng());
 			specifiedRoutes[i] = new RouteSegmentToServicePoint(path.getPoints(), servicePoints[i], path.getLength());
@@ -63,7 +63,7 @@ public class Truck extends MovingObject {
 	public PositionTypeAction updateLocation(double lat, double lng){
 		// update location, return next {location, type, action}
 		PositionTypeAction rs = null;
-		this.lat = lat; this.lng = lng;
+		this.setLat(lat); this.setLng(lng);
 		if(currentPointIndex == specifiedRoutes[currentRouteSegmentIndex].getMapPoints().length-1){
 			if(currentRouteSegmentIndex == specifiedRoutes.length-1){
 				double n_lat = specifiedRoutes[currentRouteSegmentIndex].getMapPoints()[currentPointIndex].getLat();
@@ -122,15 +122,15 @@ public class Truck extends MovingObject {
 	}
 	public String toString(){
 		IServicePoint[] servicePoints = collectServicePoints();
-		String s = id + ": (" + lat + "," + lng + "), service points = ";
+		String s = id + ": (" + getLat() + "," + getLng() + "), service points = ";
 		for(int i = 0; i < servicePoints.length; i++) s = s + "{" + servicePoints[i].getId() + "," + servicePoints[i].getLatLng() + "}, ";
 		return s;
 	}
 	public Truck(String id, double lat, double lng) {
 		super();
 		this.id = id;
-		this.lat = lat;
-		this.lng = lng;
+		this.setLat(lat);
+		this.setLng(lng);
 	}
 	public String getServicePointString(){
 		if(servicePoints == null) return "NULL";
@@ -143,8 +143,8 @@ public class Truck extends MovingObject {
 		/*
 		 * apply simple strategy assuming computation time is zero
 		 */
-		estimatedNextLat = lat;
-		estimatedNextLng = lng;
+		estimatedNextLat = getLat();
+		estimatedNextLng = getLng();
 		estimatedNextServicePointIndex = 0;
 		
 		/*

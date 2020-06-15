@@ -62,7 +62,7 @@ public class SumAccumulatedWeightPoints implements IVRPFunction {
     private int stt;
     @Override
     public int getStt() {
-        return stt;
+        return this.stt;
     }
 
     @Override

@@ -155,7 +155,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
 
     @Override
     public int getStt() {
-        return stt;
+        return this.stt;
     }
 
     @Override

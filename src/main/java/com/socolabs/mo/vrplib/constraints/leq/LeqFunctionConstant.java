@@ -74,7 +74,7 @@ public class LeqFunctionConstant implements IVRPFunction {
 
     @Override
     public int getStt() {
-        return stt;
+        return this.stt;
     }
 
     @Override

@@ -1,15 +1,19 @@
 package com.socolabs.mo.components.movingobjects;
 
+import com.socolabs.mo.components.maps.Point;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class MovingObject implements IMovingObject {
+public class MovingObject extends Point implements IMovingObject  {
 	protected String id;
-	protected double lat;
-	protected double lng;
 	protected double speed = 11;// m/s (~40km/h)
+
+	public MovingObject(String id, double lat, double lng) {
+		super(lat, lng);
+		this.id = id;
+	}
 	/*
 	private RouteSegmentToServicePoint[] specifiedRoutes;
 	

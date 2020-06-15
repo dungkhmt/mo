@@ -1,6 +1,8 @@
 package com.socolabs.mo.controller;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,6 +15,7 @@ import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceEleme
 import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.Path;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
+import com.socolabs.mo.components.movingobjects.IMovingObject;
 import com.socolabs.mo.components.movingobjects.IServicePoint;
 import com.socolabs.mo.components.movingobjects.MovingObject;
 import com.socolabs.mo.components.movingobjects.agent.Agent;
@@ -43,9 +46,10 @@ public class ApiController {
     private static ObjectManager mgr = new ObjectManager();
     public static GISMap gismap;// = new GISMap();
     public static String region = "";
-
+	public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	public static GoogleMapsQuery GMQ = new GoogleMapsQuery();
 	public static Gson gson = new Gson();
+
 	@PostMapping("/add")
     public Integer home(@RequestBody AddModel addModel) {
     	synchronized(count){
@@ -58,14 +62,21 @@ public class ApiController {
 	public String name(){
 		return "ApiController";
 	}
-	
+
+	@PostMapping("/getCurrentDate")
+	public String getCurrentDate() {
+		LocalDateTime now = LocalDateTime.now();
+		System.out.println("getCurrentDate::" + dtf.format(now));
+		return dtf.format(now);
+	}
+
 	@PostMapping("/getObjects")
 	public String getObjects(){
-		List<MovingObject> l_objects = mgr.getObjects();
+		List<IMovingObject> l_objects = mgr.getObjects();
 		Gson gson = new Gson();
 		MovingObject[] objects = new MovingObject[l_objects.size()];
 		for(int i = 0; i < l_objects.size(); i++)
-			objects[i] = l_objects.get(i);
+			objects[i] = (MovingObject) l_objects.get(i);
 		String json = gson.toJson(objects);
 		//System.out.println("getObjects, json = " + json);
 		return json;
@@ -91,7 +102,7 @@ public class ApiController {
     public String createObject(@RequestBody MovingObject obj) {
     	synchronized(mgr){
     		count = count + 1;
-    		MovingObject c_obj = mgr.addObject(obj);
+    		IMovingObject c_obj = mgr.addObject(obj);
     		
     		System.out.println(name() + "::createObject " + obj.getId() + ", count = " + count);
     		return "{\"id\":\"" + c_obj.getId() + "\",\"lat\":" + c_obj.getLat() + ",\"lng\":" + c_obj.getLng() + "}";
@@ -102,7 +113,7 @@ public class ApiController {
     public String createTruck(@RequestBody Truck obj) {
     	synchronized(mgr){
     		count = count + 1;
-    		MovingObject c_obj = mgr.addObject(obj);
+    		IMovingObject c_obj = mgr.addObject(obj);
     		
     		System.out.println(name() + "::createTruck " + obj.getId() + ", count = " + count);
     		return "{\"id\":\"" + c_obj.getId() + "\",\"lat\":" + c_obj.getLat() + ",\"lng\":" + c_obj.getLng() + "}";

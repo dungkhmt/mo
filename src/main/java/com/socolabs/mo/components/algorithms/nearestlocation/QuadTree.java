@@ -1,6 +1,8 @@
 package com.socolabs.mo.components.algorithms.nearestlocation;
 
 import com.socolabs.mo.components.maps.Point;
+import com.socolabs.mo.components.maps.graphs.Node;
+import com.socolabs.mo.components.movingobjects.ILocation;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,16 +19,16 @@ public class QuadTree {
     double lngLower;
     double lngUpper;
     private TreeNode root;
-    private Collection<Point> points;
+    private Collection<ILocation> points;
 
-    public QuadTree(Collection<Point> points) {
+    public QuadTree(Collection<ILocation> points) {
         this.points = new HashSet<>(points);
-        Point fp = points.iterator().next();
+        ILocation fp = points.iterator().next();
         latLower = fp.getLat();
         latUpper = fp.getLat();
         lngLower = fp.getLng();
         lngUpper = fp.getLng();
-        for (Point p : points) {
+        for (ILocation p : points) {
             latLower = Math.min(latLower, p.getLat());
             latUpper = Math.max(latUpper, p.getLat());
             lngLower = Math.min(lngLower, p.getLng());
@@ -35,7 +37,7 @@ public class QuadTree {
         initTree();
     }
 
-    public QuadTree(Collection<Point> points, double latLower, double lngLower, double latUpper, double lngUpper) {
+    public QuadTree(Collection<Node> points, double latLower, double lngLower, double latUpper, double lngUpper) {
         this.points = new HashSet<>(points);
         this.latLower = latLower;
         this.latUpper = latUpper;
@@ -44,9 +46,18 @@ public class QuadTree {
         initTree();
     }
 
-    public Point findNearestPoint(double lat, double lng) {
+    public QuadTree(double latLower, double lngLower, double latUpper, double lngUpper) {
+        this.points = new HashSet<>();
+        this.latLower = latLower;
+        this.latUpper = latUpper;
+        this.lngLower = lngLower;
+        this.lngUpper = lngUpper;
+        initTree();
+    }
+
+    public ILocation findNearestPoint(double lat, double lng) {
         double minDist = 1e18;
-        Point nearestPoint = null;
+        ILocation nearestPoint = null;
         PriorityQueue<Pair<TreeNode, Double>> pq = new PriorityQueue<>(new Comparator<Pair<TreeNode, Double>>() {
             @Override
             public int compare(Pair<TreeNode, Double> o1, Pair<TreeNode, Double> o2) {
@@ -67,7 +78,7 @@ public class QuadTree {
             }
             TreeNode t = td.first;
             if (t.getChildNodes().isEmpty()) {
-                Pair<Point, Double> bestPoint = t.findNearestPoint(lat, lng);
+                Pair<ILocation, Double> bestPoint = t.findNearestPoint(lat, lng);
                 if (bestPoint.second < minDist) {
                     minDist = bestPoint.second;
                     nearestPoint = bestPoint.first;
@@ -81,7 +92,7 @@ public class QuadTree {
         return nearestPoint;
     }
 
-    public Point findNearestPoint(String latlng) {
+    public ILocation findNearestPoint(String latlng) {
         String[] s = latlng.split(",");
         double lat = Double.valueOf(s[0].trim());
         double lng = Double.valueOf(s[1].trim());
@@ -96,16 +107,16 @@ public class QuadTree {
         System.out.println(name() + ":: initTree finished, time = " + (t / 1000) + "s");
     }
 
-    private TreeNode buildTree(Collection<Point> points, double latLower, double lngLower, double latUpper, double lngUpper, int depth) {
+    private TreeNode buildTree(Collection<ILocation> points, double latLower, double lngLower, double latUpper, double lngUpper, int depth) {
         TreeNode t = new TreeNode(points, latLower, lngLower, latUpper, lngUpper);
         if (points.size() > MIN_NB_POINT_PER_BLOCK && depth < MAX_DEPTH) {
             double latMid = (latLower + latUpper) / 2;
             double lngMid = (lngLower + lngUpper) / 2;
-            HashSet<Point> l1 = new HashSet<>();
-            HashSet<Point> l2 = new HashSet<>();
-            HashSet<Point> l3 = new HashSet<>();
-            HashSet<Point> l4 = new HashSet<>();
-            for (Point p : points) {
+            HashSet<ILocation> l1 = new HashSet<>();
+            HashSet<ILocation> l2 = new HashSet<>();
+            HashSet<ILocation> l3 = new HashSet<>();
+            HashSet<ILocation> l4 = new HashSet<>();
+            for (ILocation p : points) {
                 if (p.getLat() < latMid) {
                     if (p.getLng() < lngMid) {
                         l1.add(p);
@@ -136,18 +147,18 @@ public class QuadTree {
         return t;
     }
 
-    private void add(TreeNode t, Point np, double latLower, double lngLower, double latUpper, double lngUpper, int depth) {
+    private void add(TreeNode t, ILocation np, double latLower, double lngLower, double latUpper, double lngUpper, int depth) {
         t.add(np);
         double latMid = (latLower + latUpper) / 2;
         double lngMid = (lngLower + lngUpper) / 2;
         if (t.getChildNodes().isEmpty()) {
-            Collection<Point> points = t.getPoints();
+            Collection<ILocation> points = t.getPoints();
             if (points.size() > MIN_NB_POINT_PER_BLOCK && depth < MAX_DEPTH) {
-                HashSet<Point> l1 = new HashSet<>();
-                HashSet<Point> l2 = new HashSet<>();
-                HashSet<Point> l3 = new HashSet<>();
-                HashSet<Point> l4 = new HashSet<>();
-                for (Point p : points) {
+                HashSet<ILocation> l1 = new HashSet<>();
+                HashSet<ILocation> l2 = new HashSet<>();
+                HashSet<ILocation> l3 = new HashSet<>();
+                HashSet<ILocation> l4 = new HashSet<>();
+                for (ILocation p : points) {
                     if (p.getLat() < latMid) {
                         if (p.getLng() < lngMid) {
                             l1.add(p);
@@ -185,7 +196,7 @@ public class QuadTree {
                 }
             }
             if (!added) {
-                HashSet<Point> l = new HashSet<>();
+                HashSet<ILocation> l = new HashSet<>();
                 l.add(np);
                 if (np.getLat() < latMid) {
                     if (np.getLng() < lngMid) {
@@ -204,11 +215,11 @@ public class QuadTree {
         }
     }
 
-    public void add(Point p) {
+    public void add(ILocation p) {
         add(root, p, latLower, lngLower, latUpper, lngUpper, 1);
     }
 
-    public void remove(Point p) {
+    public void remove(ILocation p) {
         root.remove(p);
     }
 

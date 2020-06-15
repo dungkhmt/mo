@@ -1,23 +1,16 @@
 package com.socolabs.mo.components.maps;
 
-public class Point {
-	private int id;
-	private double lat;
-	private double lng;
-	public Point(int id, double lat, double lng) {
-		super();
-		this.id = id;
+import com.socolabs.mo.components.movingobjects.ILocation;
+
+public class Point implements ILocation {
+	protected double lat;
+	protected double lng;
+	public Point(double lat, double lng) {
 		this.lat = lat;
 		this.lng = lng;
 	}
 	public Point() {
-		super();
-	}
-	public int getId() {
-		return id;
-	}
-	public void setId(int id) {
-		this.id = id;
+
 	}
 	public double getLat() {
 		return lat;

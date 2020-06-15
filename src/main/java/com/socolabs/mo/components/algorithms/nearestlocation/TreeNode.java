@@ -1,6 +1,7 @@
 package com.socolabs.mo.components.algorithms.nearestlocation;
 
 import com.socolabs.mo.components.maps.Point;
+import com.socolabs.mo.components.movingobjects.ILocation;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,12 +13,12 @@ import java.util.Collection;
 public class TreeNode extends Block {
     private ArrayList<TreeNode> childNodes;
 
-    public TreeNode(Collection<Point> points) {
+    public TreeNode(Collection<ILocation> points) {
         super(points);
         childNodes = new ArrayList<>();
     }
 
-    public TreeNode(Collection<Point> points, double latLower, double lngLower, double latUpper, double lngUpper) {
+    public TreeNode(Collection<ILocation> points, double latLower, double lngLower, double latUpper, double lngUpper) {
         super(points, latLower, lngLower, latUpper, lngUpper);
         childNodes = new ArrayList<>();
     }
@@ -26,7 +27,7 @@ public class TreeNode extends Block {
         childNodes.add(c);
     }
 
-    public void remove(Point p) {
+    public void remove(ILocation p) {
         super.remove(p);
         ArrayList<TreeNode> delLst = new ArrayList<>();
         for (TreeNode c : childNodes) {

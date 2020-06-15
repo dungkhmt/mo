@@ -1,6 +1,7 @@
 package com.socolabs.mo.components.maps;
 
 import java.io.File;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -13,21 +14,24 @@ import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceEleme
 import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.graphs.Arc;
 import com.socolabs.mo.components.maps.graphs.Graph;
+import com.socolabs.mo.components.maps.graphs.Node;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
 import com.socolabs.mo.components.maps.utils.LatLng;
+import com.socolabs.mo.components.movingobjects.ILocation;
 import com.socolabs.mo.model.modelmap.MapWindow;
 import com.google.gson.Gson;
 
 import java.util.*;
 public class GISMap {
-	private KDTree kdTree;
+//	private KDTree kdTree;
 	private QuadTree quadTree;
-	private ArrayList<Point> points;
+	private ArrayList<Node> points;
 	private HashMap<Integer, Integer> mID2Index;
 	public static GoogleMapsQuery G = new GoogleMapsQuery();
 	
 	private Graph g;
-	
+	private Random rand = new Random(1000);
+
 	public GISMap(){
 		//loadMap("data/SanfranciscoRoad-connected-contracted-5.txt");
 		try {
@@ -46,6 +50,10 @@ public class GISMap {
 		}
 	}
 
+	public Point getRandomPoint() {
+		return (Point) points.get(rand.nextInt(points.size()));
+	}
+
 	public String name(){
 		return "GISMap";
 	}
@@ -56,7 +64,7 @@ public class GISMap {
 		double maxLat = 1-minLat;
 		double maxLng = 1-minLng;
 		for(int i = 1; i < points.size(); i++){
-			Point p = points.get(i);
+			Node p = points.get(i);
 			if(p.getLat() > maxLat) maxLat = p.getLat();
 			if(p.getLat() < minLat) minLat = p.getLat();
 			if(p.getLng() > maxLng) maxLng = p.getLng();
@@ -74,8 +82,26 @@ public class GISMap {
 		System.out.println("computeCoordinateWindows, " + minLat + "," + minLng + "  " + maxLat + "," + maxLng + ", json = " + json);
 		return json;
 	}
-	public Point findNearestPoint(String latlng){
-		return kdTree.findNearestPoint(latlng);
+
+	public MapWindow computeCoordinateMapWindows(){
+		double minLat = Integer.MAX_VALUE;
+		double minLng = Integer.MAX_VALUE;
+		double maxLat = 1-minLat;
+		double maxLng = 1-minLng;
+		for(int i = 1; i < points.size(); i++){
+			Node p = points.get(i);
+			if(p.getLat() > maxLat) maxLat = p.getLat();
+			if(p.getLat() < minLat) minLat = p.getLat();
+			if(p.getLng() > maxLng) maxLng = p.getLng();
+			if(p.getLng() < minLng) minLng = p.getLng();
+		}
+		MapWindow mw = new MapWindow(minLat, minLng, maxLat, maxLng);
+		System.out.println("computeCoordinateMapWindows, " + minLat + "," + minLng + "  " + maxLat + "," + maxLng);
+		return mw;
+	}
+
+	public Node findNearestPoint(String latlng){
+		return (Node) quadTree.findNearestPoint(latlng); //kdTree.findNearestPoint(latlng);
 
 //		String[] s = latlng.split(",");
 //		double lat = Double.valueOf(s[0].trim());
@@ -100,8 +126,8 @@ public class GISMap {
 		System.out.println(name() + "::loadMap start.....");
 		try{
 			Scanner in = new Scanner(new File(filename));
-			points = new ArrayList<Point>();
-			points.add(new Point());// add artificial point, so that mapping from index 1, 2, 3....
+			points = new ArrayList<Node>();
+			points.add(new Node());// add artificial point, so that mapping from index 1, 2, 3....
 			mID2Index = new HashMap<Integer,Integer>();
 			double t0 = System.currentTimeMillis();
 			// read points
@@ -110,7 +136,7 @@ public class GISMap {
 				if(id == -1) break;
 				double lat = in.nextDouble();
 				double lng = in.nextDouble();
-				Point p = new Point(id,lat,lng);
+				Node p = new Node(id,lat,lng);
 				mID2Index.put(id,points.size());
 				points.add(p);
 				//System.out.println(name() + "::loadMap, id = " + id + ", latlng = (" + lat + "," + lng + "), sz = " + points.size());
@@ -141,11 +167,14 @@ public class GISMap {
 				Arc b = new Arc(beginIndex, length);
 				A[endIndex].add(b);
 			}
-			List<Point> ps = points.subList(1, points.size());
+			List<ILocation> ps = new ArrayList<>();
+			for (int i = 1; i < points.size(); i++) {
+				ps.add(points.get(i));
+			}
 			double t = System.currentTimeMillis() - t0;
 			System.out.println(name() + "::loadMap finished, time = " + (t*0.001) + "s");
-			kdTree = new KDTree(ps);
-//			quadTree = new QuadTree(ps);
+//			kdTree = new KDTree(ps);
+			quadTree = new QuadTree(ps);
 
 //			Random rand = new Random();
 //			double latLen = quadTree.getLatUpper() - quadTree.getLatLower();
@@ -187,7 +216,7 @@ public class GISMap {
 
 	public void calcDistanceElements(DistanceElementQuery input) {
 		HashMap<String, HashMap<String, GeneralDistanceElement>> mFrom2To2Element = new HashMap<>();
-		HashMap<String, Point> mLatLgng2Point = new HashMap<>();
+		HashMap<String, Node> mLatLgng2Point = new HashMap<>();
 		HashMap<String, String> mId2LatLng = new HashMap<>();
 		for (GeneralDistanceElement e : input.getElements()) {
 			if (!mFrom2To2Element.containsKey(e.getFromId())) {
@@ -225,7 +254,7 @@ public class GISMap {
 	public DistanceElement[] getDistanceElements(LatLngInput input) {
 		HashMap<String, Integer> mCode2Id = new HashMap<>();
 		for (LatLng latLng : input.getLatLngList()) {
-			Point point = findNearestPoint(latLng.getLat() +"," + latLng.getLng());
+			Node point = findNearestPoint(latLng.getLat() +"," + latLng.getLng());
 			System.out.println("latlng Code: " + latLng.getCode() + " id: " + point.getId());
 			mCode2Id.put(latLng.getCode(), point.getId());
 		}
@@ -258,8 +287,8 @@ public class GISMap {
 	}
 
 	public Path findPath(String fromLatLng, String toLatLng){
-		Point fromPoint = findNearestPoint(fromLatLng);
-		Point toPoint = findNearestPoint(toLatLng);
+		Node fromPoint = findNearestPoint(fromLatLng);
+		Node toPoint = findNearestPoint(toLatLng);
 		return findPath(fromPoint.getId(), toPoint.getId());
 	}
 	public Path findPath(int fromID, int toID){
@@ -270,7 +299,7 @@ public class GISMap {
 		int t = mID2Index.get(toID);
 		int[] p = app.solve(s, t);
 		if(p == null) return null;
-		Point[] path = new Point[p.length];
+		Node[] path = new Node[p.length];
 		for(int i = 0; i < path.length; i++){
 			path[i] = points.get(p[i]);
 		}

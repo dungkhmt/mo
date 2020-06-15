@@ -1,6 +1,8 @@
 package com.socolabs.mo.components.algorithms.nearestlocation;
 
 import com.socolabs.mo.components.maps.Point;
+import com.socolabs.mo.components.maps.graphs.Node;
+import com.socolabs.mo.components.movingobjects.ILocation;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,14 +14,13 @@ public class KDTree {
     public static int MIN_NB_POINT_PER_BLOCK = 5;
 
     private TreeNode root;
-    private ArrayList<Point> points;
+    private ArrayList<ILocation> points;
     public static LatCmp latCmp = new LatCmp();
     public static LngCmp lngCmp = new LngCmp();
 
-    public KDTree(Collection<Point> points) {
+    public KDTree(Collection<Node> points) {
         this.points = new ArrayList<>(points);
         initTree();
-
     }
 
     public Point findNearestPoint(double lat, double lng) {
@@ -45,10 +46,10 @@ public class KDTree {
             }
             TreeNode t = td.first;
             if (t.getChildNodes().isEmpty()) {
-                Pair<Point, Double> bestPoint = t.findNearestPoint(lat, lng);
+                Pair<ILocation, Double> bestPoint = t.findNearestPoint(lat, lng);
                 if (bestPoint.second < minDist) {
                     minDist = bestPoint.second;
-                    nearestPoint = bestPoint.first;
+                    nearestPoint = (Point) bestPoint.first;
                 }
             } else {
                 for (TreeNode c : t.getChildNodes()) {
@@ -74,7 +75,7 @@ public class KDTree {
         System.out.println(name() + ":: initTree finished, time = " + (t / 1000) + "s");
     }
 
-    private TreeNode buildTree(ArrayList<Point> points, boolean latCoorDiv) {
+    private TreeNode buildTree(ArrayList<ILocation> points, boolean latCoorDiv) {
         TreeNode p = new TreeNode(points);
         if (points.size() <= MIN_NB_POINT_PER_BLOCK) {
             return p;
@@ -84,8 +85,8 @@ public class KDTree {
         } else {
             Collections.sort(points, lngCmp);
         }
-        ArrayList<Point> l1 = new ArrayList<>();
-        ArrayList<Point> l2 = new ArrayList<>();
+        ArrayList<ILocation> l1 = new ArrayList<>();
+        ArrayList<ILocation> l2 = new ArrayList<>();
         int mid = points.size() / 2;
         for (int i = 0; i < points.size(); i++) {
             if (i < mid) {
@@ -104,10 +105,10 @@ public class KDTree {
     }
 }
 
-class LatCmp implements Comparator<Point> {
+class LatCmp implements Comparator<ILocation> {
 
     @Override
-    public int compare(Point o1, Point o2) {
+    public int compare(ILocation o1, ILocation o2) {
         if (o1.getLat() < o2.getLat() || (o1.getLat() == o2.getLat() && o1.getLng() < o2.getLng())) {
             return -1;
         }
@@ -118,10 +119,10 @@ class LatCmp implements Comparator<Point> {
     }
 }
 
-class LngCmp implements Comparator<Point> {
+class LngCmp implements Comparator<ILocation> {
 
     @Override
-    public int compare(Point o1, Point o2) {
+    public int compare(ILocation o1, ILocation o2) {
         if (o1.getLng() < o2.getLng() || (o1.getLng() == o2.getLng() && o1.getLat() < o2.getLat())) {
             return -1;
         }

@@ -30,7 +30,7 @@ public class TravelTimeManager implements IDistanceManager {
 
     @Override
     public double getDistance(VRPPoint x, VRPPoint y) {
-        if (x == null) {
+        if (x == null || y == null) {
             return 0;
         }
         return travelTimeMatrix[x.getStt()][y.getStt()];//travelTimeMap.get(x.getLocationCode()).get(y.getLocationCode());
@@ -38,7 +38,7 @@ public class TravelTimeManager implements IDistanceManager {
 
     @Override
     public double getTmpDistance(VRPPoint x, VRPPoint y) {
-        if (x == null) {
+        if (x == null || y == null) {
             return 0;
         }
         return travelTimeMatrix[x.getStt()][y.getStt()];//travelTimeMap.get(x.getLocationCode()).get(y.getLocationCode());

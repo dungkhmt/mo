@@ -2,6 +2,7 @@ package com.socolabs.mo.components.objectmanager;
 import java.util.*;
 
 import com.socolabs.mo.components.api.updateplannedroutetruck.UpdatePlannedRouteTruckInput;
+import com.socolabs.mo.components.movingobjects.IMovingObject;
 import com.socolabs.mo.components.movingobjects.truck.ServicePointDelivery;
 import com.socolabs.mo.components.movingobjects.truck.Truck;
 
@@ -14,29 +15,29 @@ import com.socolabs.mo.model.routevrp.Route;
 import com.socolabs.mo.model.routevrp.RouteVRPInputPoint;
 
 public class ObjectManager implements ObjectManagerInterface{
-	private ArrayList<MovingObject> objects;
-	private Map<String, MovingObject> mID2Object;
+	private ArrayList<IMovingObject> objects;
+	private Map<String, IMovingObject> mID2Object;
 	private List<ObjectCluster> clusters;
 	
 	public String name(){
 		return "ObjectManager";
 	}
 	public ObjectManager(){
-		objects = new ArrayList<MovingObject>();
-		mID2Object = new HashMap<String, MovingObject>();
+		objects = new ArrayList<IMovingObject>();
+		mID2Object = new HashMap<String, IMovingObject>();
 		//gismap = new GISMap();
 	}
-	public List<MovingObject> getObjects(){
+	public List<IMovingObject> getObjects(){
 		return objects;
 	}
 	public List<Truck> getTrucks(){
 		ArrayList<Truck> L = new ArrayList<Truck>();
-		for(MovingObject o: objects){
+		for(IMovingObject o: objects){
 			if(o instanceof Truck) L.add((Truck)o);
 		}
 		return L;
 	}
-	public MovingObject addObject(MovingObject obj){
+	public IMovingObject addObject(IMovingObject obj){
 		if(mID2Object.get(obj.getId())!=null){
 			return mID2Object.get(obj.getId());
 		}
@@ -45,9 +46,15 @@ public class ObjectManager implements ObjectManagerInterface{
 		mID2Object.put(obj.getId(), obj);
 		return obj;
 	}
-	public MovingObject updateLocation(String ID, double lat, double lng){
+
+	@Override
+	public IMovingObject removeObject(IMovingObject obj) {
+		return null;
+	}
+
+	public IMovingObject updateLocation(String ID, double lat, double lng){
 		System.out.println(name() + "::updateLocation object " + ID + ", new location = (" + lat + "," + lng + ")");
-		MovingObject obj = mID2Object.get(ID);
+		IMovingObject obj = mID2Object.get(ID);
 		if(obj == null) return null;
 		obj.setLat(lat);
 		obj.setLng(lng);
@@ -93,7 +100,7 @@ public class ObjectManager implements ObjectManagerInterface{
 	}
 	public Truck getTruckById(String id){
 		
-    	MovingObject o = mID2Object.get(id);
+    	IMovingObject o = mID2Object.get(id);
     	//System.out.println(name() + "::getTruckById, id = " + id + " o = " + (o != null ? o.getId() : "NULL"));
     	if(o instanceof Truck) return (Truck)o;
     	return null;

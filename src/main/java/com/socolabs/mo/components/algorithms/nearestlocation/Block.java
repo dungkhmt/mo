@@ -2,6 +2,7 @@ package com.socolabs.mo.components.algorithms.nearestlocation;
 
 import com.socolabs.mo.components.maps.Point;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
+import com.socolabs.mo.components.movingobjects.ILocation;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,14 +17,14 @@ public class Block {
     private double latLower;
     private double lngUpper;
     private double lngLower;
-    private Collection<Point> points;
+    private Collection<ILocation> points;
 
-    public Block(Collection<Point> points) {
+    public Block(Collection<ILocation> points) {
         this.points = points;
-        Point fp = points.iterator().next();
+        ILocation fp = points.iterator().next();
         latLower = latUpper = fp.getLat();
         lngLower = lngUpper = fp.getLng();
-        for (Point p : points) {
+        for (ILocation p : points) {
             latLower = Math.min(latLower, p.getLat());
             latUpper = Math.max(latUpper, p.getLat());
             lngLower = Math.min(lngLower, p.getLng());
@@ -31,7 +32,7 @@ public class Block {
         }
     }
 
-    public Block(Collection<Point> points, double latLower, double lngLower, double latUpper, double lngUpper) {
+    public Block(Collection<ILocation> points, double latLower, double lngLower, double latUpper, double lngUpper) {
         this.points = points;
         this.latLower = latLower;
         this.latUpper = latUpper;
@@ -39,11 +40,11 @@ public class Block {
         this.lngUpper = lngUpper;
     }
 
-    public void add(Point p) {
+    public void add(ILocation p) {
         points.add(p);
     }
 
-    public void remove(Point p) {
+    public void remove(ILocation p) {
         points.remove(p);
     }
 
@@ -55,23 +56,23 @@ public class Block {
         return points.size();
     }
 
-    public boolean isInRange(Point p) {
+    public boolean isInRange(ILocation p) {
         double lat = p.getLat();
         double lng = p.getLng();
         return latLower <= lat && lat <= latUpper && lngLower <= lng && lng <= lngUpper;
     }
 
-    public boolean contains(Point p) {
+    public boolean contains(ILocation p) {
         if (isInRange(p)) {
             return points.contains(p);
         }
         return false;
     }
 
-    public Pair<Point, Double> findNearestPoint(double lat, double lng) {
+    public Pair<ILocation, Double> findNearestPoint(double lat, double lng) {
         double bestDist = 1e18;
-        Point bestPoint = null;
-        for (Point p : points) {
+        ILocation bestPoint = null;
+        for (ILocation p : points) {
             double dist = G.computeDistanceHaversine(lat, lng, p.getLat(), p.getLng());
             if (dist < bestDist) {
                 bestDist = dist;

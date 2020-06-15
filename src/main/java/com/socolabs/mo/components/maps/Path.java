@@ -1,12 +1,13 @@
 package com.socolabs.mo.components.maps;
 
+import com.socolabs.mo.components.maps.graphs.Node;
 import com.socolabs.mo.controller.ApiController;
 
 public class Path {
-	private Point[] points;
+	private Node[] points;
 	private double length;
 	
-	public Path(Point[] points, double length) {
+	public Path(Node[] points, double length) {
 		super();
 		this.points = points;
 		this.length = length;
@@ -31,11 +32,11 @@ public class Path {
 		return points;
 	}
 
-	public void setPoints(Point[] points) {
+	public void setPoints(Node[] points) {
 		this.points = points;
 	}
 
-	public Path(Point[] points) {
+	public Path(Node[] points) {
 		super();
 		this.points = points;
 	}
