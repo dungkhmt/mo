@@ -43,6 +43,7 @@ public class VRPVarRoutes {
     private ArrayList<IVRPChecker> checkers;
 
     private ArrayList<VRPPoint> changedPoints;
+    private HashSet<VRPPoint> freePoints;
 
     private static InvariantSttCmp invariantCmp = new InvariantSttCmp();
 
@@ -63,6 +64,7 @@ public class VRPVarRoutes {
         satisfiedConstraints = new BitSet();
         checkers = new ArrayList<>();
         changedPoints = new ArrayList<>();
+        freePoints = new HashSet<>();
     }
 
     public VRPPoint createPoint(String locationCode) {
@@ -112,6 +114,8 @@ public class VRPVarRoutes {
 
     public void post(VRPRoute route) {
         allRoutes.add(route);
+        freePoints.remove(route.getStartPoint());
+        freePoints.remove(route.getEndPoint());
         route.setStt(allRoutes.size());
         for (IVRPBasicEntity entity : basicEntities) {
             entity.createRoute(route);
@@ -203,12 +207,12 @@ public class VRPVarRoutes {
         return explore();
     }
 
-    public void propageteInsertPointMove(VRPPoint x, VRPPoint y) {
+    public void propagateInsertPointMove(VRPPoint x, VRPPoint y) {
         boolean status = exploreInsertPointMove(x, y);
         if (status) {
             propagate();
         } else {
-            System.out.println("EXCEPTION::propageteInsertPointMove !!!!");
+            System.out.println("EXCEPTION::propagateInsertPointMove !!!!");
             System.exit(-1);
         }
     }
@@ -304,12 +308,12 @@ public class VRPVarRoutes {
         return explore();
     }
 
-    public void propageteOnePointMove(VRPPoint x, VRPPoint y) {
+    public void propagateOnePointMove(VRPPoint x, VRPPoint y) {
         boolean status = exploreOnePointMove(x, y);
         if (status) {
             propagate();
         } else {
-            System.out.println("EXCEPTION::propageteOnePointMove !!!!");
+            System.out.println("EXCEPTION::propagateOnePointMove !!!!");
             System.exit(-1);
         }
     }
@@ -409,12 +413,12 @@ public class VRPVarRoutes {
         return explore();
     }
 
-    public void propageteTwoPointsMove(VRPPoint x, VRPPoint y) {
+    public void propagateTwoPointsMove(VRPPoint x, VRPPoint y) {
         boolean status = exploreTwoPointsMove(x, y);
         if (status) {
             propagate();
         } else {
-            System.out.println("EXCEPTION::propageteTwoPointsMove !!!!");
+            System.out.println("EXCEPTION::propagateTwoPointsMove !!!!");
             System.exit(-1);
         }
     }
@@ -2459,12 +2463,16 @@ public class VRPVarRoutes {
                         mChangedRouteToRemovedPoints.put(routeU, new ArrayList<>());
                     }
                     mChangedRouteToRemovedPoints.get(routeU).add(u);
+                } else {
+                    addedPoints.add(u);
                 }
                 if (v != CBLSVRP.NULL_POINT) {
                     if (!mChangedRouteToAddedPoints.containsKey(routeV)) {
                         mChangedRouteToAddedPoints.put(routeV, new ArrayList<>());
                     }
                     mChangedRouteToAddedPoints.get(routeV).add(u);
+                } else {
+                    removedPoints.add(u);
                 }
             }
         }
@@ -2543,6 +2551,8 @@ public class VRPVarRoutes {
         for (VRPRoute route : mChangedRouteToFirstTmpPoint.keySet()) {
             route.propagate();
         }
+        freePoints.removeAll(addedPoints);
+        freePoints.addAll(removedPoints);
         // xóa đi khi ko muốn mất thời gian verify lại các invariants
         if (!verify()) {
             System.out.println("ERORR");
@@ -2666,7 +2676,7 @@ public class VRPVarRoutes {
         for (VRPPoint point : nodeWeightMap.keySet()) {
             VRPPoint y = insertedPoints.get(rand.nextInt(insertedPoints.size()));
             System.out.println("insert " + point.getLocationCode() + " after " + y.getLocationCode());
-            vr.propageteOnePointMove(point, y);
+            vr.propagateOnePointMove(point, y);
             insertedPoints.add(point);
         }
 //        for (int step = 0; step < 100000; step++) {
@@ -2674,7 +2684,7 @@ public class VRPVarRoutes {
 //            VRPPoint y = insertedPoints.get(rand.nextInt(insertedPoints.size()));
 //            if (x != y) {
 //                System.out.println("add " + x.getLocationCode() + " after " + y.getLocationCode());
-//                vr.propageteOnePointMove(x, y);
+//                vr.propagateOnePointMove(x, y);
 //            }
 //        }
 //        for (int step = 0; step < 100000; step++) {
@@ -2682,7 +2692,7 @@ public class VRPVarRoutes {
 //            VRPPoint y = addPoints.get(rand.nextInt(addPoints.size()));
 //            if (x != y) {
 //                System.out.println("swap " + x + " and " + y + " " + x.getRoute() + " " + y.getRoute());
-//                vr.propageteTwoPointsMove(x, y);
+//                vr.propagateTwoPointsMove(x, y);
 //            }
 //        }
 

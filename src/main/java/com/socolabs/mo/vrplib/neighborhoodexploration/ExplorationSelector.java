@@ -6,11 +6,13 @@ import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
 import com.socolabs.mo.vrplib.moves.IVRPMove;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
+@Getter
 public class ExplorationSelector implements IVRPInvariant {
 
     private VRPVarRoutes vr;
@@ -20,6 +22,7 @@ public class ExplorationSelector implements IVRPInvariant {
 
     private ArrayList<VRPRoute> changedRoutes;
     private ArrayList<VRPPoint> removedPoints;
+    private ArrayList<VRPPoint> addedPoints;
 
     private int stt;
 
@@ -43,6 +46,7 @@ public class ExplorationSelector implements IVRPInvariant {
                 removedPoints.add(p);
             }
         }
+        addedPoints = new ArrayList<>();
         neighborhoodExplorations = new ArrayList<>();
     }
 
@@ -54,6 +58,9 @@ public class ExplorationSelector implements IVRPInvariant {
         IVRPMove bestMove = null;
         for (INeighborhoodExploration neighborhoodExploration : neighborhoodExplorations) {
             IVRPMove move = neighborhoodExploration.getMove();
+            if (move == null) {
+                continue;
+            }
             if (bestMove != null) {
                 bestMove = move;
             } else {
@@ -79,6 +86,7 @@ public class ExplorationSelector implements IVRPInvariant {
         removedPoints.clear();
         changedRoutes.addAll(vr.getChangedRoutes());
         removedPoints.addAll(vr.getRemovedPoints());
+        addedPoints.addAll(vr.getAddedPoints());
     }
 
     @Override

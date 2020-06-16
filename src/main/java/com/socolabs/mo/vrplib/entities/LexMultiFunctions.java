@@ -20,9 +20,9 @@ public class LexMultiFunctions {
         coefs = new ArrayList<>();
     }
 
-    public void add(IVRPFunction f, int coef) {
+    public void add(IVRPFunction f, int optimalType) {
         functions.add(f);
-        this.coefs.add(coef);
+        this.coefs.add(optimalType);
     }
 
     public LexMultiValues evaluate() {
