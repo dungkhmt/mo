@@ -24,11 +24,16 @@ public class CrossExchangeMove4 implements IVRPMove {
 
     @Override
     public void move() {
+        System.out.println("propagate " + name() + " -> " + x1 + "; " + y1 + "; " + x2 + "; " + y2 + " eval = " + eval);
         vr.propagateCrossExchangeMove4(x1, y1, x2, y2);
     }
 
     @Override
     public LexMultiValues evaluation() {
         return eval;
+    }
+
+    public String name() {
+        return "CrossExchangeMove4";
     }
 }

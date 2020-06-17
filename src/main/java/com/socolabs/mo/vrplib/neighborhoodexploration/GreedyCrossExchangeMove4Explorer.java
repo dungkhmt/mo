@@ -33,6 +33,7 @@ public class GreedyCrossExchangeMove4Explorer implements INeighborhoodExploratio
                 return objectiveF.compare(o1.evaluation(), o2.evaluation());
             }
         });
+        selector.add(this);
     }
 
     @Override
@@ -41,8 +42,10 @@ public class GreedyCrossExchangeMove4Explorer implements INeighborhoodExploratio
         ArrayList<VRPRoute> changedRoutes = selector.getChangedRoutes();
         for (VRPRoute r : changedRoutes) {
             ArrayList<IVRPMove> relatedMoves = mRoute2RelatedMoves.get(r);
-            orderedMoves.removeAll(relatedMoves);
-            relatedMoves.clear();
+            if (relatedMoves != null) {
+                orderedMoves.removeAll(relatedMoves);
+                relatedMoves.clear();
+            }
         }
         for (VRPRoute cr : changedRoutes) {
             if (cr.getNbPoints() > 1) {
@@ -51,7 +54,7 @@ public class GreedyCrossExchangeMove4Explorer implements INeighborhoodExploratio
                         for (VRPPoint x1 = cr.getStartPoint().getNext(); x1.getNext() != cr.getEndPoint(); x1 = x1.getNext()) {
                             for (VRPPoint y1 = x1.getNext(); y1 != cr.getEndPoint(); y1 = y1.getNext()) {
                                 for (VRPPoint x2 = ar.getStartPoint().getNext(); x2.getNext() != ar.getEndPoint(); x2 = x2.getNext()) {
-                                    for (VRPPoint y2 = x1.getNext(); y2 != ar.getEndPoint(); y2 = y2.getNext()) {
+                                    for (VRPPoint y2 = x2.getNext(); y2 != ar.getEndPoint(); y2 = y2.getNext()) {
                                         if (vr.exploreCrossExchangeMove4(x1, y1, x2, y2)) {
                                             LexMultiValues eval = objectiveF.evaluate();
                                             if (objectiveF.compare(eval, 0) < 0) {

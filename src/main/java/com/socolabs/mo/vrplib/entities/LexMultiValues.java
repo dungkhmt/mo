@@ -37,6 +37,22 @@ public class LexMultiValues {
             values.add(v);
     }
 
+    public LexMultiValues plus(LexMultiValues o) {
+        LexMultiValues ret = new LexMultiValues();
+        for (int i = 0; i < o.size(); i++) {
+            ret.add(values.get(i) + o.get(i));
+        }
+        return ret;
+    }
+
+    public LexMultiValues minus(LexMultiValues o) {
+        LexMultiValues ret = new LexMultiValues();
+        for (int i = 0; i < o.size(); i++) {
+            ret.add(values.get(i) - o.get(i));
+        }
+        return ret;
+    }
+
     public int size(){
         return values.size();
     }

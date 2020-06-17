@@ -20,11 +20,16 @@ public class TwoOptMove7 implements IVRPMove {
 
     @Override
     public void move() {
+        System.out.println("propagate " + name() + " -> " + x + "; " + y + " eval = " + eval);
         vr.propagateTwoOptMove7(x, y);
     }
 
     @Override
     public LexMultiValues evaluation() {
         return eval;
+    }
+
+    public String name() {
+        return "TwoOptMove7";
     }
 }

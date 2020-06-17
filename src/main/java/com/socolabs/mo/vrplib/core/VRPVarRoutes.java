@@ -4,9 +4,14 @@ import com.socolabs.mo.vrplib.constraints.capacity.CapacityConstraint;
 import com.socolabs.mo.vrplib.constraints.leq.Leq;
 import com.socolabs.mo.vrplib.constraints.timewindows.TimeWindowsConstraint;
 import com.socolabs.mo.vrplib.entities.InvariantSttCmp;
+import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
+import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedEdgeCalculator;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedWeightCalculator;
+import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
 import com.socolabs.mo.vrplib.functions.AccumulatedPointWeightsOnPath;
+import com.socolabs.mo.vrplib.functions.sum.SumAccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
+import com.socolabs.mo.vrplib.search.GreedySearch;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
 import localsearch.domainspecific.vehiclerouting.vrp.CBLSVR;
 import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
@@ -2599,11 +2604,12 @@ public class VRPVarRoutes {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime now = LocalDateTime.now();
-        System.out.println(dtf.format(now));
-
-        System.exit(0);
+//        System.exit(0);
+//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+//        LocalDateTime now = LocalDateTime.now();
+//        System.out.println(dtf.format(now));
+//
+//        System.exit(0);
         Scanner cin = new Scanner(new FileInputStream("data\\VRPTW"));
         int nbTrucks = cin.nextInt();
         int capacity = cin.nextInt();
@@ -2666,11 +2672,16 @@ public class VRPVarRoutes {
 
         CapacityConstraint cc = new CapacityConstraint(vr, nodeWeightMap, mRoute2Capacity);
         TimeWindowsConstraint tw = new TimeWindowsConstraint(vr, travelTimeMap, earliestArrivalTimeMap, lastestArrivalTimeMap);
-        AccumulatedWeightPoints accWP = new AccumulatedWeightPoints(new AccumulatedWeightCalculator(vr, nodeWeightMap));
-        for (VRPRoute route : vr.getAllRoutes()) {
-            AccumulatedPointWeightsOnPath totalWeightOfRoute = new AccumulatedPointWeightsOnPath(accWP, route.getEndPoint());
-            Leq subCC = new Leq(totalWeightOfRoute, capacity);
-        }
+        SumAccumulatedWeightPoints totalDist = new SumAccumulatedWeightPoints(
+                new AccumulatedWeightPoints(
+                        new AccumulatedEdgeCalculator(
+                                new TravelTimeManager(vr, travelTimeMap))));
+
+        LexMultiFunctions objectiveFunc = new LexMultiFunctions();
+        objectiveFunc.add(cc, LexMultiFunctions.MINIMIZE);
+        objectiveFunc.add(tw, LexMultiFunctions.MINIMIZE);
+        objectiveFunc.add(totalDist, LexMultiFunctions.MINIMIZE);
+
 
         Random rand = new Random(1993);
         for (VRPPoint point : nodeWeightMap.keySet()) {
@@ -2679,6 +2690,11 @@ public class VRPVarRoutes {
             vr.propagateOnePointMove(point, y);
             insertedPoints.add(point);
         }
+
+        GreedySearch s = new GreedySearch(vr, objectiveFunc);
+        s.search(1000, 60000 * 5);
+
+        System.exit(0);
 //        for (int step = 0; step < 100000; step++) {
 //            VRPPoint x = addPoints.get(rand.nextInt(addPoints.size()));
 //            VRPPoint y = insertedPoints.get(rand.nextInt(insertedPoints.size()));

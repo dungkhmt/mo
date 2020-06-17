@@ -61,7 +61,7 @@ public class ExplorationSelector implements IVRPInvariant {
             if (move == null) {
                 continue;
             }
-            if (bestMove != null) {
+            if (bestMove == null) {
                 bestMove = move;
             } else {
                 int cmp = objectiveFunction.compare(move.evaluation(), bestMove.evaluation());

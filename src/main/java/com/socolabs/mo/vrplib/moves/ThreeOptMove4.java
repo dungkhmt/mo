@@ -22,11 +22,16 @@ public class ThreeOptMove4 implements IVRPMove {
 
     @Override
     public void move() {
+        System.out.println("propagate " + name() + " -> " + x + "; " + y + "; " + z + " eval = " + eval);
         vr.propagateThreeOptMove4(x, y, z);
     }
 
     @Override
     public LexMultiValues evaluation() {
         return eval;
+    }
+
+    public String name() {
+        return "ThreeOptMove4";
     }
 }

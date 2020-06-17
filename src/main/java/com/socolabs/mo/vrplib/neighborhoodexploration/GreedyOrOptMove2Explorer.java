@@ -34,6 +34,7 @@ public class GreedyOrOptMove2Explorer implements INeighborhoodExploration {
                 return objectiveF.compare(o1.evaluation(), o2.evaluation());
             }
         });
+        selector.add(this);
     }
 
     @Override
@@ -42,13 +43,15 @@ public class GreedyOrOptMove2Explorer implements INeighborhoodExploration {
         ArrayList<VRPRoute> changedRoutes = selector.getChangedRoutes();
         for (VRPRoute r : changedRoutes) {
             ArrayList<IVRPMove> relatedMoves = mRoute2RelatedMoves.get(r);
-            orderedMoves.removeAll(relatedMoves);
-            relatedMoves.clear();
+            if (relatedMoves != null) {
+                orderedMoves.removeAll(relatedMoves);
+                relatedMoves.clear();
+            }
         }
         for (VRPRoute cr : changedRoutes) {
             for (VRPRoute ar : vr.getAllRoutes()) {
                 if (cr != ar) {
-                    for (VRPPoint x1 = cr.getStartPoint().getNext(); x1.getNext() != cr.getEndPoint(); x1 = x1.getNext()) {
+                    for (VRPPoint x1 = cr.getStartPoint().getNext(); x1 != cr.getEndPoint(); x1 = x1.getNext()) {
                         for (VRPPoint x2 = x1.getNext(); x2 != cr.getEndPoint(); x2 = x2.getNext()) {
                             for (VRPPoint y = ar.getStartPoint(); y != ar.getEndPoint(); y = y.getNext()) {
                                 if (vr.exploreOrOptMove2(x1, x2, y)) {
@@ -69,7 +72,7 @@ public class GreedyOrOptMove2Explorer implements INeighborhoodExploration {
                             }
                         }
                     }
-                    for (VRPPoint x1 = ar.getStartPoint().getNext(); x1.getNext() != ar.getEndPoint(); x1 = x1.getNext()) {
+                    for (VRPPoint x1 = ar.getStartPoint().getNext(); x1 != ar.getEndPoint(); x1 = x1.getNext()) {
                         for (VRPPoint x2 = x1.getNext(); x2 != ar.getEndPoint(); x2 = x2.getNext()) {
                             for (VRPPoint y = cr.getStartPoint(); y != cr.getEndPoint(); y = y.getNext()) {
                                 if (vr.exploreOrOptMove2(x1, x2, y)) {

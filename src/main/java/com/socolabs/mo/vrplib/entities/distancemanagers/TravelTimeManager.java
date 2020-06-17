@@ -4,6 +4,7 @@ import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
 import java.util.HashMap;
 
@@ -23,7 +24,11 @@ public class TravelTimeManager implements IDistanceManager {
         travelTimeMatrix = new int[maxStt + 1][maxStt + 1];
         for (VRPPoint x : vr.getAllPoints()) {
             for (VRPPoint y : vr.getAllPoints()) {
-                travelTimeMatrix[x.getStt()][y.getStt()] = travelTimeMap.get(x.getLocationCode()).get(y.getLocationCode());
+                try {
+                    travelTimeMatrix[x.getStt()][y.getStt()] = travelTimeMap.get(x.getLocationCode()).get(y.getLocationCode());
+                } catch (NullPointerException e) {
+                    travelTimeMatrix[x.getStt()][y.getStt()] = CBLSVRP.MAX_INT;
+                }
             }
         }
     }

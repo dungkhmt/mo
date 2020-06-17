@@ -22,11 +22,16 @@ public class OrOptMove2 implements IVRPMove {
 
     @Override
     public void move() {
+        System.out.println("propagate " + name() + " -> " + x1 + "; " + x2 + "; " + y + " eval = " + eval);
         vr.propagateOrOptMove2(x1, x2, y);
     }
 
     @Override
     public LexMultiValues evaluation() {
         return eval;
+    }
+
+    public String name() {
+        return "OrOptMove2";
     }
 }

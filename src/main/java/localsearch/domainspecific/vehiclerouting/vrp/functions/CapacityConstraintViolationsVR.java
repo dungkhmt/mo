@@ -1,18 +1,12 @@
 package localsearch.domainspecific.vehiclerouting.vrp.functions;
 
-import java.security.SecureRandom;
+import localsearch.domainspecific.vehiclerouting.vrp.*;
+import localsearch.domainspecific.vehiclerouting.vrp.entities.NodeWeightsManager;
+import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import localsearch.domainspecific.vehiclerouting.vrp.CBLSVR;
-import localsearch.domainspecific.vehiclerouting.vrp.Constants;
-import localsearch.domainspecific.vehiclerouting.vrp.IFunctionVR;
-import localsearch.domainspecific.vehiclerouting.vrp.VRManager;
-import localsearch.domainspecific.vehiclerouting.vrp.VarRoutesVR;
-import localsearch.domainspecific.vehiclerouting.vrp.entities.ArcWeightsManager;
-import localsearch.domainspecific.vehiclerouting.vrp.entities.NodeWeightsManager;
-import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
 
 public class CapacityConstraintViolationsVR implements IFunctionVR {
 	
@@ -37,6 +31,16 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 		post();
 	}
 	
+	public CapacityConstraintViolationsVR(VarRoutesVR XR, NodeWeightsManager nwm, double[] capacity) {
+		this.XR = XR;
+		this.nwm = nwm;
+		this.capacity = new double[XR.getNbRoutes() + 1];
+		for (int i = 1; i <= XR.getNbRoutes(); i++) {
+			this.capacity[i] = capacity[i];
+		}
+		post();
+	}
+
 	private void post() {
 		mgr = XR.getVRManager();
 		sumWeights = new double[XR.getTotalNbPoints()];
@@ -66,7 +70,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 		return nwm.getWeight(p);
 	}
 	
-	private double getSumWeights(Point p){
+	public double getSumWeights(Point p){
 		return sumWeights[getIndex(p)];
 	}
 	
@@ -297,7 +301,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public void propagateCrossExchangeMove(Point x1, Point y1, Point x2,
-			Point y2) {
+                                           Point y2) {
 		// TODO Auto-generated method stub
 		double oldX = getViolations(getSumWeights(XR.getTerminatingPointOfRoute(XR.oldRoute(x1))), XR.oldRoute(x1));
         double oldY = getViolations(getSumWeights(XR.getTerminatingPointOfRoute(XR.oldRoute(x2))), XR.oldRoute(x2));
@@ -325,7 +329,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public void propagateThreePointsMove(Point x1, Point x2, Point x3,
-			Point y1, Point y2, Point y3) {
+                                         Point y1, Point y2, Point y3) {
 		// TODO Auto-generated method stub
 		HashSet<Integer> oldR = new HashSet<Integer>();
 		oldR.add(XR.oldRoute(x1)); 
@@ -343,7 +347,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public void propagateFourPointsMove(Point x1, Point x2, Point x3, Point x4,
-			Point y1, Point y2, Point y3, Point y4) {
+                                        Point y1, Point y2, Point y3, Point y4) {
 		// TODO Auto-generated method stub
 		HashSet<Integer> oldR = new HashSet<Integer>();
 		oldR.add(XR.oldRoute(x1)); 
@@ -418,7 +422,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 	
 	public String name() {
 		// TODO Auto-generated method stub
-		return "AccumulatedNodeWeightsOnPathVR";
+		return "CapacityConstraintViolationsVR";
 	}
 
 	
@@ -746,7 +750,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public double evaluateCrossExchangeMove(Point x1, Point y1, Point x2,
-			Point y2) {
+                                            Point y2) {
 		// TODO Auto-generated method stub
 		if (!XR.checkPerformCrossExchangeMove(x1, y1, x2, y2)) {
     		System.out.println(name() + ":: Error evaluateCrossExchangeMove: " + x1 + " " + y1 + " " + x2 + " " + y2 + "\n" + XR.toString());
@@ -796,7 +800,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public double evaluateThreePointsMove(Point x1, Point x2, Point x3,
-			Point y1, Point y2, Point y3) {
+                                          Point y1, Point y2, Point y3) {
 		// TODO Auto-generated method stub
 		if (!XR.checkPerformThreePointsMove(x1, x2, x3, y1, y2, y3)) {
 			System.out.println(name() + ":: Error evaluateThreePointsMove: " + x1 + " " + y1 + " " + x2 + " " + y2  + " " + x3 + " " + y3 + "\n" + XR.toString());
@@ -829,7 +833,7 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 
 	
 	public double evaluateFourPointsMove(Point x1, Point x2, Point x3,
-			Point x4, Point y1, Point y2, Point y3, Point y4) {
+                                         Point x4, Point y1, Point y2, Point y3, Point y4) {
 		// TODO Auto-generated method stub
 		if (!XR.checkPerformFourPointsMove(x1, x2, x3, x4, y1, y2, y3, y4)) {
 			System.out.println(name() + ":: Error evaluateFourPointsMove: " + x1 + " " + y1 + " " + x2 + " " + y2  + " " + x3 + " " + y3 + " " + x4 + " " + y4 + "\n" + XR.toString());
@@ -869,7 +873,10 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 		}
 		double oldY = getViolations(getSumWeights(XR.getTerminatingPointOfRoute(XR.route(y))), XR.route(y));
 		double newY = getViolations(getSumWeights(XR.getTerminatingPointOfRoute(XR.route(y))) + getWeights(x), XR.route(y));
-		return newY - oldY;
+//		System.out.println(getSumWeights(XR.getTerminatingPointOfRoute(XR.route(y))));
+//		System.out.println(getWeights(x));
+//		System.out.println(capacity[XR.route(y)]);
+		return newY;
 	}
 
 	
@@ -1012,113 +1019,113 @@ public class CapacityConstraintViolationsVR implements IFunctionVR {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		int N = 60;
-		int n = 50;
-		int K = 5;
-		Point[] p = new Point[N];
-		SecureRandom rand = new SecureRandom();
-		for (int i = 0; i < N; i++) {
-			p[i] = new Point(i, rand.nextInt(50), rand.nextInt(50));
-		}
-		VRManager mgr = new VRManager();
-		VarRoutesVR XR = new VarRoutesVR(mgr);
-		for (int i = 0; i < n; i++) {
-			XR.addClientPoint(p[i]);
-		}
-		for (int i = n; i < N - K; i++) {
-			XR.addRoute(p[i], p[i + K]);
-		}
-		XR.initSequential();
-		NodeWeightsManager nwm = new NodeWeightsManager(XR.getAllPoints());
-		for (int i = 0; i < p.length; i++) {
-			nwm.setWeight(p[i], rand.nextInt(10));
-		}
-		IFunctionVR f = new CapacityConstraintViolationsVR(XR, nwm, 50);
-		
-		mgr.close();
-		mgr.performRemoveOnePoint(p[0]);
-		
-		int iter = 0;
-		double oldV = 0;
-		double newV = 0;
-		double delta = 0;
-		while (iter < 1000) {
-			System.out.println(iter++ + "\n" + XR + "\n");
-			//for (int i = 0; i < N; i++) {
-				oldV = f.getValue();
-			//}
-//			int x1 = rand.nextInt(N);
-//			int x2 = rand.nextInt(N);
-//			int y1 = rand.nextInt(N);
-//			int y2 = rand.nextInt(N);
-//			int x3 = rand.nextInt(N);
-//			int y3 = rand.nextInt(N);
-//			int x4 = rand.nextInt(N);
-//			int y4 = rand.nextInt(N);
-//			while (!XR.checkPerformAddRemovePoints(p[x1], p[x2], p[x3])) {
-//				x1 = rand.nextInt(N);
-//				y1 = rand.nextInt(N);
-//				x2 = rand.nextInt(N);
-//				y2 = rand.nextInt(N);
-//				x3 = rand.nextInt(N);
-//				y3 = rand.nextInt(N);
-//				x4 = rand.nextInt(N);
-//				y4 = rand.nextInt(N);
-//			}
-//
-//			System.out.println(p[x1] + " " + p[y1] + " " );
+//		int N = 60;
+//		int n = 50;
+//		int K = 5;
+//		Point[] p = new Point[N];
+//		SecureRandom rand = new SecureRandom();
+//		for (int i = 0; i < N; i++) {
+//			p[i] = new Point(i, rand.nextInt(50), rand.nextInt(50));
+//		}
+//		VRManager mgr = new VRManager();
+//		VarRoutesVR XR = new VarRoutesVR(mgr);
+//		for (int i = 0; i < n; i++) {
+//			XR.addClientPoint(p[i]);
+//		}
+//		for (int i = n; i < N - K; i++) {
+//			XR.addRoute(p[i], p[i + K]);
+//		}
+//		XR.initSequential();
+//		NodeWeightsManager nwm = new NodeWeightsManager(XR.getAllPoints());
+//		for (int i = 0; i < p.length; i++) {
+//			nwm.setWeight(p[i], rand.nextInt(10));
+//		}
+//		IFunctionVR f = new CapacityConstraintViolationsVR(XR, nwm, 50);
+//		
+//		mgr.close();
+//		mgr.performRemoveOnePoint(p[0]);
+//		
+//		int iter = 0;
+//		double oldV = 0;
+//		double newV = 0;
+//		double delta = 0;
+//		while (iter < 1000) {
+//			System.out.println(iter++ + "\n" + XR + "\n");
 //			//for (int i = 0; i < N; i++) {
-//				delta = f.evaluateAddRemovePoints(p[x1], p[x2], p[x3]);
+//				oldV = f.getValue();
 //			//}
-//			mgr.performAddRemovePoints(p[x1], p[x2], p[x3]);
+////			int x1 = rand.nextInt(N);
+////			int x2 = rand.nextInt(N);
+////			int y1 = rand.nextInt(N);
+////			int y2 = rand.nextInt(N);
+////			int x3 = rand.nextInt(N);
+////			int y3 = rand.nextInt(N);
+////			int x4 = rand.nextInt(N);
+////			int y4 = rand.nextInt(N);
+////			while (!XR.checkPerformAddRemovePoints(p[x1], p[x2], p[x3])) {
+////				x1 = rand.nextInt(N);
+////				y1 = rand.nextInt(N);
+////				x2 = rand.nextInt(N);
+////				y2 = rand.nextInt(N);
+////				x3 = rand.nextInt(N);
+////				y3 = rand.nextInt(N);
+////				x4 = rand.nextInt(N);
+////				y4 = rand.nextInt(N);
+////			}
+////
+////			System.out.println(p[x1] + " " + p[y1] + " " );
+////			//for (int i = 0; i < N; i++) {
+////				delta = f.evaluateAddRemovePoints(p[x1], p[x2], p[x3]);
+////			//}
+////			mgr.performAddRemovePoints(p[x1], p[x2], p[x3]);
+////			//for (int i = 0; i < N; i++) {
+////				newV = f.getValue();
+////			//}
+//				ArrayList<Point> x = new ArrayList<Point>();
+//				ArrayList<Point> y = new ArrayList<Point>();
+//				int count = rand.nextInt(5) + 5;
+//				for (int i = 0; i < count; i++) {
+//					x.add(p[rand.nextInt(N)]);
+//					if (rand.nextInt(5) == 0) {
+//						y.add(CBLSVR.NULL_POINT);
+//					} else {
+//						y.add(p[rand.nextInt(N)]);
+//					}
+//				}
+//				while (!XR.checkPerformKPointsMove(x, y)) {
+//					x.clear();
+//					y.clear();
+//					count = rand.nextInt(5) + 5;
+//					for (int i = 0; i < count; i++) {
+//						x.add(p[rand.nextInt(N)]);
+//						if (rand.nextInt(5) == 0) {
+//							y.add(CBLSVR.NULL_POINT);
+//						} else {
+//							y.add(p[rand.nextInt(N)]);
+//						}
+//					}
+//				}
+//				System.out.println(count);
+//				for (int i = 0; i < count; i++) {
+//					System.out.println(x.get(i) + " " + y.get(i));
+//				}
+//				//for (int i = 0; i < N; i++) {
+//					delta = f.evaluateKPointsMove(x, y);
+//				//} 
+//				mgr.performKPointsMove(x, y);
+//				//for (int i = 0; i < N; i++) {
+//					newV = f.getValue();
+//				//}
+//			System.out.println(XR + " " + f);
 //			//for (int i = 0; i < N; i++) {
-//				newV = f.getValue();
+//				if (Math.abs(oldV + delta - newV) > 1e-6) {
+//					System.out.println("WTFFFFFFFFFFFFFFFFFFF " + " "
+//							+ oldV + " " + delta + " " + newV);
+//					System.exit(-1);
+//				}
 //			//}
-				ArrayList<Point> x = new ArrayList<Point>();
-				ArrayList<Point> y = new ArrayList<Point>();
-				int count = rand.nextInt(5) + 5;
-				for (int i = 0; i < count; i++) {
-					x.add(p[rand.nextInt(N)]);
-					if (rand.nextInt(5) == 0) {
-						y.add(CBLSVR.NULL_POINT);
-					} else {
-						y.add(p[rand.nextInt(N)]);
-					}
-				}
-				while (!XR.checkPerformKPointsMove(x, y)) {
-					x.clear();
-					y.clear();
-					count = rand.nextInt(5) + 5;
-					for (int i = 0; i < count; i++) {
-						x.add(p[rand.nextInt(N)]);
-						if (rand.nextInt(5) == 0) {
-							y.add(CBLSVR.NULL_POINT);
-						} else {
-							y.add(p[rand.nextInt(N)]);
-						}
-					}
-				}
-				System.out.println(count);
-				for (int i = 0; i < count; i++) {
-					System.out.println(x.get(i) + " " + y.get(i));
-				}
-				//for (int i = 0; i < N; i++) {
-					delta = f.evaluateKPointsMove(x, y);
-				//} 
-				mgr.performKPointsMove(x, y);
-				//for (int i = 0; i < N; i++) {
-					newV = f.getValue();
-				//}
-			System.out.println(XR + " " + f);
-			//for (int i = 0; i < N; i++) {
-				if (Math.abs(oldV + delta - newV) > 1e-6) {
-					System.out.println("WTFFFFFFFFFFFFFFFFFFF " + " "
-							+ oldV + " " + delta + " " + newV);
-					System.exit(-1);
-				}
-			//}
-		}
-		System.out.println("Okkkkkkkkkkkkkk");
+//		}
+//		System.out.println("Okkkkkkkkkkkkkk");
 	}
 
 	

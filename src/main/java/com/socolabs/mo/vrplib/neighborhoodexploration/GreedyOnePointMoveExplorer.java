@@ -36,6 +36,7 @@ public class GreedyOnePointMoveExplorer implements INeighborhoodExploration {
                 return objectiveF.compare(o1.evaluation(), o2.evaluation());
             }
         });
+        selector.add(this);
     }
 
     @Override
@@ -44,13 +45,17 @@ public class GreedyOnePointMoveExplorer implements INeighborhoodExploration {
         ArrayList<VRPRoute> changedRoutes = selector.getChangedRoutes();
         for (VRPRoute r : changedRoutes) {
             ArrayList<IVRPMove> relatedMoves = mRoute2RelatedMoves.get(r);
-            orderedMoves.removeAll(relatedMoves);
-            relatedMoves.clear();
+            if (relatedMoves != null) {
+                orderedMoves.removeAll(relatedMoves);
+                relatedMoves.clear();
+            }
         }
         for (VRPPoint p : selector.getAddedPoints()) {
             ArrayList<IVRPMove> relatedMoves = mPoint2RelatedMoves.get(p);
-            orderedMoves.removeAll(relatedMoves);
-            relatedMoves.clear();
+            if (relatedMoves != null) {
+                orderedMoves.removeAll(relatedMoves);
+                relatedMoves.clear();
+            }
         }
         for (VRPRoute cr : changedRoutes) {
             for (VRPRoute ar : vr.getAllRoutes()) {

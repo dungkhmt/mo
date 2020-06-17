@@ -30,11 +30,16 @@ public class AddAndRemoveMove implements IVRPMove {
         ArrayList<VRPPoint> ly = new ArrayList<>();
         lx.add(x); ly.add(y);
         lx.add(z); ly.add(CBLSVRP.NULL_POINT);
+        System.out.println("propagate " + name() + " -> " + x + "; " + y + "; " + z + " eval = " + eval);
         vr.propagateKPointsMove(lx, ly);
     }
 
     @Override
     public LexMultiValues evaluation() {
         return eval;
+    }
+
+    public String name() {
+        return "AddAndRemoveMove";
     }
 }

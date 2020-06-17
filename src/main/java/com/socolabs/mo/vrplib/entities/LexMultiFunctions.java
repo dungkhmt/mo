@@ -25,6 +25,14 @@ public class LexMultiFunctions {
         this.coefs.add(optimalType);
     }
 
+    public LexMultiValues values() {
+        LexMultiValues values = new LexMultiValues();
+        for (IVRPFunction f : functions) {
+            values.add(f.getValue());
+        }
+        return values;
+    }
+
     public LexMultiValues evaluate() {
         LexMultiValues values = new LexMultiValues();
         for (IVRPFunction f : functions) {
