@@ -30,6 +30,20 @@ public class VRPRoute {
         endPoint.initTmp();
     }
 
+    public VRPRoute(VRPPoint startPoint, VRPPoint endPoint, String truckCode, VRPVarRoutes vr) {
+        this.startPoint = startPoint;
+        this.endPoint = endPoint;
+        this.truckCode = truckCode;
+        startPoint.setNext(endPoint);
+        endPoint.setPrev(startPoint);
+        startPoint.setRoute(this);
+        endPoint.setRoute(this);
+        endPoint.setIndex(1);
+        startPoint.initTmp();
+        endPoint.initTmp();
+        vr.post(this);
+    }
+
     public void propagate() {
 //        nbPoints = tmpNbPoints;
     }

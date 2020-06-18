@@ -82,16 +82,16 @@ public class VRPVarRoutes {
         VRPPoint startPoint = createPoint(startLocation);
         VRPPoint endPoint = createPoint(endLocation);
         VRPRoute r = new VRPRoute(startPoint, endPoint, truckCode);
-        startPoint.setRoute(r);
-        endPoint.setRoute(r);
+//        startPoint.setRoute(r);
+//        endPoint.setRoute(r);
         post(r);
         return r;
     }
 
     public VRPRoute createRoute(VRPPoint startPoint, VRPPoint endPoint, String truckCode) {
         VRPRoute r = new VRPRoute(startPoint, endPoint, truckCode);
-        startPoint.setRoute(r);
-        endPoint.setRoute(r);
+//        startPoint.setRoute(r);
+//        endPoint.setRoute(r);
         post(r);
         return r;
     }

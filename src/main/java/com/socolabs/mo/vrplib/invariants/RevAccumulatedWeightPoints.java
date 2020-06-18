@@ -50,6 +50,14 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
         changedPoints = new ArrayList<>();
     }
 
+    public double getWeightValueOfPoint(VRPPoint point) {
+        return revAccWeightArr[point.getStt()];
+    }
+
+    public double getTmpWeightValueOfPoint(VRPPoint point) {
+        return tmpRevAccWeightArr[point.getStt()];
+    }
+
     private void clearTmpData() {
         for (VRPPoint point : changedPoints) {
             int stt = point.getStt();
@@ -66,7 +74,7 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
             VRPPoint next = point.getNext();
             if (next == null) {
                 changedPoints.add(point);
-                tmpRevAccWeightArr[point.getStt()] = accCalculator.caclAccWeightAtPoint(0, point);
+                tmpRevAccWeightArr[point.getStt()] = accCalculator.calcTmpAccWeightAtPoint(0, point);
                 next = point;
                 point = point.getPrev();
                 while (point != null) {

@@ -1,8 +1,8 @@
 package localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model;
 
-import weka.core.Debug.Random;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Utils {
 	public static int CAP_FLEXIBILITY = 0;

@@ -26,6 +26,14 @@ public class VRPPoint {
         route = tmpRoute = null;
     }
 
+    public VRPPoint(String locationCode, VRPVarRoutes vr) {
+        this.locationCode = locationCode;
+        stt = index = tmpIndex = 0;
+        next = prev = tmpPrev = tmpNext = null;
+        route = tmpRoute = null;
+        vr.post(this);
+    }
+
     public void propagate() {
         index = tmpIndex;
         next = tmpNext;
