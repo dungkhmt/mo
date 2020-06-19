@@ -33,22 +33,30 @@ public class SchoolBusSolver {
 
     public SchoolBusRoutingSolution solve(SchoolBusRoutingInput input) {
         this.input = input;
-        initData();
+        stateModel();
 
         return null;
     }
 
-    private void initData() {
-        initTravelTime();
-        stateModel();
+    private void initSolution() {
+
     }
 
     private void stateModel() {
         vr = new VRPVarRoutes();
+        initTravelTime();
         createRoutes();
         createPoints();
+        addRoadBlockConstraint();
         addCapacityConstraint();
         addTravelTimeConstraint();
+    }
+
+    private void addRoadBlockConstraint() {
+        TravelTimeManager roadBlockManager = new TravelTimeManager(vr, roadBlockMap);
+        DMRoadBlockViolationCalculator roadBlockViolationCalculator = new DMRoadBlockViolationCalculator(roadBlockManager);
+        AccumulatedWeightPoints accRoadBlockViolations = new AccumulatedWeightPoints(roadBlockViolationCalculator);
+        SumAccumulatedWeightPoints roadBlockConstraint = new SumAccumulatedWeightPoints(accRoadBlockViolations);
     }
 
     private void addTravelTimeConstraint() {
@@ -67,13 +75,21 @@ public class SchoolBusSolver {
         // thời gian đến trường ko được sau thời điểm latestDateTimeDeliveryAtSchool
         SumRouteFunctions arrivalTimeAtSchoolConstraint = new SumRouteFunctions(vr, mRoute2TimeViolation);
 
-        DMRevTimeCalculator revTimeCalculator = new DMRevTimeCalculator(travelTimeManager);
+        DMRevTimeCalculator revTimeCalculator = new DMRevTimeCalculator(travelTimeManager, serviceTimeManager);
+        // tổng thời gian đi từ 1 điểm u đến trường
         RevAccumulatedWeightPoints revAccTravelTime = new RevAccumulatedWeightPoints(revTimeCalculator);
+        // vi phạm về thời gian di chuyển từ 1 điểm u đến trường
         NWMTimeViolationAtPoint travelTimeViolationAtPoint = new NWMTimeViolationAtPoint(vr, revAccTravelTime);
+        // tổng vi phạm của các điểm từ điểm bắt đầu đến điểm u
         AccumulatedWeightPoints travelTimeViolationAcc = new AccumulatedWeightPoints(new AccumulatedNodeCalculator(travelTimeViolationAtPoint));
         // constraint giới hạn thời gian di chuyển từ 1 điểm không được vượt quá 180% so với đường đi ngắn nhất đến trường
         SumAccumulatedWeightPoints totalTravelTimeViolations = new SumAccumulatedWeightPoints(travelTimeViolationAcc);
 
+        // tính thời gian ứng với từng point trong hàm mục tiêu
+        // hàm mục tiêu là tổng thời gian di chuyển của các route + tổng độ chênh lệch giữa thời gian đi trực tiếp với thời gian đi thực tế của từng point đến trường
+        NWMTravelTimeObjective nwmTravelTimeObjective = new NWMTravelTimeObjective(vr, revAccTravelTime);
+        AccumulatedWeightPoints travelTimeObjectiveAcc = new AccumulatedWeightPoints(new AccumulatedNodeCalculator(nwmTravelTimeObjective));
+        SumAccumulatedWeightPoints travelTimeObjective = new SumAccumulatedWeightPoints(travelTimeObjectiveAcc);
     }
 
     private void addCapacityConstraint() {
@@ -87,7 +103,7 @@ public class SchoolBusSolver {
         for (Vehicle v : input.getVehicles()) {
             SchoolBusPickupPoint startPoint = new SchoolBusPickupPoint(schoolLocationId, vr, input, travelTimeMap);
             SchoolBusPickupPoint endPoint = new SchoolBusPickupPoint(schoolLocationId, vr, input, travelTimeMap);
-            SchoolBusRoute route = new SchoolBusRoute(startPoint, endPoint, "" + v.getId(), vr);
+            SchoolBusRoute route = new SchoolBusRoute(startPoint, endPoint, "" + v.getId(), v.getCap(), vr);
             mRoute2Capacity.put(route, 1.0 * v.getCap());
         }
     }

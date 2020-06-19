@@ -2,6 +2,7 @@ package com.socolabs.mo.vrplib.invariants;
 
 import com.socolabs.mo.vrplib.core.*;
 import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,18 +72,18 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
         clearTmpData();
         for (VRPRoute route : vr.getChangedRoutes()) {
             VRPPoint point = route.getEndPoint();
-            VRPPoint next = point.getNext();
+            VRPPoint next = point.getTmpNext();
             if (next == null) {
                 changedPoints.add(point);
                 tmpRevAccWeightArr[point.getStt()] = accCalculator.calcTmpAccWeightAtPoint(0, point);
                 next = point;
-                point = point.getPrev();
+                point = point.getTmpPrev();
                 while (point != null) {
                     changedPoints.add(point);
                     int stt = point.getStt();
                     tmpRevAccWeightArr[stt] = accCalculator.calcTmpAccWeightAtPoint(tmpRevAccWeightArr[next.getStt()], point);
                     next = point;
-                    point = point.getPrev();
+                    point = point.getTmpPrev();
                 }
             }
         }
@@ -117,6 +118,30 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
 
     @Override
     public boolean verify() {
+        for (VRPRoute route : vr.getAllRoutes()) {
+            VRPPoint point = route.getEndPoint();
+            VRPPoint next = point.getNext();
+            if (next == null) {
+                double accWeight = accCalculator.caclAccWeightAtPoint(0, point);
+//                System.out.println("route " + route);
+//                System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
+                if (Math.abs(revAccWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
+                    System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                    return false;
+                }
+                point = point.getPrev();
+                while (point != null) {
+                    int stt = point.getStt();
+                    accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
+//                    System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
+                    if (Math.abs(revAccWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
+                        System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                        return false;
+                    }
+                    point = point.getPrev();
+                }
+            }
+        }
         return true;
     }
 

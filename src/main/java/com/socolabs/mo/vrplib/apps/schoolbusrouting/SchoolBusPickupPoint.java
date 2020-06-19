@@ -12,8 +12,10 @@ import java.util.HashMap;
 @Getter
 public class SchoolBusPickupPoint extends VRPPoint {
 
+    private int groupId;
     private double pickupServiceTime;
     private int totalTravelTimeLimit;
+    private int directTravelTimeToSchool;
     private ArrayList<SchoolBusRequest> requests;
 
     public SchoolBusPickupPoint(String locationCode, VRPVarRoutes vr,
@@ -30,11 +32,14 @@ public class SchoolBusPickupPoint extends VRPPoint {
             // thay đổi khi sử dụng boardingTimeScale3
             totalTravelTimeLimit = (int) ((1 + 0.05 * input.getConfigParams().getBoardingTimeScale2()) * directTravelTime);
         }
+        directTravelTimeToSchool = directTravelTime;
+        groupId = 0;
     }
 
     public void addRequest(SchoolBusRequest r) {
         requests.add(r);
         pickupServiceTime = Math.max(pickupServiceTime, r.getServicePickupDuration());
+        groupId = Math.max(groupId, r.getGroupId());
     }
 
     public int size() {

@@ -78,9 +78,8 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
     public void explore() {
 //        System.out.println(accCalculator.name() + " explore: ");
         clearTmpData();
-        HashMap<VRPRoute, VRPPoint> mRouteToFirstTmpPoint = vr.getMChangedRouteToFirstTmpPoint();
-        for (Map.Entry<VRPRoute, VRPPoint> e : mRouteToFirstTmpPoint.entrySet()) {
-            VRPPoint cur = e.getValue();
+        for (VRPRoute r : vr.getChangedRoutes()) {
+            VRPPoint cur = r.getStartPoint();
             VRPPoint prev = cur.getTmpPrev();
             if (prev == null) {
                 int stt = cur.getStt();

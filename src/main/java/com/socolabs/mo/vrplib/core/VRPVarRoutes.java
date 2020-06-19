@@ -6,11 +6,15 @@ import com.socolabs.mo.vrplib.constraints.timewindows.TimeWindowsConstraint;
 import com.socolabs.mo.vrplib.entities.InvariantSttCmp;
 import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedEdgeCalculator;
+import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedNodeCalculator;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedWeightCalculator;
+import com.socolabs.mo.vrplib.entities.accumulatedcalculators.RevAccumulatedEdgeCalculator;
 import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
+import com.socolabs.mo.vrplib.entities.nodeweightmanagers.NodeWeightManager;
 import com.socolabs.mo.vrplib.functions.AccumulatedPointWeightsOnPath;
 import com.socolabs.mo.vrplib.functions.sum.SumAccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
+import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.search.GreedySearch;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
 import localsearch.domainspecific.vehiclerouting.vrp.CBLSVR;
@@ -2676,7 +2680,9 @@ public class VRPVarRoutes {
                 new AccumulatedWeightPoints(
                         new AccumulatedEdgeCalculator(
                                 new TravelTimeManager(vr, travelTimeMap))));
-
+        RevAccumulatedWeightPoints revAcc = new RevAccumulatedWeightPoints(
+                new AccumulatedNodeCalculator(
+                        new NodeWeightManager(vr, nodeWeightMap)));
         LexMultiFunctions objectiveFunc = new LexMultiFunctions();
         objectiveFunc.add(cc, LexMultiFunctions.MINIMIZE);
         objectiveFunc.add(tw, LexMultiFunctions.MINIMIZE);
