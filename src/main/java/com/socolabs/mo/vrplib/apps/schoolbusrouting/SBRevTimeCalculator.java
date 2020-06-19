@@ -7,13 +7,13 @@ import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 
-public class DMRevTimeCalculator implements IAccumulatedCalculator {
+public class SBRevTimeCalculator implements IAccumulatedCalculator {
 
     private VRPVarRoutes vr;
     private IDistanceManager travelTimeManager;
     private INodeWeightManager serviceTimeManager;
 
-    public DMRevTimeCalculator(IDistanceManager travelTimeManager, INodeWeightManager serviceTimeManager) {
+    public SBRevTimeCalculator(IDistanceManager travelTimeManager, INodeWeightManager serviceTimeManager) {
         this.vr = travelTimeManager.getVarRoutes();
         this.travelTimeManager = travelTimeManager;
         this.serviceTimeManager = serviceTimeManager;
@@ -22,13 +22,13 @@ public class DMRevTimeCalculator implements IAccumulatedCalculator {
     @Override
     public double caclAccWeightAtPoint(double prevValue, VRPPoint point) {
         return prevValue + travelTimeManager.getDistance(point, point.getNext())
-                + serviceTimeManager.getWeight(point.getNext());
+                + serviceTimeManager.getWeight(point);
     }
 
     @Override
     public double calcTmpAccWeightAtPoint(double prevValue, VRPPoint point) {
         return prevValue + travelTimeManager.getTmpDistance(point, point.getTmpNext())
-                + serviceTimeManager.getTmpWeight(point.getTmpNext());
+                + serviceTimeManager.getTmpWeight(point);
     }
 
     @Override

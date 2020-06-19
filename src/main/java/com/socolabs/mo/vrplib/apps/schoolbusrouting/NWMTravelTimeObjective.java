@@ -19,7 +19,7 @@ public class NWMTravelTimeObjective  implements INodeWeightManager {
     @Override
     public double getWeight(VRPPoint point) {
         if (point.isStartPoint()) {
-            return revAccTravelTime.getWeightValueOfPoint(point);
+            return revAccTravelTime.getWeightValueOfPoint(point.getNext());
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) - p.getDirectTravelTimeToSchool());
@@ -28,7 +28,7 @@ public class NWMTravelTimeObjective  implements INodeWeightManager {
     @Override
     public double getTmpWeight(VRPPoint point) {
         if (point.isStartPoint()) {
-            return revAccTravelTime.getTmpWeightValueOfPoint(point);
+            return revAccTravelTime.getTmpWeightValueOfPoint(point.getTmpNext());
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) - p.getDirectTravelTimeToSchool());

@@ -1,40 +1,30 @@
-package com.socolabs.mo.vrplib.functions.sum;
+package com.socolabs.mo.vrplib.apps.schoolbusrouting;
 
 import com.socolabs.mo.vrplib.core.IVRPFunction;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
-import localsearch.domainspecific.vehiclerouting.vrp.CBLSVR;
 
-import java.util.HashMap;
 import java.util.HashSet;
 
-public class SumRouteFunctions implements IVRPFunction {
+public class SBTotalUsedBuses implements IVRPFunction {
 
     private VRPVarRoutes vr;
-    private IVRPFunction[] functions;
+    private int value;
+    private int tmpValue;
 
-    private double value;
-    private double tmpValue;
-
-    public SumRouteFunctions(VRPVarRoutes vr, HashMap<VRPRoute, IVRPFunction> mRoute2Function) {
+    public SBTotalUsedBuses(VRPVarRoutes vr) {
         this.vr = vr;
         vr.post(this);
-        int maxStt = 0;
-        for (VRPRoute r : mRoute2Function.keySet()) {
-            maxStt = Math.max(maxStt, r.getStt());
-        }
         value = 0;
-        functions = new IVRPFunction[maxStt + 1];
-        for (VRPRoute r : mRoute2Function.keySet()) {
-            int stt = r.getStt();
-            functions[stt] = mRoute2Function.get(r);
-            value += functions[stt].getValue();
+        for (VRPRoute r : vr.getAllRoutes()) {
+            if (r.getNbPoints() > 0) {
+                value++;
+            }
         }
         tmpValue = value;
     }
-
     @Override
     public double getValue() {
         return value;
@@ -49,12 +39,12 @@ public class SumRouteFunctions implements IVRPFunction {
     public void explore() {
         tmpValue = value;
         for (VRPRoute r : vr.getChangedRoutes()) {
-            int idx = r.getStt();
-            if (idx >= 0 && idx < functions.length) {
-                if (functions[idx] != null) {
-                    tmpValue -= functions[idx].getValue();
-                    tmpValue += functions[idx].getTmpValue();
-                }
+            int nb = r.getNbPoints();
+            int tmpNb = r.getTmpNbPoints();
+            if (nb == 0 && tmpNb > 0) {
+                tmpValue++;
+            } else if (nb > 0 && tmpNb == 0) {
+                tmpValue--;
             }
         }
     }
@@ -72,7 +62,7 @@ public class SumRouteFunctions implements IVRPFunction {
     private int stt;
     @Override
     public int getStt() {
-        return this.stt;
+        return stt;
     }
 
     @Override
@@ -82,14 +72,14 @@ public class SumRouteFunctions implements IVRPFunction {
 
     @Override
     public boolean verify() {
-        double v = 0;
-        for (int i = 0; i < functions.length; i++) {
-            if (functions[i] != null) {
-                v += functions[i].getValue();
+        int v = 0;
+        for (VRPRoute r : vr.getAllRoutes()) {
+            if (r.getNbPoints() > 0) {
+                v++;
             }
         }
-        if (Math.abs(v - value) > CBLSVRP.EPS) {
-            System.out.println(name() + ":: EXCEPTION calculating sum of route functions !!!!");
+        if (v != value) {
+            System.out.println(name() + ":: EXCEPTION calculating total used buses !!!!");
             return false;
         }
         return true;
@@ -122,6 +112,6 @@ public class SumRouteFunctions implements IVRPFunction {
 
     @Override
     public String name() {
-        return "SumRouteFunctions";
+        return "SBTotalUsedBuses";
     }
 }

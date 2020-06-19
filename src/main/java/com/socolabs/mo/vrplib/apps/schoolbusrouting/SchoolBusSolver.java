@@ -3,7 +3,6 @@ package com.socolabs.mo.vrplib.apps.schoolbusrouting;
 import com.socolabs.mo.vrplib.constraints.capacity.CapacityConstraint;
 import com.socolabs.mo.vrplib.constraints.leq.Leq;
 import com.socolabs.mo.vrplib.core.IVRPFunction;
-import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
@@ -15,7 +14,6 @@ import com.socolabs.mo.vrplib.functions.sum.SumRouteFunctions;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -47,14 +45,35 @@ public class SchoolBusSolver {
         initTravelTime();
         createRoutes();
         createPoints();
-        addRoadBlockConstraint();
+        addMaximumNumberOfStudents();
         addCapacityConstraint();
+        addGroupConstraint();
+        addRoadBlockConstraint();
+        addMinimumUsedBuses();
         addTravelTimeConstraint();
+    }
+
+    private void addGroupConstraint() {
+        SumAccumulatedWeightPoints totalGroupViolations = new SumAccumulatedWeightPoints(
+                new AccumulatedWeightPoints(
+                        new AccumulatedNodeCalculator(
+                                new NWMGroupViolationAtPoint(vr))));
+
+    }
+
+    private void addMinimumUsedBuses() {
+        SBTotalUsedBuses totalUsedBuses = new SBTotalUsedBuses(vr);
+    }
+
+    private void addMaximumNumberOfStudents() {
+        SBNumberValidStudentCalculator nbValidStudentCalculator = new SBNumberValidStudentCalculator(vr);
+        SumAccumulatedWeightPoints totalValidStudents = new SumAccumulatedWeightPoints(
+                new AccumulatedWeightPoints(nbValidStudentCalculator));
     }
 
     private void addRoadBlockConstraint() {
         TravelTimeManager roadBlockManager = new TravelTimeManager(vr, roadBlockMap);
-        DMRoadBlockViolationCalculator roadBlockViolationCalculator = new DMRoadBlockViolationCalculator(roadBlockManager);
+        SBRoadBlockViolationCalculator roadBlockViolationCalculator = new SBRoadBlockViolationCalculator(roadBlockManager);
         AccumulatedWeightPoints accRoadBlockViolations = new AccumulatedWeightPoints(roadBlockViolationCalculator);
         SumAccumulatedWeightPoints roadBlockConstraint = new SumAccumulatedWeightPoints(accRoadBlockViolations);
     }
@@ -62,7 +81,7 @@ public class SchoolBusSolver {
     private void addTravelTimeConstraint() {
         IDistanceManager travelTimeManager = new TravelTimeManager(vr, travelTimeMap);
         NWMPickupServiceTimeAtPoint serviceTimeManager = new NWMPickupServiceTimeAtPoint(vr);
-        DMArrivalTimeCalculator arrivalTimeCalculator = new DMArrivalTimeCalculator(travelTimeManager,
+        SBArrivalTimeCalculator arrivalTimeCalculator = new SBArrivalTimeCalculator(travelTimeManager,
                                                                                     serviceTimeManager,
                                                                                     input.getConfigParams().getEarliestDateTimePickupAtPoint());
         AccumulatedWeightPoints accArrivalTime = new AccumulatedWeightPoints(arrivalTimeCalculator);
@@ -75,7 +94,7 @@ public class SchoolBusSolver {
         // thời gian đến trường ko được sau thời điểm latestDateTimeDeliveryAtSchool
         SumRouteFunctions arrivalTimeAtSchoolConstraint = new SumRouteFunctions(vr, mRoute2TimeViolation);
 
-        DMRevTimeCalculator revTimeCalculator = new DMRevTimeCalculator(travelTimeManager, serviceTimeManager);
+        SBRevTimeCalculator revTimeCalculator = new SBRevTimeCalculator(travelTimeManager, serviceTimeManager);
         // tổng thời gian đi từ 1 điểm u đến trường
         RevAccumulatedWeightPoints revAccTravelTime = new RevAccumulatedWeightPoints(revTimeCalculator);
         // vi phạm về thời gian di chuyển từ 1 điểm u đến trường

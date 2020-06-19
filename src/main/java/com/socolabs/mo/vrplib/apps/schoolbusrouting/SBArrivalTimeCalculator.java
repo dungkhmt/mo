@@ -7,14 +7,14 @@ import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 
-public class DMArrivalTimeCalculator  implements IAccumulatedCalculator {
+public class SBArrivalTimeCalculator implements IAccumulatedCalculator {
 
     private VRPVarRoutes vr;
     private IDistanceManager travelTimeManager;
     private INodeWeightManager serviceTimeManager;
     private int earliestPickupTime;
 
-    public DMArrivalTimeCalculator(IDistanceManager travelTimeManager, INodeWeightManager serviceTimeManager, int earliestPickupTime) {
+    public SBArrivalTimeCalculator(IDistanceManager travelTimeManager, INodeWeightManager serviceTimeManager, int earliestPickupTime) {
         this.vr = travelTimeManager.getVarRoutes();
         this.travelTimeManager = travelTimeManager;
         this.serviceTimeManager = serviceTimeManager;

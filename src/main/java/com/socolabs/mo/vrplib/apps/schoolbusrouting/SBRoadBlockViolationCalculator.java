@@ -6,12 +6,12 @@ import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 
-public class DMRoadBlockViolationCalculator implements IAccumulatedCalculator {
+public class SBRoadBlockViolationCalculator implements IAccumulatedCalculator {
 
     private VRPVarRoutes vr;
     private IDistanceManager roadBlockManager;
 
-    public DMRoadBlockViolationCalculator(IDistanceManager roadBlockManager) {
+    public SBRoadBlockViolationCalculator(IDistanceManager roadBlockManager) {
         vr = roadBlockManager.getVarRoutes();
         this.roadBlockManager = roadBlockManager;
     }
