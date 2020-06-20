@@ -111,6 +111,11 @@ public class TimeWindowsConstraint implements IVRPFunction {
     }
 
     @Override
+    public void clearTmpData() {
+        tmpValue = value;
+    }
+
+    @Override
     public void createPoint(VRPPoint point) {
 
     }

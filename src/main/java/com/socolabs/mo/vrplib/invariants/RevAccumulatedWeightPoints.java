@@ -59,7 +59,7 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
         return tmpRevAccWeightArr[point.getStt()];
     }
 
-    private void clearTmpData() {
+    public void clearTmpData() {
         for (VRPPoint point : changedPoints) {
             int stt = point.getStt();
             tmpRevAccWeightArr[stt] = revAccWeightArr[stt];
@@ -69,7 +69,6 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
 
     @Override
     public void explore() {
-        clearTmpData();
         for (VRPRoute route : vr.getChangedRoutes()) {
             VRPPoint point = route.getEndPoint();
             VRPPoint next = point.getTmpNext();

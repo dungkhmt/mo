@@ -14,19 +14,22 @@ public class LexMultiFunctions {
 
     private ArrayList<IVRPFunction> functions;
     private ArrayList<Integer> coefs;
+    private ArrayList<String> funcNames;
 
     public LexMultiFunctions() {
         functions = new ArrayList<>();
         coefs = new ArrayList<>();
+        funcNames = new ArrayList<>();
     }
 
-    public void add(IVRPFunction f, int optimalType) {
+    public void add(IVRPFunction f, int optimalType, String funcName) {
         functions.add(f);
-        this.coefs.add(optimalType);
+        coefs.add(optimalType);
+        funcNames.add(funcName);
     }
 
     public LexMultiValues values() {
-        LexMultiValues values = new LexMultiValues();
+        LexMultiValues values = new LexMultiValues(this);
         for (IVRPFunction f : functions) {
             values.add(f.getValue());
         }
@@ -34,11 +37,15 @@ public class LexMultiFunctions {
     }
 
     public LexMultiValues evaluate() {
-        LexMultiValues values = new LexMultiValues();
+        LexMultiValues values = new LexMultiValues(this);
         for (IVRPFunction f : functions) {
             values.add(f.getTmpValue() - f.getValue());
         }
         return values;
+    }
+
+    public String getFuncName(int i) {
+        return funcNames.get(i);
     }
 
     public int compare(LexMultiValues a, LexMultiValues b) {

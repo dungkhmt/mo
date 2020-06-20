@@ -90,6 +90,11 @@ public class ExplorationSelector implements IVRPInvariant {
     }
 
     @Override
+    public void clearTmpData() {
+
+    }
+
+    @Override
     public HashSet<VRPPoint> getIndependentPoints() {
         return null;
     }

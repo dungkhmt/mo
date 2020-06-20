@@ -61,6 +61,6 @@ public class VRPPoint {
     }
 
     public String toString() {
-        return "Point(" + locationCode + ", " + index + ", " + stt + ")";
+        return "Point(locationCode: " + locationCode + ", index: " + index + ", stt: " + stt + ", route: " + route + ")";
     }
 }

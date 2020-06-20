@@ -5,10 +5,12 @@ import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
+@Getter
 public class AccumulatedPointWeightsOnPath implements IVRPFunction {
 
     private AccumulatedWeightPoints accWeightPoints;
@@ -37,6 +39,11 @@ public class AccumulatedPointWeightsOnPath implements IVRPFunction {
 
     @Override
     public void propagate() {
+
+    }
+
+    @Override
+    public void clearTmpData() {
 
     }
 

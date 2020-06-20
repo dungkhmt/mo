@@ -31,6 +31,8 @@ import java.time.LocalDateTime;
 
 @Getter
 public class VRPVarRoutes {
+    private boolean verifying = true;
+
     private ArrayList<VRPPoint> allPoints;
     private ArrayList<VRPRoute> allRoutes;
     private ArrayList<IVRPInvariant> invariants;
@@ -115,6 +117,7 @@ public class VRPVarRoutes {
 
     public void post(VRPPoint point) {
         allPoints.add(point);
+        freePoints.add(point);
         point.setStt(allPoints.size());
         for (IVRPBasicEntity entity : basicEntities) {
             entity.createPoint(point);
@@ -2516,6 +2519,9 @@ public class VRPVarRoutes {
         for (VRPRoute r : mChangedRouteToFirstTmpPoint.keySet()) {
             r.initTmp();
         }
+        for (IVRPInvariant i : dependentInvariantLst) {
+            i.clearTmpData();
+        }
         changedPoints.clear();
         mChangedRouteToFirstTmpPoint.clear();
         mChangedRouteToRemovedPoints.clear();
@@ -2563,10 +2569,16 @@ public class VRPVarRoutes {
         freePoints.removeAll(addedPoints);
         freePoints.addAll(removedPoints);
         // xóa đi khi ko muốn mất thời gian verify lại các invariants
-        if (!verify()) {
-            System.out.println("ERORR");
-            System.exit(-1);
+        if (verifying) {
+            if (!verify()) {
+                System.out.println("ERORR");
+                System.exit(-1);
+            }
         }
+    }
+
+    public void setVerifying(boolean verifying) {
+        this.verifying = verifying;
     }
 
     private boolean verify() {
@@ -2684,9 +2696,9 @@ public class VRPVarRoutes {
                 new AccumulatedNodeCalculator(
                         new NodeWeightManager(vr, nodeWeightMap)));
         LexMultiFunctions objectiveFunc = new LexMultiFunctions();
-        objectiveFunc.add(cc, LexMultiFunctions.MINIMIZE);
-        objectiveFunc.add(tw, LexMultiFunctions.MINIMIZE);
-        objectiveFunc.add(totalDist, LexMultiFunctions.MINIMIZE);
+        objectiveFunc.add(cc, LexMultiFunctions.MINIMIZE, "cap");
+        objectiveFunc.add(tw, LexMultiFunctions.MINIMIZE, "time window");
+        objectiveFunc.add(totalDist, LexMultiFunctions.MINIMIZE, "total dist");
 
 
         Random rand = new Random(1993);
@@ -2721,9 +2733,6 @@ public class VRPVarRoutes {
         int l = 10;
         HashSet<VRPPoint> outOfRoutes = new HashSet<>();
         for (int step = 0; step < 100000; step++) {
-            if (step == 41) {
-                System.out.println("debug");
-            }
             System.out.println(step);
             ArrayList<VRPPoint> x = new ArrayList<>();
             ArrayList<VRPPoint> y = new ArrayList<>();

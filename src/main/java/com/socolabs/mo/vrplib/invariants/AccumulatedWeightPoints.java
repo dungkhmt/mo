@@ -23,6 +23,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
     private ArrayList<VRPPoint> changedPoints;
 
     private int stt;
+    private boolean debug = false;
 
     public AccumulatedWeightPoints(IAccumulatedCalculator accCalculator) {
         this.vr = accCalculator.getVarRoutes();
@@ -30,6 +31,14 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
         vr.post(this);
         init();
     }
+//
+//    public AccumulatedWeightPoints(IAccumulatedCalculator accCalculator, boolean debug) {
+//        this.vr = accCalculator.getVarRoutes();
+//        this.accCalculator = accCalculator;
+//        vr.post(this);
+//        init();
+//        this.debug = debug;
+//    }
 
     public double getWeightValueOfPoint(VRPPoint point) {
         return accWeightArr[point.getStt()];
@@ -66,7 +75,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
         changedPoints = new ArrayList<>();
     }
 
-    private void clearTmpData() {
+    public void clearTmpData() {
         for (VRPPoint point : changedPoints) {
             int stt = point.getStt();
             tmpAccWeightArr[stt] = accWeightArr[stt];
@@ -77,7 +86,6 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
     @Override
     public void explore() {
 //        System.out.println(accCalculator.name() + " explore: ");
-        clearTmpData();
         for (VRPRoute r : vr.getChangedRoutes()) {
             VRPPoint cur = r.getStartPoint();
             VRPPoint prev = cur.getTmpPrev();
@@ -106,6 +114,15 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
 
     @Override
     public void propagate() {
+        if (debug) {
+            System.out.println("--------------");
+            for (VRPRoute r : vr.getChangedRoutes()) {
+                System.out.println("route " + r);
+                for (VRPPoint p = r.getStartPoint(); p != null; p = p.getTmpNext()) {
+                    System.out.println(p + " " + accWeightArr[p.getStt()] + " : " + tmpAccWeightArr[p.getStt()]);
+                }
+            }
+        }
         for (VRPPoint point : changedPoints) {
             int stt = point.getStt();
             accWeightArr[stt] = tmpAccWeightArr[stt];
@@ -172,7 +189,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
                 double accWeight = accCalculator.caclAccWeightAtPoint(0, point);
 //                System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                 if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                    System.out.println("EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                    System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                     return false;
                 }
                 point = point.getNext();
@@ -180,7 +197,7 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
                     accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
 //                    System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                     if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                        System.out.println("EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                        System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                         return false;
                     }
                     point = point.getNext();

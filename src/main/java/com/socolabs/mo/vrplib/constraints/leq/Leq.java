@@ -40,6 +40,11 @@ public class Leq implements IVRPFunction {
     }
 
     @Override
+    public void clearTmpData() {
+
+    }
+
+    @Override
     public void createPoint(VRPPoint point) {
 
     }

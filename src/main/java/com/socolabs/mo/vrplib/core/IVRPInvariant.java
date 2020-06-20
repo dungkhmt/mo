@@ -6,6 +6,7 @@ import java.util.HashSet;
 public interface IVRPInvariant extends IVRPBasicEntity {
     void explore();
     void propagate();
+    void clearTmpData();
 
     HashSet<VRPPoint> getIndependentPoints();
     int getStt();

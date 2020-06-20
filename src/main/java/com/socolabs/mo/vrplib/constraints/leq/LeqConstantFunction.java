@@ -40,6 +40,11 @@ public class LeqConstantFunction implements IVRPFunction {
     }
 
     @Override
+    public void clearTmpData() {
+        tmpValue = value;
+    }
+
+    @Override
     public void createPoint(VRPPoint point) {
 
     }

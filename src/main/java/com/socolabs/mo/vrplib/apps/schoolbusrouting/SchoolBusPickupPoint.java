@@ -17,10 +17,12 @@ public class SchoolBusPickupPoint extends VRPPoint {
     private int totalTravelTimeLimit;
     private int directTravelTimeToSchool;
     private ArrayList<SchoolBusRequest> requests;
+    private SchoolBusRoutingInput input;
 
     public SchoolBusPickupPoint(String locationCode, VRPVarRoutes vr,
                                 SchoolBusRoutingInput input, HashMap<String, HashMap<String, Integer>> travelTimeMap) {
         super(locationCode, vr);
+        this.input = input;
         requests = new ArrayList<>();
         pickupServiceTime = 0;
         int directTravelTime = travelTimeMap.get(locationCode).get("" + input.getShoolPointId());
@@ -44,5 +46,34 @@ public class SchoolBusPickupPoint extends VRPPoint {
 
     public int size() {
         return requests.size();
+    }
+
+    public String getStudentLst() {
+        String st = "[";
+        int i = 0;
+        for (SchoolBusRequest re : requests) {
+            if (i > 0) {
+                st += ", ";
+            }
+            st += re.getIdPerson();
+            i++;
+        }
+        return st + "]";
+    }
+
+    public double getLat() {
+        if (requests.size() > 0) {
+            return requests.get(0).getLat_pickup();
+        } else {
+            return input.getLat_school();
+        }
+    }
+
+    public double getLng() {
+        if (requests.size() > 0) {
+            return requests.get(0).getLong_pickup();
+        } else {
+            return input.getLong_school();
+        }
     }
 }

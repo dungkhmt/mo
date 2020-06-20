@@ -65,6 +65,11 @@ public class SumRouteFunctions implements IVRPFunction {
     }
 
     @Override
+    public void clearTmpData() {
+        tmpValue = value;
+    }
+
+    @Override
     public HashSet<VRPPoint> getIndependentPoints() {
         return null;
     }

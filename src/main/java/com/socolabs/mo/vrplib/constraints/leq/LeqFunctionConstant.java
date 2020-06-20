@@ -1,6 +1,7 @@
 package com.socolabs.mo.vrplib.constraints.leq;
 
 import com.socolabs.mo.vrplib.core.*;
+import com.socolabs.mo.vrplib.functions.AccumulatedPointWeightsOnPath;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,7 +18,7 @@ public class LeqFunctionConstant implements IVRPFunction {
         this.f = f;
         this.v = v;
         f.getVarRoutes().post(this);
-        value = Math.max(0, f.getValue() - v);
+        value = tmpValue = Math.max(0, f.getValue() - v);
     }
 
     @Override
@@ -38,6 +39,11 @@ public class LeqFunctionConstant implements IVRPFunction {
     @Override
     public void propagate() {
         value = tmpValue;
+    }
+
+    @Override
+    public void clearTmpData() {
+        tmpValue = value;
     }
 
     @Override
@@ -85,7 +91,7 @@ public class LeqFunctionConstant implements IVRPFunction {
     @Override
     public boolean verify() {
         if (value != tmpValue) {
-            System.out.println("EXCEPTION::" + name() + " -> value != tmpValue");
+            System.out.println("EXCEPTION::" + name() + " -> value(" + value + ") != tmpValue(" + tmpValue+ ") fvalue = " + f.getValue());
             return false;
         }
         return true;

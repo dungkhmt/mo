@@ -25,10 +25,10 @@ public class SBRoadBlockViolationCalculator implements IAccumulatedCalculator {
             }
         }
         int roadBlock = (int) roadBlockManager.getDistance(prev, point);
-        int roadBlockCap = SBUtils.getRoadBloakCap(roadBlock);
+        int roadBlockCap = SBUtils.getRoadBloakCap(roadBlock) + 1;
         SchoolBusRoute schoolBusRoute = (SchoolBusRoute) point.getRoute();
         if (schoolBusRoute != null) {
-            return prevValue + Math.max(0, roadBlockCap - schoolBusRoute.getCapacity());
+            return prevValue + Math.max(0, schoolBusRoute.getCapacity() - roadBlockCap);
         }
         return prevValue;
     }
@@ -42,10 +42,10 @@ public class SBRoadBlockViolationCalculator implements IAccumulatedCalculator {
             }
         }
         int roadBlock = (int) roadBlockManager.getTmpDistance(prev, point);
-        int roadBlockCap = SBUtils.getRoadBloakCap(roadBlock);
-        SchoolBusRoute schoolBusRoute = (SchoolBusRoute) point.getRoute();
+        int roadBlockCap = SBUtils.getRoadBloakCap(roadBlock) + 1;
+        SchoolBusRoute schoolBusRoute = (SchoolBusRoute) point.getTmpRoute();
         if (schoolBusRoute != null) {
-            return prevValue + Math.max(0, roadBlockCap - schoolBusRoute.getCapacity());
+            return prevValue + Math.max(0, schoolBusRoute.getCapacity() - roadBlockCap);
         }
         return prevValue;
     }
