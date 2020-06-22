@@ -1,4 +1,4 @@
-package com.socolabs.mo.vrplib.apps.schoolbusrouting;
+package com.socolabs.mo.vrplib.apps.schoolbusrouting.functions;
 
 import com.socolabs.mo.vrplib.core.IVRPFunction;
 import com.socolabs.mo.vrplib.core.VRPPoint;

@@ -6,6 +6,9 @@ import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
+import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.BusRoute;
+import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.SchoolBusRoutingInput;
+import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.SchoolBusRoutingSolution;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.Utils;
 import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
 import org.apache.poi.EncryptedDocumentException;
@@ -113,5 +116,26 @@ public class SBUtils {
             System.out.println("export error");
             ex.printStackTrace();
         }
+    }
+
+    public static SchoolBusRoutingSolution exportSolution(SchoolBusRoutingInput input, VRPVarRoutes vr) {
+        ArrayList<BusRoute> busRoutes = new ArrayList<>();
+        for (VRPRoute r : vr.getAllRoutes()) {
+            if (r.getNbPoints() > 0) {
+                int nbPersons = 0;
+                int nbStops = 0;
+                double travelTime = 0;
+                double travelDistance = 0;
+                int updateFlag = 0;
+                int isResolved = 0;
+                for (VRPPoint p = r.getStartPoint().getNext(); p != r.getEndPoint(); p = p.getNext()) {
+                    SchoolBusPickupPoint sbP = (SchoolBusPickupPoint) p;
+                    nbPersons += sbP.size();
+                    nbStops ++;
+
+                }
+            }
+        }
+        return null;
     }
 }

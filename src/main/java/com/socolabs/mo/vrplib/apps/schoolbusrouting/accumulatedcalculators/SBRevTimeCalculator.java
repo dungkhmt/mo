@@ -1,4 +1,4 @@
-package com.socolabs.mo.vrplib.apps.schoolbusrouting;
+package com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators;
 
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
