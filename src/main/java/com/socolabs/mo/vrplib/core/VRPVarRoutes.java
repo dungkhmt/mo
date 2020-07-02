@@ -2710,7 +2710,7 @@ public class VRPVarRoutes {
         }
 
         GreedySearch s = new GreedySearch(vr, objectiveFunc);
-        s.search(1000, 60000 * 5);
+        s.search(1000, 60000 * 5, false);
 
         System.exit(0);
 //        for (int step = 0; step < 100000; step++) {

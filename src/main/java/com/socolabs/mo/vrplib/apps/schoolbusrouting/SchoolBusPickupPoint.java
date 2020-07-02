@@ -16,6 +16,7 @@ public class SchoolBusPickupPoint extends VRPPoint {
     private double pickupServiceTime;
     private int totalTravelTimeLimit;
     private int directTravelTimeToSchool;
+    private double haversineDistanceToSchool;
     private ArrayList<SchoolBusRequest> requests;
     private SchoolBusRoutingInput input;
 
@@ -38,10 +39,41 @@ public class SchoolBusPickupPoint extends VRPPoint {
         groupId = 0;
     }
 
+    public double computeDistanceHaversine(double lat1, double long1,
+                                           double lat2, double long2) {
+        double SCALE = 1;
+        double PI = 3.14159265;
+        long1 = long1 * 1.0 / SCALE;
+        lat1 = lat1 * 1.0 / SCALE;
+        long2 = long2 * 1.0 / SCALE;
+        lat2 = lat2 * 1.0 / SCALE;
+
+        double dlat1 = lat1 * PI / 180;
+        double dlong1 = long1 * PI / 180;
+        double dlat2 = lat2 * PI / 180;
+        double dlong2 = long2 * PI / 180;
+
+        double dlong = dlong2 - dlong1;
+        double dlat = dlat2 - dlat1;
+
+        double aHarv = Math.pow(Math.sin(dlat / 2), 2.0) + Math.cos(dlat1)
+                * Math.cos(dlat2) * Math.pow(Math.sin(dlong / 2), 2.0);
+        double cHarv = 2 * Math.atan2(Math.sqrt(aHarv), Math.sqrt(1.0 - aHarv));
+
+        double R = 6378.137; // in km
+
+        return R * cHarv * SCALE; // in km
+
+    }
+
     public void addRequest(SchoolBusRequest r) {
         requests.add(r);
         pickupServiceTime = Math.max(pickupServiceTime, r.getServicePickupDuration());
         groupId = Math.max(groupId, r.getGroupId());
+        if (requests.size() == 1) {
+            haversineDistanceToSchool = computeDistanceHaversine(r.getLat_pickup(), r.getLong_pickup(),
+                    input.getLat_school(), input.getLong_school());
+        }
     }
 
     public int size() {

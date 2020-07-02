@@ -11,10 +11,12 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
 
     private VRPVarRoutes vr;
     private RevAccumulatedWeightPoints revAccTravelTime;
+    private double boardingTimeScale;
 
-    public NWMTimeViolationAtPoint(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccTravelTime) {
+    public NWMTimeViolationAtPoint(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccTravelTime, double boardingTimeScale) {
         this.vr = vr;
         this.revAccTravelTime = revAccTravelTime;
+        this.boardingTimeScale = boardingTimeScale;
     }
 
     @Override
@@ -23,7 +25,15 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
             return 0;
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
-        return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
+        VRPRoute route = point.getRoute();
+        if (route != null) {
+            int nbPoints = route.getNbPoints() + 1;
+            int d = nbPoints - point.getIndex();
+            return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point)
+                    - p.getDirectTravelTimeToSchool() * (boardingTimeScale + 0.1 * d));
+        }
+        return 0;
+//        return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
     }
 
     @Override
@@ -32,7 +42,15 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
             return 0;
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
-        return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
+        VRPRoute route = point.getTmpRoute();
+        if (route != null) {
+            int nbPoints = route.getTmpNbPoints() + 1;
+            int d = nbPoints - point.getTmpIndex();
+            return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point)
+                    - p.getDirectTravelTimeToSchool() * (boardingTimeScale + 0.1 * d));
+        }
+        return 0;
+//        return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
     }
 
     @Override

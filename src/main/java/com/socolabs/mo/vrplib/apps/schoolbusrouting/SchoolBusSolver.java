@@ -1,10 +1,7 @@
 package com.socolabs.mo.vrplib.apps.schoolbusrouting;
 
 import com.google.gson.Gson;
-import com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators.SBArrivalTimeCalculator;
-import com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators.SBNumberValidStudentCalculator;
-import com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators.SBRevTimeCalculator;
-import com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators.SBRoadBlockViolationCalculator;
+import com.socolabs.mo.vrplib.apps.schoolbusrouting.accumulatedcalculators.*;
 import com.socolabs.mo.vrplib.apps.schoolbusrouting.functions.SBTotalUsedBuses;
 import com.socolabs.mo.vrplib.apps.schoolbusrouting.nodewieghtmanagers.*;
 import com.socolabs.mo.vrplib.constraints.capacity.CapacityConstraint;
@@ -14,7 +11,9 @@ import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
+import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedEdgeCalculator;
 import com.socolabs.mo.vrplib.entities.accumulatedcalculators.AccumulatedNodeCalculator;
+import com.socolabs.mo.vrplib.entities.distancemanagers.DistanceManager;
 import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
 import com.socolabs.mo.vrplib.functions.AccumulatedPointWeightsOnPath;
 import com.socolabs.mo.vrplib.functions.sum.SumAccumulatedWeightPoints;
@@ -24,15 +23,14 @@ import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.search.GreedySearch;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.*;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 public class SchoolBusSolver {
 
     private SchoolBusRoutingInput input;
 
+    private HashMap<String, HashMap<String, Double>> distanceMap;
     private HashMap<String, HashMap<String, Integer>> travelTimeMap;
     private HashMap<String, HashMap<String, Integer>> roadBlockMap;
     private HashMap<VRPRoute, Double> mRoute2Capacity;
@@ -40,33 +38,67 @@ public class SchoolBusSolver {
     private VRPVarRoutes vr;
     private LexMultiFunctions objectiveFuncs;
     private RevAccumulatedWeightPoints revAccTravelTime;
+    private RevAccumulatedWeightPoints revAccDistance;
     private AccumulatedWeightPoints accArrivalTime;
     private IDistanceManager travelTimeManager;
+    private DistanceManager distanceManager;
 
     public SchoolBusRoutingSolution solve(SchoolBusRoutingInput input) {
+        System.out.println("solve");
         this.input = input;
         stateModel();
+        System.out.println("done State Model");
         GreedySearch search = new GreedySearch(vr, objectiveFuncs);
-        search.search(100000, 10 * 60000);
-        SBUtils.exportSBExcel(vr, accArrivalTime, travelTimeManager, revAccTravelTime,
+        search.addExplorer(GreedySearch.INSERT_ONE_MOVE);
+        search.search(100000, 10 * 60000, false);
+        search.addExplorer(GreedySearch.ONE_POINT_MOVE);
+        search.addExplorer(GreedySearch.OR_OPT_MOVE);
+        search.addExplorer(GreedySearch.TWO_POINTS_MOVE);
+        search.addExplorer(GreedySearch.TWO_OPT_MOVE);
+        search.addExplorer(GreedySearch.THREE_OPT_MOVE);
+        search.addExplorer(GreedySearch.CROSS_EXCHANGE_MOVE);
+        search.search(100000, 30 * 60000, false);
+        SBUtils.exportSBExcel(vr, accArrivalTime, travelTimeManager, revAccTravelTime, mRoute2Capacity,
                 "D:\\Workspace\\VinSchool\\nodejs\\nodejs\\data\\",
                 "Imperia");
-        return null;
+        return null;//SBUtils.exportSolution(input, vr);
     }
 
     private void stateModel() {
         vr = new VRPVarRoutes();
         objectiveFuncs = new LexMultiFunctions();
+        System.out.println("initTravelTime");
         initTravelTime();
+        System.out.println("createRoutes");
         createRoutes();
+        System.out.println("createPoints");
         createPoints();
+        System.out.println("addMaximumNumberOfStudents");
         addMaximumNumberOfStudents();
+        System.out.println("addCapacityConstraint");
         addCapacityConstraint();
+        System.out.println("addGroupConstraint");
         addGroupConstraint();
+        System.out.println("addRoadBlockConstraint");
         addRoadBlockConstraint();
+//        System.out.println("addDistanceConstraint");
+//        addDistanceConstraint();
+        System.out.println("addTravelTimeConstraint");
         addTravelTimeConstraint();
+        System.out.println("addMinimumUsedBusesObjective");
         addMinimumUsedBusesObjective();
+        System.out.println("addTravelTimeObjective");
         addTravelTimeObjective();
+    }
+
+    private void addDistanceConstraint() {
+        SumAccumulatedWeightPoints totalDistanceViolations = new SumAccumulatedWeightPoints(
+                new AccumulatedWeightPoints(
+                        new SBDistanceViolationCalculator(vr)
+                )
+        );
+        objectiveFuncs.add(totalDistanceViolations, LexMultiFunctions.MINIMIZE, "distanceViolations");
+
     }
 
     private void addGroupConstraint() {
@@ -118,7 +150,7 @@ public class SchoolBusSolver {
         // tổng thời gian đi từ 1 điểm u đến trường
         revAccTravelTime = new RevAccumulatedWeightPoints(revTimeCalculator);
         // vi phạm về thời gian di chuyển từ 1 điểm u đến trường
-        NWMTimeViolationAtPoint travelTimeViolationAtPoint = new NWMTimeViolationAtPoint(vr, revAccTravelTime);
+        NWMTimeViolationAtPoint travelTimeViolationAtPoint = new NWMTimeViolationAtPoint(vr, revAccTravelTime, 0.01 * input.getConfigParams().getBoardingTimeScale2());
         // tổng vi phạm của các điểm từ điểm bắt đầu đến điểm u
         AccumulatedWeightPoints travelTimeViolationAcc = new AccumulatedWeightPoints(new AccumulatedNodeCalculator(travelTimeViolationAtPoint));
         // constraint giới hạn thời gian di chuyển từ 1 điểm không được vượt quá 180% so với đường đi ngắn nhất đến trường
@@ -129,10 +161,16 @@ public class SchoolBusSolver {
     private void addTravelTimeObjective() {
         // tính thời gian ứng với từng point trong hàm mục tiêu
         // hàm mục tiêu là tổng thời gian di chuyển của các route + tổng độ chênh lệch giữa thời gian đi trực tiếp với thời gian đi thực tế của từng point đến trường
-        NWMTravelTimeObjective nwmTravelTimeObjective = new NWMTravelTimeObjective(vr, revAccTravelTime);
+        distanceManager = new DistanceManager(vr, distanceMap);
+        revAccDistance = new RevAccumulatedWeightPoints(new SBRevDistanceCalculator(distanceManager));
+        NWMTravelTimeObjective nwmTravelTimeObjective = new NWMTravelTimeObjective(vr, revAccTravelTime,  travelTimeManager, false);
         AccumulatedWeightPoints travelTimeObjectiveAcc = new AccumulatedWeightPoints(new AccumulatedNodeCalculator(nwmTravelTimeObjective));
         SumAccumulatedWeightPoints travelTimeObjective = new SumAccumulatedWeightPoints(travelTimeObjectiveAcc);
-        objectiveFuncs.add(travelTimeObjective, LexMultiFunctions.MINIMIZE, "travelTimeObj");
+        objectiveFuncs.add(travelTimeObjective, LexMultiFunctions.MINIMIZE, "maxTravelTimeObj");
+//        NWMTravelTimeObjective nwmTravelTimeObjective1 = new NWMTravelTimeObjective(vr, revAccTravelTime, true);
+//        AccumulatedWeightPoints travelTimeObjectiveAcc1 = new AccumulatedWeightPoints(new AccumulatedNodeCalculator(nwmTravelTimeObjective1));
+//        SumAccumulatedWeightPoints travelTimeObjective1 = new SumAccumulatedWeightPoints(travelTimeObjectiveAcc1);
+//        objectiveFuncs.add(travelTimeObjective1, LexMultiFunctions.MINIMIZE, "totalTravelTimeObj");
     }
 
     private void addCapacityConstraint() {
@@ -189,8 +227,8 @@ public class SchoolBusSolver {
                 roadBlock = 0;
             }
             int roadBlockCap = SBUtils.getRoadBloakCap(roadBlock);
-            SchoolBusRoute route = findRoute(roadBlockCap + 1);
-            double routeCap = mRoute2Capacity.get(route);
+//            SchoolBusRoute route = findRoute(roadBlockCap + 1);
+            double routeCap = roadBlockCap;//mRoute2Capacity.get(route);
 
             int demand = 0;
             for (ArrayList<SchoolBusRequest> subRequests : locationRequests) {
@@ -219,6 +257,7 @@ public class SchoolBusSolver {
                         dividedRequests.addAll(subRequests);
                         cnt += subRequests.size();
                         orderedSubRequests.remove(subRequests);
+                        System.out.println(orderedSubRequests.size());
                     } else {
                         subRequests = orderedSubRequests.last();
                         if (cnt + subRequests.size() <= routeCap) {
@@ -262,6 +301,7 @@ public class SchoolBusSolver {
         locationIdSet.add(input.getShoolPointId());
         travelTimeMap = new HashMap<>();
         roadBlockMap = new HashMap<>();
+        distanceMap = new HashMap<>();
         double timeScale = 1.0 + 0.01 * input.getConfigParams().getTimeScale();
         for (DistanceElement e : input.getDistances()) {
             String src = "" + e.getSrcCode();
@@ -269,18 +309,55 @@ public class SchoolBusSolver {
             if (!travelTimeMap.containsKey(src)) {
                 travelTimeMap.put(src, new HashMap<>());
                 roadBlockMap.put(src, new HashMap<>());
+                distanceMap.put(src, new HashMap<>());
             }
             travelTimeMap.get(src).put(dest, (int) Math.ceil(timeScale * e.getTravelTime()));
             roadBlockMap.get(src).put(dest, e.getRoadBlock());
+            distanceMap.get(src).put(dest, e.getDistance());
         }
     }
 
     public static void main(String[] args) throws FileNotFoundException {
         Gson g = new Gson();
-        String inputFile = "D:\\Workspace\\VinSchool\\10212350ydjri3vmtuha4qhyc5sshkc_time14_39_658nextyear-input.json";
+        String inputFile = "D:\\Workspace\\VinSchool\\Times\\Times\\4212315b0rxixdruq3jmxjox2xvc4yv_time9_27_686nextyear-input.json";
         BufferedReader in = new BufferedReader(new FileReader(inputFile));
         SchoolBusRoutingInput input = g.fromJson(in, SchoolBusRoutingInput.class);
+        ArrayList<SchoolBusRequest> avaiRequests = new ArrayList<>();
+        HashSet<Integer> idLocations = new HashSet<>();
+        for (DistanceElement de : input.getDistances()) {
+            if (de.getDestCode() == input.getShoolPointId()) {
+                idLocations.add(de.getSrcCode());
+            }
+        }
+        for (SchoolBusRequest r : input.getRequests()) {
+            if (idLocations.contains(r.getPickupLocationId())) {// && idLocations.contains(r.getDeliveryLocationId())) {
+                avaiRequests.add(r);
+            } else {
+
+            }
+        }
+        System.out.println(avaiRequests.size());
+//        System.exit(0);
+//        input.getConfigParams().setBoardingTimeScale1(250);
+        input.getConfigParams().setBoardingTimeScale2(200);
+        SchoolBusRequest[] newRequests = new SchoolBusRequest[avaiRequests.size()];
+        for (int i = 0; i < newRequests.length; i++) {
+            newRequests[i] = avaiRequests.get(i);
+        }
+        input.setRequests(newRequests);
+        System.out.println(newRequests.length);
+//        input.setRequestSolutionType("new");
+//        String inputJson = g.toJson(input);
+//        try {
+//            BufferedWriter fo = new BufferedWriter(new FileWriter("D:\\Workspace\\VinSchool\\Times\\Times\\4212315_times_city_input.json"));
+//            fo.write(inputJson);
+//            fo.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        System.exit(0);
         SchoolBusSolver solver = new SchoolBusSolver();
-        solver.solve(input);
+        SchoolBusRoutingSolution sol = solver.solve(input);
+
     }
 }

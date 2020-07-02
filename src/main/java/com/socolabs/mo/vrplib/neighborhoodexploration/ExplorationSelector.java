@@ -84,6 +84,7 @@ public class ExplorationSelector implements IVRPInvariant {
     public void propagate() {
         changedRoutes.clear();
         removedPoints.clear();
+        addedPoints.clear();
         changedRoutes.addAll(vr.getChangedRoutes());
         removedPoints.addAll(vr.getRemovedPoints());
         addedPoints.addAll(vr.getAddedPoints());

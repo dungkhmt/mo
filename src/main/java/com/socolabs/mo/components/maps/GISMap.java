@@ -35,7 +35,7 @@ public class GISMap {
 	public GISMap(){
 		//loadMap("data/SanfranciscoRoad-connected-contracted-5.txt");
 		try {
-			loadMap("data/HoChiMinhRoad-connected.txt");
+			loadMap("data/HanoiCityRoad-connected.txt");
 		} catch (Exception e) {
 
 		}
@@ -164,8 +164,8 @@ public class GISMap {
 				//		+ ", endIndex = " + endIndex + ", n = " + n);
 				
 				A[beginIndex].add(a);
-				Arc b = new Arc(beginIndex, length);
-				A[endIndex].add(b);
+//				Arc b = new Arc(beginIndex, length);
+//				A[endIndex].add(b);
 			}
 			List<ILocation> ps = new ArrayList<>();
 			for (int i = 1; i < points.size(); i++) {
