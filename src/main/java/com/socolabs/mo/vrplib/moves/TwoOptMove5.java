@@ -3,7 +3,9 @@ package com.socolabs.mo.vrplib.moves;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.LexMultiValues;
+import lombok.Getter;
 
+@Getter
 public class TwoOptMove5 implements IVRPMove {
 
     private VRPVarRoutes vr;
@@ -21,6 +23,7 @@ public class TwoOptMove5 implements IVRPMove {
     @Override
     public void move() {
         System.out.println("propagate " + name() + " -> " + x + "; " + y + " eval = " + eval);
+        System.out.println("x route " + x.getRoute() + " :: y route " + y.getRoute());
         vr.propagateTwoOptMove5(x, y);
     }
 

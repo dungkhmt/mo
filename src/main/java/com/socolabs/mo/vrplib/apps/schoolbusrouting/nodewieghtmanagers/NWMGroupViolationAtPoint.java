@@ -32,7 +32,7 @@ public class NWMGroupViolationAtPoint implements INodeWeightManager {
             SchoolBusPickupPoint prev = (SchoolBusPickupPoint) point.getTmpPrev();
             SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
             if (p.getGroupId() != prev.getGroupId()) {
-                return 1;
+                return p.getGroupId() > 0 ? 1 : 0;
             }
         }
         return 0;

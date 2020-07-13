@@ -79,4 +79,13 @@ public class LexMultiFunctions {
         }
         return 0;
     }
+
+    public double getValueOfFunctionName(String funcName) {
+        for (int i = 0; i < funcNames.size(); i++) {
+            if (funcNames.get(i).equals(funcName)) {
+                return functions.get(i).getValue();
+            }
+        }
+        return 0;
+    }
 }

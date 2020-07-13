@@ -1,9 +1,12 @@
 package com.socolabs.mo.vrplib.invariants;
 
+import com.socolabs.mo.vrplib.apps.schoolbusrouting.SchoolBusPickupPoint;
 import com.socolabs.mo.vrplib.core.*;
 import com.socolabs.mo.vrplib.entities.IAccumulatedCalculator;
 import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -123,8 +126,8 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
             if (next == null) {
                 double accWeight = accCalculator.caclAccWeightAtPoint(0, point);
 //                System.out.println("route " + route);
-//                System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
                 if (Math.abs(revAccWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
+                    System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
                     System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                     return false;
                 }
@@ -132,8 +135,8 @@ public class RevAccumulatedWeightPoints implements IVRPInvariant {
                 while (point != null) {
                     int stt = point.getStt();
                     accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
-//                    System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
                     if (Math.abs(revAccWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
+                        System.out.println(" - " + revAccWeightArr[point.getStt()] + " " + accWeight);
                         System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                         return false;
                     }

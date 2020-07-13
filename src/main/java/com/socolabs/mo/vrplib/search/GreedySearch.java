@@ -8,7 +8,6 @@ import com.socolabs.mo.vrplib.entities.VRPSolutionValue;
 import com.socolabs.mo.vrplib.moves.IVRPMove;
 import com.socolabs.mo.vrplib.neighborhoodexploration.*;
 
-import javax.servlet.http.PushBuilder;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -26,18 +25,18 @@ public class GreedySearch {
 
     private VRPVarRoutes vr;
     private LexMultiFunctions objectiveFunc;
-    private ExplorationSelector selector;
+    private GreedyExplorationSelector selector;
 
     public GreedySearch(VRPVarRoutes vr, LexMultiFunctions objectiveFunc) {
         this.vr = vr;
         this.objectiveFunc = objectiveFunc;
-        selector = new ExplorationSelector(vr, objectiveFunc);
+        selector = new GreedyExplorationSelector(vr, objectiveFunc);
     }
 
     public void addExplorer(int moveType) {
         switch (moveType) {
             case INSERT_ONE_MOVE:
-                new GreedyInsertOnePointMoveExplorer(vr, selector);
+                new BestInsertOnePointMoveExplorer(vr, selector);
                 break;
             case ONE_POINT_MOVE:
                 new GreedyOnePointMoveExplorer(vr, selector);
@@ -86,7 +85,7 @@ public class GreedySearch {
             iter++;
             LexMultiValues oldValues = objectiveFunc.values();
             System.out.println("iter " + iter + " :: objectiveValues = " + oldValues);
-            IVRPMove bestMove = selector.selectBestMove();
+            IVRPMove bestMove = selector.selectFirstImprovementMove();
             if (bestMove != null) {
                 bestMove.move();
                 LexMultiValues newValues = objectiveFunc.values();

@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 @Getter
 public class SchoolBusPickupPoint extends VRPPoint {
@@ -16,12 +17,15 @@ public class SchoolBusPickupPoint extends VRPPoint {
     private double pickupServiceTime;
     private int totalTravelTimeLimit;
     private int directTravelTimeToSchool;
+    private double directDistanceToSchool;
     private double haversineDistanceToSchool;
     private ArrayList<SchoolBusRequest> requests;
     private SchoolBusRoutingInput input;
 
     public SchoolBusPickupPoint(String locationCode, VRPVarRoutes vr,
-                                SchoolBusRoutingInput input, HashMap<String, HashMap<String, Integer>> travelTimeMap) {
+                                SchoolBusRoutingInput input,
+                                HashMap<String, HashMap<String, Integer>> travelTimeMap,
+                                HashMap<String, HashMap<String, Double>> distanceMap) {
         super(locationCode, vr);
         this.input = input;
         requests = new ArrayList<>();
@@ -36,6 +40,7 @@ public class SchoolBusPickupPoint extends VRPPoint {
             totalTravelTimeLimit = (int) ((1 + 0.05 * input.getConfigParams().getBoardingTimeScale2()) * directTravelTime);
         }
         directTravelTimeToSchool = directTravelTime;
+        directDistanceToSchool = distanceMap.get(locationCode).get("" + input.getShoolPointId());
         groupId = 0;
     }
 

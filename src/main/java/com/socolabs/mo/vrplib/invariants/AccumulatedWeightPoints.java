@@ -187,17 +187,27 @@ public class AccumulatedWeightPoints implements IVRPInvariant {
             if (prev == null) {
 //                System.out.println("route: " + route.getStt());
                 double accWeight = accCalculator.caclAccWeightAtPoint(0, point);
-//                System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                 if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                    System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                    accWeight = accCalculator.caclAccWeightAtPoint(0, point);
+                    System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
+                    System.out.println(name() + "::EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                     return false;
                 }
                 point = point.getNext();
                 while (point != null) {
                     accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
-//                    System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
                     if (Math.abs(accWeightArr[point.getStt()] - accWeight) > CBLSVRP.EPS) {
-                        System.out.println(name() + "EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
+                        System.out.println("debug ---------------");
+                        point = route.getStartPoint();
+                        accWeight = accCalculator.caclAccWeightAtPoint(0, point);
+                        System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
+                        while (point.getNext() != null) {
+                            point = point.getNext();
+                            accWeight = accCalculator.caclAccWeightAtPoint(accWeight, point);
+                            System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
+                        }
+                        System.out.println("point " + point.getLocationCode() + " acc = " + accWeightArr[point.getStt()] + " verifying value = " + accWeight);
+                        System.out.println(name() + "::EXCEPTION::" + accCalculator.name() + " -> accWeightArr != tmpAccWeightArr");
                         return false;
                     }
                     point = point.getNext();

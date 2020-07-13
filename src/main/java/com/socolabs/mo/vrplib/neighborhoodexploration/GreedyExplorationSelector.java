@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 @Getter
-public class ExplorationSelector implements IVRPInvariant {
+public class GreedyExplorationSelector implements IVRPInvariant {
 
     private VRPVarRoutes vr;
     private LexMultiFunctions objectiveFunction;
@@ -28,7 +28,7 @@ public class ExplorationSelector implements IVRPInvariant {
 
     private Random rand = new Random();
 
-    public ExplorationSelector(VRPVarRoutes vr, LexMultiFunctions objectiveFunction) {
+    public GreedyExplorationSelector(VRPVarRoutes vr, LexMultiFunctions objectiveFunction) {
         this.vr = vr;
         this.objectiveFunction = objectiveFunction;
         vr.post(this);
@@ -65,7 +65,7 @@ public class ExplorationSelector implements IVRPInvariant {
                 bestMove = move;
             } else {
                 int cmp = objectiveFunction.compare(move.evaluation(), bestMove.evaluation());
-                if (cmp < 0) {
+                if (cmp <= 0) {
                     bestMove = move;
                 } else if (cmp == 0 && rand.nextBoolean()) {
                     bestMove = move;
@@ -73,6 +73,17 @@ public class ExplorationSelector implements IVRPInvariant {
             }
         }
         return bestMove;
+    }
+
+    public IVRPMove selectFirstImprovementMove() {
+        for (INeighborhoodExploration neighborhoodExploration : neighborhoodExplorations) {
+            IVRPMove move = neighborhoodExploration.getMove();
+            if (move == null) {
+                continue;
+            }
+            return move;
+        }
+        return null;
     }
 
     @Override

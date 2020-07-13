@@ -56,6 +56,6 @@ public class AccumulatedNodeCalculator implements IAccumulatedCalculator {
 
     @Override
     public String name() {
-        return "AccumulatedNodeCalculator";
+        return "AccumulatedNodeCalculator::" + nodeWeightManager.name();
     }
 }

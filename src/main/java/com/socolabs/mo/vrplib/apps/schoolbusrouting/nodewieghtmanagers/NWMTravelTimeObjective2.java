@@ -6,17 +6,17 @@ import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.IDistanceManager;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
-import com.socolabs.mo.vrplib.entities.distancemanagers.TravelTimeManager;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
 
-public class NWMTravelTimeObjective  implements INodeWeightManager {
+public class NWMTravelTimeObjective2 implements INodeWeightManager {
 
     private VRPVarRoutes vr;
     private RevAccumulatedWeightPoints revAccTravelTime;
     private IDistanceManager travelTimeManager;
     private boolean sumTotalTravelTime;
 
-    public NWMTravelTimeObjective(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccTravelTime, IDistanceManager travelTimeManager, boolean sumTotalTravelTime) {
+    public NWMTravelTimeObjective2(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccTravelTime, IDistanceManager travelTimeManager, boolean sumTotalTravelTime) {
         this.vr = vr;
         this.revAccTravelTime = revAccTravelTime;
         this.travelTimeManager = travelTimeManager;
@@ -26,29 +26,33 @@ public class NWMTravelTimeObjective  implements INodeWeightManager {
     @Override
     public double getWeight(VRPPoint point) {
         if (point.isStartPoint()) {
-            return sumTotalTravelTime ? revAccTravelTime.getWeightValueOfPoint(point.getNext()) : 0;
+            return 0;
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
-        double vi = Math.max(0, travelTimeManager.getDistance(point, point.getNext()) - travelTimeManager.getDistance(point.getNext(), point));
-        if (p.getIndex() == 1) {
-            return vi + 10 * Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) - p.getDirectTravelTimeToSchool());
-        } else {
-            return vi;
+        double vi = 0;
+        if (travelTimeManager.getDistance(point.getNext(), point) > CBLSVRP.EPS) {
+            vi = travelTimeManager.getDistance(point, point.getNext()) / travelTimeManager.getDistance(point.getNext(), point);
         }
+        if (p.getDirectTravelTimeToSchool() > CBLSVRP.EPS) {
+            return vi + revAccTravelTime.getWeightValueOfPoint(point) / p.getDirectTravelTimeToSchool();
+        }
+        return vi;
     }
 
     @Override
     public double getTmpWeight(VRPPoint point) {
         if (point.isStartPoint()) {
-            return sumTotalTravelTime ? revAccTravelTime.getTmpWeightValueOfPoint(point.getTmpNext()) : 0;
+            return 0;
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
-        double vi = Math.max(0, travelTimeManager.getDistance(point, point.getTmpNext()) - travelTimeManager.getDistance(point.getTmpNext(), point));
-        if (p.getTmpIndex() == 1) {
-            return vi + 10 * Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) - p.getDirectTravelTimeToSchool());
-        } else {
-            return vi;
+        double vi = 0;
+        if (travelTimeManager.getDistance(point.getTmpNext(), point) > CBLSVRP.EPS) {
+            vi = travelTimeManager.getDistance(point, point.getTmpNext()) / travelTimeManager.getDistance(point.getTmpNext(), point);
         }
+        if (p.getDirectTravelTimeToSchool() > CBLSVRP.EPS) {
+            return vi + revAccTravelTime.getTmpWeightValueOfPoint(point) / p.getDirectTravelTimeToSchool();
+        }
+        return vi;
     }
 
     @Override
@@ -78,7 +82,7 @@ public class NWMTravelTimeObjective  implements INodeWeightManager {
 
     @Override
     public String name() {
-        return "NWMTravelTimeObjective";
+        return "NWMTravelTimeObjective2";
     }
 }
 

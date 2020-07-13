@@ -1,5 +1,7 @@
 package com.socolabs.mo.vrplib.apps.schoolbusrouting;
 
+import com.google.gson.Gson;
+import com.socolabs.mo.components.algorithms.nearestlocation.Pair;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
@@ -8,16 +10,22 @@ import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.*;
 import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
+import localsearch.domainspecific.vehiclerouting.vrp.utils.DateTimeUtils;
+import localsearch.domainspecific.vehiclerouting.vrp.utils.googlemaps.Direction;
+import localsearch.domainspecific.vehiclerouting.vrp.utils.googlemaps.GoogleMapsQuery;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class SBUtils {
 
@@ -248,5 +256,122 @@ public class SBUtils {
             }
         }
         return null;
+    }
+
+    public static int calcDifferenceBetween2Solutions(SchoolBusRoutingSolution randomSolution,
+                                                      SchoolBusRoutingSolution officialSolution) {
+        HashMap<Integer, HashSet<Integer>> mLocation2PrevLocationOfRandomSol = new HashMap<>();
+        for (BusRoute r : randomSolution.getBusRoutes()) {
+            int prevLocationId = -1;
+            for (RouteElement e : r.getNodes()) {
+                int locationId = e.getLocationId();
+                if (!mLocation2PrevLocationOfRandomSol.containsKey(locationId)) {
+                    mLocation2PrevLocationOfRandomSol.put(locationId, new HashSet<>());
+                }
+                mLocation2PrevLocationOfRandomSol.get(locationId).add(prevLocationId);
+                prevLocationId = e.getLocationId();
+            }
+        }
+        for (SchoolBusRequest re : randomSolution.getUnScheduledRequests()) {
+            int locationId = re.getPickupLocationId();
+            if (!mLocation2PrevLocationOfRandomSol.containsKey(locationId)) {
+                mLocation2PrevLocationOfRandomSol.put(locationId, new HashSet<>());
+            }
+            mLocation2PrevLocationOfRandomSol.get(locationId).add(-1);
+        }
+        HashMap<Integer, HashSet<Integer>> mLocation2PrevLocationOfOfficialSol = new HashMap<>();
+        for (BusRoute r : officialSolution.getBusRoutes()) {
+            int prevLocationId = -1;
+            for (RouteElement e : r.getNodes()) {
+                int locationId = e.getLocationId();
+                if (!mLocation2PrevLocationOfOfficialSol.containsKey(locationId)) {
+                    mLocation2PrevLocationOfOfficialSol.put(locationId, new HashSet<>());
+                }
+                mLocation2PrevLocationOfOfficialSol.get(locationId).add(prevLocationId);
+                prevLocationId = e.getLocationId();
+            }
+        }
+        for (SchoolBusRequest re : officialSolution.getUnScheduledRequests()) {
+            int locationId = re.getPickupLocationId();
+            if (!mLocation2PrevLocationOfOfficialSol.containsKey(locationId)) {
+                mLocation2PrevLocationOfOfficialSol.put(locationId, new HashSet<>());
+            }
+            mLocation2PrevLocationOfOfficialSol.get(locationId).add(-1);
+        }
+        int nbChange = 0;
+        for (Integer locationId : mLocation2PrevLocationOfOfficialSol.keySet()) {
+            HashSet<Integer> randomSet = mLocation2PrevLocationOfRandomSol.get(locationId);
+            HashSet<Integer> officialSet = mLocation2PrevLocationOfOfficialSol.get(locationId);
+            if (randomSet == null && officialSet != null) {
+                nbChange += officialSet.size();
+            }
+            if (randomSet != null && officialSet == null) {
+                nbChange += randomSet.size();
+            }
+            for (int x : officialSet) {
+                if (!randomSet.contains(x)) {
+                    nbChange++;
+                }
+            }
+        }
+        return nbChange;
+    }
+
+    public static void recreateTravelTimeMatrix(SchoolBusRoutingInput input, String savePath) {
+        HashSet<Integer> locationIdSet = new HashSet<>();
+        HashMap<Integer, Pair<Double, Double>> mLocationId2LatLng = new HashMap<>();
+        locationIdSet.add(input.getShoolPointId());
+        mLocationId2LatLng.put(input.getShoolPointId(), new Pair<>(input.getLat_school(), input.getLong_school()));
+        for (SchoolBusRequest r : input.getRequests()) {
+            if (r.getLat_pickup() != 0 && r.getLong_pickup() != 0 && r.getLat_pickup() != r.getLong_pickup()) {
+                locationIdSet.add(r.getPickupLocationId());
+                mLocationId2LatLng.put(r.getPickupLocationId(),
+                        new Pair<>(r.getLat_pickup(), r.getLong_pickup()));
+            }
+            if (r.getLat_delivery() != 0 && r.getLong_delivery() != 0 && r.getLat_delivery() != r.getLong_delivery()) {
+                locationIdSet.add(r.getDeliveryLocationId());
+                mLocationId2LatLng.put(r.getDeliveryLocationId(),
+                        new Pair<>(r.getLat_delivery(), r.getLong_delivery()));
+            }
+        }
+        int n = locationIdSet.size();
+        GoogleMapsQuery GMQ = new GoogleMapsQuery();
+        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-11 07:00:00");
+        for (int i = 0; i < input.getDistances().length; i++) {
+            try {
+                DistanceElement de = input.getDistances()[i];
+                int src = de.getSrcCode();
+                int dest = de.getDestCode();
+                Pair<Double, Double> srcLatLng = mLocationId2LatLng.get(src);
+                Pair<Double, Double> destLatLng = mLocationId2LatLng.get(dest);
+                Direction direction = GMQ.getDirection(srcLatLng.first, srcLatLng.second, destLatLng.first, destLatLng.second, "driving", departure_time);
+                if (direction != null) {
+                    System.out.println(i + " -> duration = " + direction.getDurations() + " distance = " + direction.getDistances());
+                    de.setTravelTime(direction.getDurations());
+                    de.setDistance(direction.getDistances());
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        Gson g = new Gson();
+        String inputJson = g.toJson(input);
+        try {
+            BufferedWriter fo = new BufferedWriter(new FileWriter(savePath));
+            fo.write(inputJson);
+            fo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void forecaseTimeScaleToGGMap(String dataFile) {
+
+    }
+
+    public static double mean(ArrayList<Double> dataLst) {
+        double m = 0;
+        m = dataLst.stream().reduce(0.0, Double::sum);
+        return m / dataLst.size();
     }
 }

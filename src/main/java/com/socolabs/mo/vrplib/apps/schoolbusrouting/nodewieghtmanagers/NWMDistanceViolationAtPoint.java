@@ -7,18 +7,16 @@ import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.INodeWeightManager;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 
-public class NWMTimeViolationAtPoint implements INodeWeightManager {
+public class NWMDistanceViolationAtPoint  implements INodeWeightManager {
 
     private VRPVarRoutes vr;
-    private RevAccumulatedWeightPoints revAccTravelTime;
+    private RevAccumulatedWeightPoints revAccDistance;
     private double boardingTimeScale;
-    private double coef;
 
-    public NWMTimeViolationAtPoint(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccTravelTime, double boardingTimeScale) {
+    public NWMDistanceViolationAtPoint(VRPVarRoutes vr, RevAccumulatedWeightPoints revAccDistance, double boardingTimeScale) {
         this.vr = vr;
-        this.revAccTravelTime = revAccTravelTime;
+        this.revAccDistance = revAccDistance;
         this.boardingTimeScale = boardingTimeScale;
-        coef = boardingTimeScale / (5 + boardingTimeScale);
     }
 
     @Override
@@ -28,12 +26,11 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         VRPRoute route = point.getRoute();
-        if (route != null && !p.isDepot()) {
+        if (route != null) {
             int nbPoints = route.getNbPoints() + 1;
-//            int d = nbPoints - point.getIndex();
-            double f = (point.getIndex() == 1) ? coef : 0;
-            return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) //- p.getTotalTravelTimeLimit());
-                    - p.getDirectTravelTimeToSchool() * (boardingTimeScale - f));
+            int d = nbPoints - point.getIndex();
+            return Math.max(0, revAccDistance.getWeightValueOfPoint(point) //- p.getTotalTravelTimeLimit());
+                    - p.getDirectDistanceToSchool() * (boardingTimeScale + 0.05 * d));
         }
         return 0;
 //        return Math.max(0, revAccTravelTime.getWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
@@ -46,12 +43,11 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
         }
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         VRPRoute route = point.getTmpRoute();
-        if (route != null && !p.isDepot()) {
+        if (route != null) {
             int nbPoints = route.getTmpNbPoints() + 1;
-//            int d = nbPoints - point.getTmpIndex();
-            double f = (point.getTmpIndex() == 1) ? coef : 0;
-            return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) //- p.getTotalTravelTimeLimit());
-                    - p.getDirectTravelTimeToSchool() * (boardingTimeScale - f));
+            int d = nbPoints - point.getTmpIndex();
+            return Math.max(0, revAccDistance.getTmpWeightValueOfPoint(point) //- p.getTotalTravelTimeLimit());
+                    - p.getDirectDistanceToSchool() * (boardingTimeScale + 0.05 * d));
         }
         return 0;
 //        return Math.max(0, revAccTravelTime.getTmpWeightValueOfPoint(point) - p.getTotalTravelTimeLimit());
@@ -87,5 +83,6 @@ public class NWMTimeViolationAtPoint implements INodeWeightManager {
         return "NWMTimeViolationAtPoint";
     }
 }
+
 
 

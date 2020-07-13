@@ -30,6 +30,6 @@ public class TwoPointsMove implements IVRPMove {
     }
 
     public String name() {
-        return "TwoOptMove";
+        return "TwoPointsMove";
     }
 }

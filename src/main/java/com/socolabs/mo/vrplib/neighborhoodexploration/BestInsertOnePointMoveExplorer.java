@@ -8,40 +8,21 @@ import com.socolabs.mo.vrplib.entities.LexMultiValues;
 import com.socolabs.mo.vrplib.moves.IVRPMove;
 import com.socolabs.mo.vrplib.moves.OnePointMove;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.TreeSet;
-
-public class GreedyInsertOnePointMoveExplorer  implements INeighborhoodExploration {
+public class BestInsertOnePointMoveExplorer implements INeighborhoodExploration {
 
     private VRPVarRoutes vr;
-    private ExplorationSelector selector;
+    private GreedyExplorationSelector selector;
     private LexMultiFunctions objectiveF;
 
-    private HashMap<VRPRoute, ArrayList<IVRPMove>> mRoute2RelatedMoves;
-    private HashMap<VRPPoint, ArrayList<IVRPMove>> mPoint2RelatedMoves;
-    private TreeSet<IVRPMove> orderedMoves;
-
-    public GreedyInsertOnePointMoveExplorer(VRPVarRoutes vr, ExplorationSelector selector) {
+    public BestInsertOnePointMoveExplorer(VRPVarRoutes vr, GreedyExplorationSelector selector) {
         this.vr = vr;
         this.selector = selector;
         this.objectiveF = selector.getObjectiveFunction();
-
-        mRoute2RelatedMoves = new HashMap<>();
-        mPoint2RelatedMoves = new HashMap<>();
-//        orderedMoves = new TreeSet<>(new Comparator<IVRPMove>() {
-//            @Override
-//            public int compare(IVRPMove o1, IVRPMove o2) {
-//                return objectiveF.compare(o1.evaluation(), o2.evaluation());
-//            }
-//        });
         selector.add(this);
     }
 
     @Override
     public IVRPMove getMove() {
-        System.out.print(name());
         OnePointMove bestMove = null;
         LexMultiValues bestEval = null;
         for (VRPRoute cr : vr.getAllRoutes()) {
@@ -63,6 +44,6 @@ public class GreedyInsertOnePointMoveExplorer  implements INeighborhoodExplorati
     }
 
     public String name() {
-        return "GreedyInsertOnePointMoveExplorer";
+        return "BestInsertOnePointMoveExplorer";
     }
 }
