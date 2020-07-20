@@ -571,7 +571,7 @@ public class GoogleMapsQuery {
 			url = new URL(
 					"https://maps.google.com/maps/api/directions/xml?origin="
 							+ lat1 + "," + lng1 + "&destination=" + lat2 + ","
-							+ lng2 + "&units=metric&departure_time=" + departure_time + "&key=AIzaSyDztY35mN41w5nFpgtJiHgNis9ItrRUzmM");
+							+ lng2 + "&units=metric&departure_time=" + departure_time + "&key=AIzaSyDsu1_V7uPqGq7kraADXPFvUz65MFnkYBM");
 		} catch (MalformedURLException ex) {
 			ex.printStackTrace();
 		}
@@ -658,7 +658,7 @@ public class GoogleMapsQuery {
 	}
 
 	public Direction getDirection(double lat1, double lng1, double lat2,
-                                  double lng2, String mode) {
+                                  double lng2, String mode, long departure_time) {
 		Direction direction = null;
 		ArrayList<StepDirection> steps = new ArrayList<StepDirection>();
 		URL url = null;
@@ -668,7 +668,7 @@ public class GoogleMapsQuery {
 			url = new URL(
 					"https://maps.google.com/maps/api/directions/xml?origin="
 							+ lat1 + "," + lng1 + "&destination=" + lat2 + ","
-							+ lng2 + "&sensor=false&units=metric&mode=" + mode +"&key=AIzaSyAglJqs1y64hfTSPX_MbBNxwSXKVRZVHko");
+							+ lng2 + "&sensor=false&units=metric&mode=" + mode +"&departure_time=" + departure_time + "&key=");
 		} catch (MalformedURLException ex) {
 			ex.printStackTrace();
 		}

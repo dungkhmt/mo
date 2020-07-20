@@ -35,7 +35,7 @@ public class GISMap {
 	public GISMap(){
 		//loadMap("data/SanfranciscoRoad-connected-contracted-5.txt");
 		try {
-			loadMap("data/HanoiCityRoad-connected.txt");
+			loadMap("pys/BusHanoiCityRoad-connected.txt");
 		} catch (Exception e) {
 
 		}
@@ -223,7 +223,7 @@ public class GISMap {
 				mFrom2To2Element.put(e.getFromId(), new HashMap<>());
 			}
 			mFrom2To2Element.get(e.getFromId()).put(e.getToId(), e);
-			String fromLatLng = e.getFromLng() + "," + e.getFromLng();
+			String fromLatLng = e.getFromLat() + "," + e.getFromLng();
 			String toLatLng = e.getToLat() + "," + e.getToLng();
 			mId2LatLng.put(e.getFromId(), fromLatLng);
 			mId2LatLng.put(e.getToId(), toLatLng);
@@ -236,11 +236,11 @@ public class GISMap {
 		}
 		PQShortestPath shortestPath = new PQShortestPath(g);
 		for (Map.Entry<String, HashMap<String, GeneralDistanceElement>> firstEntry : mFrom2To2Element.entrySet()) {
-			int startId = mLatLgng2Point.get(mId2LatLng.get(firstEntry.getKey())).getId();
+			int startId = mID2Index.get(mLatLgng2Point.get(mId2LatLng.get(firstEntry.getKey())).getId());
 			int[] endIds = new int[firstEntry.getValue().size()];
 			int l = 0;
 			for (Map.Entry<String, GeneralDistanceElement> secondEntry : firstEntry.getValue().entrySet()) {
-				endIds[l++] = mLatLgng2Point.get(mId2LatLng.get(secondEntry.getKey())).getId();
+				endIds[l++] = mID2Index.get(mLatLgng2Point.get(mId2LatLng.get(secondEntry.getKey())).getId());
 			}
 			double[] distances = shortestPath.solve(startId, endIds);
 			l = 0;

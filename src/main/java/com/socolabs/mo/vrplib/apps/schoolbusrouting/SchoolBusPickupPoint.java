@@ -30,6 +30,7 @@ public class SchoolBusPickupPoint extends VRPPoint {
         this.input = input;
         requests = new ArrayList<>();
         pickupServiceTime = 0;
+
         int directTravelTime = travelTimeMap.get(locationCode).get("" + input.getShoolPointId());
         if (directTravelTime <= SBUtils.BOARDING_TIME_1) {
             totalTravelTimeLimit = (int) ((1 + 0.01 * input.getConfigParams().getBoardingTimeScale1()) * directTravelTime);

@@ -2,6 +2,8 @@ package com.socolabs.mo.vrplib.apps.schoolbusrouting;
 
 import com.google.gson.Gson;
 import com.socolabs.mo.components.algorithms.nearestlocation.Pair;
+import com.socolabs.mo.components.maps.distanceelementquery.DistanceElementQuery;
+import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceElement;
 import com.socolabs.mo.vrplib.core.VRPPoint;
 import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
@@ -13,16 +15,16 @@ import localsearch.domainspecific.vehiclerouting.vrp.entities.Point;
 import localsearch.domainspecific.vehiclerouting.vrp.utils.DateTimeUtils;
 import localsearch.domainspecific.vehiclerouting.vrp.utils.googlemaps.Direction;
 import localsearch.domainspecific.vehiclerouting.vrp.utils.googlemaps.GoogleMapsQuery;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,12 +44,22 @@ public class SBUtils {
         return Utils.CAP_16;
     }
 
-    public static void exportSBExcel(VRPVarRoutes vr,
+    public static void exportSBExcel(SchoolBusRoutingInput input,
+                                     VRPVarRoutes vr,
                                      AccumulatedWeightPoints accArrivalTime,
                                      IDistanceManager travelTimeManager,
                                      RevAccumulatedWeightPoints revAccTravelTime,
                                      HashMap<VRPRoute, Double> mRoute2Capacity,
                                      String dir, String note) {
+        HashMap<String, String> mLocationId2Address = new HashMap<>();
+        if (input != null && input.getCurrentSolution() != null) {
+            for (BusRoute r : input.getCurrentSolution().getBusRoutes()) {
+                for (RouteElement node : r.getNodes()) {
+                    mLocationId2Address.put("" + node.getLocationId(), node.getNodeName());
+                }
+            }
+        }
+
         String fo = dir + "solution-" + note + ".xlsx";
         XSSFWorkbook workbook = new XSSFWorkbook();
         String str;
@@ -69,15 +81,15 @@ public class SBUtils {
         cell = row.createCell(6);
         cell.setCellValue("Lng");
         cell = row.createCell(7);
-        cell.setCellValue("Thoi gian di thang");
-        cell = row.createCell(8);
-        cell.setCellValue("Thoi gian ngoi tren xe chieu di");
-        cell = row.createCell(9);
-        cell.setCellValue("Diem tra");
-        cell = row.createCell(10);
-        cell.setCellValue("Thoi gian tra");
-        cell = row.createCell(11);
-        cell.setCellValue("Thoi gian ngoi tren xe chieu ve");
+        cell.setCellValue("Dia chi");
+//        cell = row.createCell(8);
+//        cell.setCellValue("Thoi gian ngoi tren xe chieu di");
+//        cell = row.createCell(9);
+//        cell.setCellValue("Diem tra");
+//        cell = row.createCell(10);
+//        cell.setCellValue("Thoi gian tra");
+//        cell = row.createCell(11);
+//        cell.setCellValue("Thoi gian ngoi tren xe chieu ve");
 
         int i = 0;
         int busId = 0;
@@ -115,10 +127,13 @@ public class SBUtils {
                 cell.setCellValue(sbP.getLat());
                 cell = row.createCell(6);
                 cell.setCellValue(sbP.getLng());
-                cell = row.createCell(7);
-                cell.setCellValue(travelTimeManager.getDistance(p, r.getEndPoint()));
-                cell = row.createCell(8);
-                cell.setCellValue(revAccTravelTime.getWeightValueOfPoint(p));
+                if (mLocationId2Address.containsKey(sbP.getLocationCode())) {
+                    cell = row.createCell(7);
+                    cell.setCellValue(mLocationId2Address.get(sbP.getLocationCode()));
+                }
+//                cell.setCellValue(travelTimeManager.getDistance(p, r.getEndPoint()));
+//                cell = row.createCell(8);
+//                cell.setCellValue(revAccTravelTime.getWeightValueOfPoint(p));
             }
         }
         try{
@@ -148,8 +163,12 @@ public class SBUtils {
         }
         ArrayList<BusRoute> busRoutes = new ArrayList<>();
         HashMap<Integer, Integer> varIndexMap = new HashMap<>();
+//        ArrayList<SchoolBusRequest> unScheduledRequests = new ArrayList<>();
+        int numberBuses = 0;
+        double totalDistance = 0;
         for (VRPRoute r : vr.getAllRoutes()) {
             if (r.getNbPoints() > 0) {
+                numberBuses ++;
                 int nbPersons = 0;
                 int nbStops = 0;
                 double travelTime = 0;
@@ -198,6 +217,7 @@ public class SBUtils {
                 travelTime += de.getTravelTime();
                 travelDistance += de.getDistance();
                 arrivalTime += de.getTravelTime();
+                totalDistance += travelDistance;
                 int extraTime = Math.max(0, input.getConfigParams().getEarliestDatetimeArrivalSchool() - arrivalTime);
                 RouteElement[] nodes = new RouteElement[nodeList.size()];
                 int curTravelTime = 0;
@@ -255,7 +275,17 @@ public class SBUtils {
                 ));
             }
         }
-        return null;
+
+        BusRoute[] busRoutesArr = new BusRoute[busRoutes.size()];
+        busRoutes.toArray(busRoutesArr);
+        return new SchoolBusRoutingSolution(busRoutesArr,
+                null,
+                new StatisticInformation(input.getRequests().length,
+                        0,
+                        0,
+                        totalDistance,
+                        numberBuses,
+                        null));
     }
 
     public static int calcDifferenceBetween2Solutions(SchoolBusRoutingSolution randomSolution,
@@ -336,7 +366,7 @@ public class SBUtils {
         }
         int n = locationIdSet.size();
         GoogleMapsQuery GMQ = new GoogleMapsQuery();
-        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-11 07:00:00");
+        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-20 07:30:00");
         for (int i = 0; i < input.getDistances().length; i++) {
             try {
                 DistanceElement de = input.getDistances()[i];
@@ -365,13 +395,118 @@ public class SBUtils {
         }
     }
 
-    public static void forecaseTimeScaleToGGMap(String dataFile) {
+    public static void recreateTravelTimeMatrixUsingOpenStreetMap(SchoolBusRoutingInput input, double speed, String savePath) {
+        HashSet<Integer> locationIdSet = new HashSet<>();
+        HashMap<Integer, Pair<Double, Double>> mLocationId2LatLng = new HashMap<>();
+        locationIdSet.add(input.getShoolPointId());
+        mLocationId2LatLng.put(input.getShoolPointId(), new Pair<>(input.getLat_school(), input.getLong_school()));
+        for (SchoolBusRequest r : input.getRequests()) {
+            if (r.getLat_pickup() != 0 && r.getLong_pickup() != 0 && r.getLat_pickup() != r.getLong_pickup()) {
+                locationIdSet.add(r.getPickupLocationId());
+                mLocationId2LatLng.put(r.getPickupLocationId(),
+                        new Pair<>(r.getLat_pickup(), r.getLong_pickup()));
+            }
+            if (r.getLat_delivery() != 0 && r.getLong_delivery() != 0 && r.getLat_delivery() != r.getLong_delivery()) {
+                locationIdSet.add(r.getDeliveryLocationId());
+                mLocationId2LatLng.put(r.getDeliveryLocationId(),
+                        new Pair<>(r.getLat_delivery(), r.getLong_delivery()));
+            }
+        }
 
+        DistanceElementQuery distanceElementQuery = new DistanceElementQuery();
+        distanceElementQuery.setParams("OpenStreetMap");
+        int n = mLocationId2LatLng.size();
+        GeneralDistanceElement[] generalDistanceElements = new GeneralDistanceElement[n * n];
+        int i = 0;
+        for (int x : mLocationId2LatLng.keySet()) {
+            Pair<Double, Double> xLocation = mLocationId2LatLng.get(x);
+            for (int y : mLocationId2LatLng.keySet()) {
+                Pair<Double, Double> yLocation = mLocationId2LatLng.get(y);
+                generalDistanceElements[i++] = new GeneralDistanceElement(
+                        "" + x,
+                        xLocation.first,
+                        xLocation.second,
+                        "" + y,
+                        yLocation.first,
+                        yLocation.second,
+                        0,
+                        0,
+                        0
+                        );
+            }
+        }
+        distanceElementQuery.setElements(generalDistanceElements);
+        Gson g = new Gson();
+        String queryJson = g.toJson(distanceElementQuery);
+
+        long cur = System.currentTimeMillis();
+
+        try {
+
+            String url = "http://13.229.140.7:7474/BusHanoiCity/get-distance-elements";
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            // Setting basic post request
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("apikey", "6OCqwI5lsE9H3RdXaJ5kucvScPQsqfGF");
+            // Send post request
+            con.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+            wr.writeBytes(queryJson);
+            wr.flush();
+            wr.close();
+            int responseCode = con.getResponseCode();
+            System.out.println("nSending 'POST' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String output;
+            StringBuffer response = new StringBuffer();
+
+            while ((output = in.readLine()) != null) {
+                response.append(output);
+            }
+            in.close();
+
+            System.out.println("request time = " + (System.currentTimeMillis() - cur));
+            distanceElementQuery = g.fromJson(response.toString(), DistanceElementQuery.class);
+
+            DistanceElement[] newDistanceElements = new DistanceElement[distanceElementQuery.getElements().length];
+            i = 0;
+            for (GeneralDistanceElement gde : distanceElementQuery.getElements()) {
+                newDistanceElements[i++] = new DistanceElement(Integer.parseInt(gde.getFromId()),
+                        Integer.parseInt(gde.getToId()),
+                        gde.getDistance(),
+                        gde.getDistance() / (1000 * speed) * 3600,
+                        0);
+            }
+            input.setDistances(newDistanceElements);
+        } catch (Exception e) {
+            System.out.println("request time = " + (System.currentTimeMillis() - cur));
+        }
+
+        String inputJson = g.toJson(input);
+        try {
+            BufferedWriter fo = new BufferedWriter(new FileWriter(savePath));
+            fo.write(inputJson);
+            fo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public static double mean(ArrayList<Double> dataLst) {
-        double m = 0;
-        m = dataLst.stream().reduce(0.0, Double::sum);
-        return m / dataLst.size();
+    public static void forecaseTimeScaleToGGMap(String dataFile) {
+        
+    }
+
+    public static double mean(double[] dataLst) {
+        return new DescriptiveStatistics(dataLst).getMean();
+    }
+
+    public static double std(double[] dataLst) {
+        return new DescriptiveStatistics(dataLst).getStandardDeviation();
     }
 }

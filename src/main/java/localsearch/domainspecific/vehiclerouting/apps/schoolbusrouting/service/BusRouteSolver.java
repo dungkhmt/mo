@@ -1335,6 +1335,8 @@ public class BusRouteSolver {
 					&& (isCheck.get(sd) == null || isCheck.get(sd) == 0))){
 					isCheck.put(sd, 1);
 					isMiss = true;
+					dis_cost = 1e9;
+					tmp_cost = 1e9;
 					try{
 						FileOutputStream fo = new FileOutputStream(fileOut, true);
 						PrintWriter out = new PrintWriter(fo);
@@ -1358,7 +1360,7 @@ public class BusRouteSolver {
 			System.out.println(name() + "::travel time info, check missingDistance file please!");
 			LOGGER.log(Level.WARNING, name() + "::travel time info, check missingDistance file please!");
 			closeLog();
-			System.exit(0);
+//			System.exit(0);
 		}
 		MAX_DISTANCE = max_dist;
 	}
@@ -2391,7 +2393,7 @@ public class BusRouteSolver {
 
 	public SchoolBusRoutingSolution randomSolve(SchoolBusRoutingInput input){
 		this.input = input;
-		int timeLimit = 300000;
+		int timeLimit = 20 * 60000;
 		int nIter = 300000;
 
 		mapData();
@@ -2472,7 +2474,7 @@ public class BusRouteSolver {
 
 		rejectPoints = best_solution.get_rejectPoints();
 		LOGGER.log(Level.INFO, "Create solution done!");
-		printSolution("E:/Project/DO/Vinschool/VinschoolProject/screen/sampleData/", "Imperia");
+		printSolution("D:\\Workspace\\VinSchool\\nodejs\\nodejs\\data\\", "Imperia");
 		return createFormatedSolution();
 	}
 	

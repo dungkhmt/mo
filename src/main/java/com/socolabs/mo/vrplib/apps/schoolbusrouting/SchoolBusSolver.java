@@ -23,6 +23,7 @@ import com.socolabs.mo.vrplib.functions.sum.SumRouteFunctions;
 import com.socolabs.mo.vrplib.invariants.AccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.invariants.RevAccumulatedWeightPoints;
 import com.socolabs.mo.vrplib.search.GreedySearch;
+import com.socolabs.mo.vrplib.utils.CBLSVRP;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model.*;
 import localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.service.BusRouteSolver;
 import localsearch.domainspecific.vehiclerouting.vrp.utils.DateTimeUtils;
@@ -51,7 +52,7 @@ public class SchoolBusSolver {
     private IDistanceManager travelTimeManager;
     private DistanceManager distanceManager;
 
-    public SchoolBusRoutingSolution solve(SchoolBusRoutingInput input) {
+    public SchoolBusRoutingSolution solve(SchoolBusRoutingInput input, SchoolBusRoutingInput rawInput) {
         System.out.println("solve");
         this.input = input;
         stateModel();
@@ -65,65 +66,11 @@ public class SchoolBusSolver {
         search.addExplorer(GreedySearch.TWO_OPT_MOVE);
         search.addExplorer(GreedySearch.THREE_OPT_MOVE);
         search.addExplorer(GreedySearch.CROSS_EXCHANGE_MOVE);
-        search.search(100000, 10 * 60000, true);
-        SBUtils.exportSBExcel(vr, accArrivalTime, travelTimeManager, revAccTravelTime, mRoute2Capacity,
-                "D:\\Workspace\\VinSchool\\nodejs\\nodejs\\data\\",
-                "Imperia");
-        return null;//SBUtils.exportSolution(input, vr);
-    }
-
-    public SchoolBusRoutingSolution solveStep2(SchoolBusRoutingInput input, double boardingTimeScale) {
-        System.out.println("solveStep2");
-        this.input = input;
-        this.boardingTimeScale = boardingTimeScale;
-
-        stateModel2();
-        System.out.println("done State Model 2");
-        GreedySearch search = new GreedySearch(vr, objectiveFuncs);
-        search.addExplorer(GreedySearch.INSERT_ONE_MOVE);
-        search.search(100000, 10 * 60000, false);
-        search.addExplorer(GreedySearch.ONE_POINT_MOVE);
-        search.addExplorer(GreedySearch.OR_OPT_MOVE);
-        search.addExplorer(GreedySearch.TWO_POINTS_MOVE);
-        search.addExplorer(GreedySearch.TWO_OPT_MOVE);
-        search.addExplorer(GreedySearch.THREE_OPT_MOVE);
-        search.addExplorer(GreedySearch.CROSS_EXCHANGE_MOVE);
         search.search(100000, 15 * 60000, true);
-        SBUtils.exportSBExcel(vr, accArrivalTime, travelTimeManager, revAccTravelTime, mRoute2Capacity,
+        SBUtils.exportSBExcel(rawInput, vr, accArrivalTime, travelTimeManager, revAccTravelTime, mRoute2Capacity,
                 "D:\\Workspace\\VinSchool\\nodejs\\nodejs\\data\\",
                 "Imperia");
-        return null;//SBUtils.exportSolution(input, vr);
-    }
-
-    private void stateModel2() {
-        vr = new VRPVarRoutes();
-        objectiveFuncs = new LexMultiFunctions();
-        System.out.println("initTravelTime");
-        initTravelTime();
-        System.out.println("createRoutes");
-        createRoutes();
-        System.out.println("createPoints");
-        createPoints();
-        System.out.println("addMaximumNumberOfStudents");
-        addMaximumNumberOfStudents();
-        System.out.println("addCapacityConstraint");
-        addCapacityConstraint();
-        System.out.println("addGroupConstraint");
-        addGroupConstraint();
-        System.out.println("addRoadBlockConstraint");
-        addRoadBlockConstraint();
-        System.out.println("addDistanceConstraint");
-        addDistanceConstraint();
-        System.out.println("addTravelTimeConstraint");
-        addTravelTimeConstraint();
-        System.out.println("addTravelTimeLimitConstraint");
-        addTravelTimeLimitConstraint();
-        System.out.println("addMinimumUsedBusesObjective");
-        addMinimumUsedBusesObjective();
-//        System.out.println("addBoardingTimeScaleObjective");
-//        addBoardingTimeScaleObjective();
-        System.out.println("addTravelTimeObjective");
-        addTravelTimeObjective();
+        return SBUtils.exportSolution(input, vr);
     }
 
     private void stateModel() {
@@ -396,11 +343,35 @@ public class SchoolBusSolver {
             roadBlockMap.get(src).put(dest, e.getRoadBlock());
             distanceMap.get(src).put(dest, e.getDistance());
         }
+        for (int x : locationIdSet) {
+            for (int y : locationIdSet) {
+                String src = "" + x;
+                String dest = "" + y;
+                try {
+                    int d = travelTimeMap.get(src).get(dest);
+                } catch (Exception e) {
+                    if (!travelTimeMap.containsKey(src)) {
+                        travelTimeMap.put(src, new HashMap<>());
+                        roadBlockMap.put(src, new HashMap<>());
+                        distanceMap.put(src, new HashMap<>());
+                    }
+                    if (x == y) {
+                        travelTimeMap.get(src).put(dest, 0);
+                        roadBlockMap.get(src).put(dest, 0);
+                        distanceMap.get(src).put(dest, 0.);
+                    } else {
+                        travelTimeMap.get(src).put(dest, CBLSVRP.MAX_INT);
+                        roadBlockMap.get(src).put(dest, 0);
+                        distanceMap.get(src).put(dest, 1e9);
+                    }
+                }
+            }
+        }
     }
 
     public static void main(String[] args) throws FileNotFoundException {
 
-        GoogleMapsQuery G = new GoogleMapsQuery();
+//        GoogleMapsQuery G = new GoogleMapsQuery();
         //G.getTravelTime(21, 105, 21.01, 105, "driving");
 //        LatLng l1 = new LatLng(20.9553953, 105.7693546);
 //        LatLng l2 = new LatLng(20.9698378, 105.7741762);
@@ -411,38 +382,40 @@ public class SchoolBusSolver {
 //
 //        System.exit(0);
         Gson g = new Gson();
-        String inputFile = "D:\\Workspace\\VinSchool\\Gb\\12-1025rx2u0qkcj1rmpdbzx1ol4xze_time9_22_432nextyear-input_new.json";
+        String inputFile = "D:\\Workspace\\VinSchool\\Times_20200718\\34-105qjx04py4ysixre1pjhoe5jds_time11_41_707nextyear-input_new.json";
         BufferedReader in = new BufferedReader(new FileReader(inputFile));
         SchoolBusRoutingInput input = g.fromJson(in, SchoolBusRoutingInput.class);
-        ArrayList<SchoolBusRequest> avaiRequests = new ArrayList<>();
-        HashSet<Integer> idLocations = new HashSet<>();
-        for (DistanceElement de : input.getDistances()) {
-            if (de.getDestCode() == input.getShoolPointId()) {
-                idLocations.add(de.getSrcCode());
-            }
-        }
-        HashSet<Integer> requestIdSet = new HashSet<>();
-        for (SchoolBusRequest r : input.getRequests()) {
-            if (idLocations.contains(r.getPickupLocationId())) {// && idLocations.contains(r.getDeliveryLocationId())) {
-                avaiRequests.add(r);
-                requestIdSet.add(r.getId());
-            } else {
+        String rawInputFile = "D:\\Workspace\\VinSchool\\Times_20200718\\34-105qjx04py4ysixre1pjhoe5jds_time11_41_707nextyear-input.json";
+        BufferedReader rawIn = new BufferedReader(new FileReader(rawInputFile));
+        SchoolBusRoutingInput rawInput = g.fromJson(rawIn, SchoolBusRoutingInput.class);
 
-            }
-        }
-        System.out.println(avaiRequests.size());
-//        System.exit(0);
-//        input.getConfigParams().setBoardingTimeScale1(250);
-//        input.getConfigParams().setBoardingTimeScale2(400);
+//        ArrayList<SchoolBusRequest> avaiRequests = new ArrayList<>();
+//        HashSet<Integer> idLocations = new HashSet<>();
+//        for (DistanceElement de : input.getDistances()) {
+//            if (de.getDestCode() == input.getShoolPointId()) {
+//                idLocations.add(de.getSrcCode());
+//            }
+//        }
+//        HashSet<Integer> requestIdSet = new HashSet<>();
+//        for (SchoolBusRequest r : input.getRequests()) {
+//            if (idLocations.contains(r.getPickupLocationId())) {// && idLocations.contains(r.getDeliveryLocationId())) {
+//                avaiRequests.add(r);
+//                requestIdSet.add(r.getId());
+//            } else {
 //
-        SchoolBusRequest[] newRequests = new SchoolBusRequest[avaiRequests.size()];
-        for (int i = 0; i < newRequests.length; i++) {
-            newRequests[i] = avaiRequests.get(i);
-        }
-        input.setRequests(newRequests);
-        System.out.println(newRequests.length);
-
+//            }
+//        }
+//        System.out.println(avaiRequests.size());
+//        SchoolBusRequest[] newRequests = new SchoolBusRequest[avaiRequests.size()];
+//        for (int i = 0; i < newRequests.length; i++) {
+//            newRequests[i] = avaiRequests.get(i);
+//        }
+//        input.setRequests(newRequests);
 //        SBUtils.recreateTravelTimeMatrix(input, inputFile.split(".json")[0] + "_new.json");
+//        System.exit(0);
+//        System.out.println(newRequests.length);
+//        input.getConfigParams().setTimeScale(0);
+//        SBUtils.recreateTravelTimeMatrixUsingOpenStreetMap(input, 20, inputFile.split(".json")[0] + "_openstreetmap.json");
 //        input.setRequestSolutionType("new");
 //        String inputJson = g.toJson(input);
 //        try {
@@ -453,8 +426,20 @@ public class SchoolBusSolver {
 //            e.printStackTrace();
 //        }
 //        System.exit(0);
+//        for (DistanceElement de : input.getDistances()) {
+//            de.setTravelTime(de.getDistance() / (1000 * 12) * 3600);
+//        }
         SchoolBusSolver solver = new SchoolBusSolver();
-        solver.solve(input);
+        SchoolBusRoutingSolution sol = solver.solve(input, rawInput);
+
+        String outputJson = g.toJson(sol);
+        try {
+            BufferedWriter fo = new BufferedWriter(new FileWriter(inputFile.split(".json")[0] + "_output.json"));
+            fo.write(outputJson);
+            fo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 //        System.out.println(boardingTimeScale);
 //        solver = new SchoolBusSolver();
 //        SchoolBusRoutingSolution sol = solver.solveStep2(input, boardingTimeScale);

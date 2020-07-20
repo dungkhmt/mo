@@ -1,20 +1,26 @@
 package localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model;
 
+import lombok.Getter;
+
+@Getter
 public class RouteElement {
 
 	private int locationId;
 	private int varIndex;
 	private String action;
-	
+	private String nodeName;
+
 	private int arrivalTime;
 	private int departureTime;
 	private int directTime;
 	private int travelTime;
-	
+
+	private double latitude;
+	private double longitude;
+
 	private int[] hsList;
 	private int[] listRegisterId;
-	
-	
+
 	public RouteElement(int locationId, int varIndex, String action,
 			int arrivalTime, int departureTime,
 			int directTime, int travelTime,

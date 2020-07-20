@@ -1,5 +1,7 @@
 package localsearch.domainspecific.vehiclerouting.apps.schoolbusrouting.model;
 
+import lombok.AllArgsConstructor;
+
 public class DistanceElement {
 
 	private int srcCode;
