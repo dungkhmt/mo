@@ -13,6 +13,7 @@ public class Leq implements IVRPFunction {
 
     public Leq(IVRPFunction f, double v) {
         this.f = new LeqFunctionConstant(f, v);
+        f.getVarRoutes().post(this);
     }
 
     public Leq(double v, IVRPFunction f) {

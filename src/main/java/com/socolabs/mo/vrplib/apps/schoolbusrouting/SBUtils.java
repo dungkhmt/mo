@@ -358,15 +358,15 @@ public class SBUtils {
                 mLocationId2LatLng.put(r.getPickupLocationId(),
                         new Pair<>(r.getLat_pickup(), r.getLong_pickup()));
             }
-            if (r.getLat_delivery() != 0 && r.getLong_delivery() != 0 && r.getLat_delivery() != r.getLong_delivery()) {
-                locationIdSet.add(r.getDeliveryLocationId());
-                mLocationId2LatLng.put(r.getDeliveryLocationId(),
-                        new Pair<>(r.getLat_delivery(), r.getLong_delivery()));
-            }
+//            if (r.getLat_delivery() != 0 && r.getLong_delivery() != 0 && r.getLat_delivery() != r.getLong_delivery()) {
+//                locationIdSet.add(r.getDeliveryLocationId());
+//                mLocationId2LatLng.put(r.getDeliveryLocationId(),
+//                        new Pair<>(r.getLat_delivery(), r.getLong_delivery()));
+//            }
         }
         int n = locationIdSet.size();
         GoogleMapsQuery GMQ = new GoogleMapsQuery();
-        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-20 07:30:00");
+        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-24 07:30:00");
         for (int i = 0; i < input.getDistances().length; i++) {
             try {
                 DistanceElement de = input.getDistances()[i];

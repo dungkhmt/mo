@@ -88,4 +88,14 @@ public class LexMultiFunctions {
         }
         return 0;
     }
+
+    public void insert(int idx, IVRPFunction f, int optimalType, String funcName) {
+        functions.add(idx, f);
+        coefs.add(idx, optimalType);
+        funcNames.add(idx, funcName);
+    }
+
+    public int size() {
+        return functions.size();
+    }
 }
