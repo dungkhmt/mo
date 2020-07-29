@@ -89,6 +89,12 @@ public class LexMultiFunctions {
         return 0;
     }
 
+    public void remove(int idx) {
+        functions.remove(idx);
+        coefs.remove(idx);
+        funcNames.remove(idx);
+    }
+
     public void insert(int idx, IVRPFunction f, int optimalType, String funcName) {
         functions.add(idx, f);
         coefs.add(idx, optimalType);

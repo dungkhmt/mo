@@ -1,49 +1,58 @@
-package com.socolabs.mo.vrplib.constraints.leq;
+package com.socolabs.mo.vrplib.functions.div;
 
-import com.socolabs.mo.vrplib.core.*;
+import com.socolabs.mo.vrplib.core.IVRPFunction;
+import com.socolabs.mo.vrplib.core.VRPPoint;
+import com.socolabs.mo.vrplib.core.VRPRoute;
+import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
-public class Leq implements IVRPFunction {
+public class DivConstantFunction implements IVRPFunction {
 
     private IVRPFunction f;
+    private double v;
 
-    private int stt;
+    private double value;
+    private double tmpValue;
 
-    public Leq(IVRPFunction f, double v) {
-        this.f = new LeqFunctionConstant(f, v);
+    public DivConstantFunction(double v, IVRPFunction f) {
+        this.f = f;
+        this.v = v;
         f.getVarRoutes().post(this);
-    }
-
-    public Leq(double v, IVRPFunction f) {
-        this.f = new LeqConstantFunction(v, f);
-        f.getVarRoutes().post(this);
+        if (f.getValue() != 0) {
+            tmpValue = value = v / f.getValue();
+        } else {
+            tmpValue = value = 0;
+        }
     }
 
     @Override
     public double getValue() {
-        return f.getValue();
+        return value;
     }
 
     @Override
     public double getTmpValue() {
-        return f.getTmpValue();
+        return tmpValue;
     }
 
     @Override
     public void explore() {
-
+        if (f.getTmpValue() != 0) {
+            tmpValue = v / f.getTmpValue();
+        } else {
+            tmpValue = 0;
+        }
     }
 
     @Override
     public void propagate() {
-
+        value = tmpValue;
     }
 
     @Override
     public void clearTmpData() {
-
+        tmpValue = value;
     }
 
     @Override
@@ -76,6 +85,8 @@ public class Leq implements IVRPFunction {
         return f.getIndependentPoints();
     }
 
+    private int stt;
+
     @Override
     public int getStt() {
         return this.stt;
@@ -88,11 +99,15 @@ public class Leq implements IVRPFunction {
 
     @Override
     public boolean verify() {
+        if (value != tmpValue) {
+            System.out.println("EXCEPTION::" + name() + " -> value != tmpValue");
+            return false;
+        }
         return true;
     }
 
     @Override
     public String name() {
-        return "Leq";
+        return "DivConstantFunction";
     }
 }

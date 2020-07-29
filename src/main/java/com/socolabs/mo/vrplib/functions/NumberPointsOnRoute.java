@@ -9,14 +9,23 @@ import java.util.HashSet;
 
 public class NumberPointsOnRoute implements IVRPFunction {
 
+    private VRPVarRoutes vr;
+    private VRPRoute route;
+
+    public NumberPointsOnRoute(VRPVarRoutes vr, VRPRoute route) {
+        this.vr = vr;
+        this.route = route;
+        vr.post(this);
+    }
+
     @Override
     public double getValue() {
-        return 0;
+        return route.getNbPoints();
     }
 
     @Override
     public double getTmpValue() {
-        return 0;
+        return route.getTmpNbPoints();
     }
 
     @Override
@@ -39,19 +48,21 @@ public class NumberPointsOnRoute implements IVRPFunction {
         return null;
     }
 
+    private int stt;
+
     @Override
     public int getStt() {
-        return 0;
+        return stt;
     }
 
     @Override
     public void setStt(int stt) {
-
+        this.stt = stt;
     }
 
     @Override
     public boolean verify() {
-        return false;
+        return true;
     }
 
     @Override
@@ -76,11 +87,11 @@ public class NumberPointsOnRoute implements IVRPFunction {
 
     @Override
     public VRPVarRoutes getVarRoutes() {
-        return null;
+        return vr;
     }
 
     @Override
     public String name() {
-        return null;
+        return "NumberPointsOnRoute";
     }
 }
