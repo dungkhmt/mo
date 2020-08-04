@@ -17,7 +17,7 @@ public class SBNumberVisitedPointsCalculator implements IAccumulatedCalculator {
     @Override
     public double caclAccWeightAtPoint(double prevValue, VRPPoint point) {
         if (!point.isDepot()) {
-            return prevValue + 1;
+            return prevValue + ((SchoolBusPickupPoint) point).getRequests().size();
         } else {
             return prevValue;
         }
@@ -26,7 +26,7 @@ public class SBNumberVisitedPointsCalculator implements IAccumulatedCalculator {
     @Override
     public double calcTmpAccWeightAtPoint(double prevValue, VRPPoint point) {
         if (!point.isDepot()) {
-            return prevValue + 1;
+            return prevValue + ((SchoolBusPickupPoint) point).getRequests().size();
         } else {
             return prevValue;
         }

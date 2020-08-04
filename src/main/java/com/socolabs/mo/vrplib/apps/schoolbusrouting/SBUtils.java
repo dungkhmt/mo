@@ -60,6 +60,16 @@ public class SBUtils {
             }
         }
 
+        try {
+            for (SchoolBusRequest re : input.getRequests()) {
+                if (!mLocationId2Address.containsKey(re.getPickupLocationId())) {
+                    mLocationId2Address.put("" + re.getPickupLocationId(), re.getAddress());
+                }
+            }
+        } catch (Exception e) {
+
+        }
+
         String fo = dir + "solution-" + note + ".xlsx";
         XSSFWorkbook workbook = new XSSFWorkbook();
         String str;
@@ -178,11 +188,15 @@ public class SBUtils {
                 int curPoint = input.getShoolPointId();
                 ArrayList<RouteElement> nodeList = new ArrayList<>();
                 int arrivalTime = input.getConfigParams().getEarliestDateTimePickupAtPoint();
-                for (VRPPoint p = r.getStartPoint().getNext(); p != r.getEndPoint(); p = p.getNext()) {
+                for (VRPPoint p = r.getStartPoint().getNext(); p != null; p = p.getNext()) {
                     SchoolBusPickupPoint sbP = (SchoolBusPickupPoint) p;
                     nbPersons += sbP.size();
                     nbStops ++;
                     DistanceElement de = distanceElementMap.get(curPoint).get(Integer.parseInt(sbP.getLocationCode()));
+                    if (nbStops > 1) {
+                        arrivalTime += de.getTravelTime();
+                    }
+
                     curPoint = Integer.parseInt(sbP.getLocationCode());
                     if (!varIndexMap.containsKey(curPoint)) {
                         varIndexMap.put(curPoint, 0);
@@ -196,36 +210,54 @@ public class SBUtils {
                         listRegisterId[ii] = request.getId();
                         ii++;
                     }
-                    nodeList.add(new RouteElement(
-                            curPoint,
-                            varIndexMap.get(curPoint),
-                            "PICKUP_POINT",
-                            arrivalTime,
-                            (int) ((int) arrivalTime + sbP.getPickupServiceTime()),
-                            (int) distanceElementMap.get(curPoint).get(input.getShoolPointId()).getTravelTime(),
-                            0,
-                            hsList,
-                            listRegisterId
-                            ));
+                    try {
+                        nodeList.add(new RouteElement(
+                                curPoint,
+                                varIndexMap.get(curPoint),
+                                "PICKUP_POINT",
+                                arrivalTime,
+                                (int) ((int) arrivalTime + sbP.getPickupServiceTime()),
+                                (int) distanceElementMap.get(curPoint).get(input.getShoolPointId()).getTravelTime(),
+                                0,
+                                hsList,
+                                listRegisterId
+                        ));
+                    } catch (Exception e) {
+                        nodeList.add(new RouteElement(
+                                curPoint,
+                                varIndexMap.get(curPoint),
+                                "PICKUP_POINT",
+                                arrivalTime,
+                                (int) ((int) arrivalTime + sbP.getPickupServiceTime()),
+                                (int) 0,
+                                0,
+                                hsList,
+                                listRegisterId
+                        ));
+                    }
                     if (nbStops > 1) {
                         travelTime += de.getTravelTime();
                         travelDistance += de.getDistance();
                     }
-                    arrivalTime += sbP.getPickupServiceTime() + de.getTravelTime();
+                    arrivalTime += sbP.getPickupServiceTime();
                 }
-                DistanceElement de = distanceElementMap.get(curPoint).get(input.getShoolPointId());
-                travelTime += de.getTravelTime();
-                travelDistance += de.getDistance();
-                arrivalTime += de.getTravelTime();
+//                DistanceElement de = distanceElementMap.get(curPoint).get(input.getShoolPointId());
+//                travelTime += de.getTravelTime();
+//                travelDistance += de.getDistance();
+//                arrivalTime += de.getTravelTime();
                 totalDistance += travelDistance;
                 int extraTime = Math.max(0, input.getConfigParams().getEarliestDatetimeArrivalSchool() - arrivalTime);
+                int deliveryTime = Math.max(input.getConfigParams().getEarliestDatetimeArrivalSchool(), arrivalTime);
                 RouteElement[] nodes = new RouteElement[nodeList.size()];
                 int curTravelTime = 0;
                 curPoint = input.getShoolPointId();
                 for (int ii = nodes.length - 1; ii >= 0; ii--) {
                     nodes[ii] = nodeList.get(ii);
                     nodes[ii].setArrivalTime(nodes[ii].getArrivalTime() + extraTime);
-                    curTravelTime += distanceElementMap.get(nodes[ii].getLocationId()).get(curPoint).getTravelTime();
+                    try {
+                        curTravelTime += distanceElementMap.get(nodes[ii].getLocationId()).get(curPoint).getTravelTime();
+                    } catch (Exception e) {
+                    }
                     nodes[ii].setTravelTime(curTravelTime);
                     curPoint = nodes[ii].getLocationId();
                 }
@@ -233,11 +265,11 @@ public class SBUtils {
                 curTravelTime = 0;
                 curPoint = input.getShoolPointId();
                 arrivalTime = input.getConfigParams().getEarliestDateTimePickupAtSchool();
-                RouteElement[] reverses = new RouteElement[nodes.length];
+                RouteElement[] reverses = new RouteElement[nodes.length - 1];
                 for (VRPPoint p = r.getEndPoint().getPrev(); p != r.getStartPoint(); p = p.getPrev()) {
                     SchoolBusPickupPoint sbP = (SchoolBusPickupPoint) p;
                     int deliveryLocationId = sbP.getRequests().get(0).getDeliveryLocationId();
-                    de = distanceElementMap.get(curPoint).get(deliveryLocationId);
+                    DistanceElement de = distanceElementMap.get(curPoint).get(deliveryLocationId);
                     curTravelTime += de.getTravelTime();
                     curPoint = deliveryLocationId;
                     arrivalTime += de.getTravelTime();
@@ -261,11 +293,11 @@ public class SBUtils {
                         Integer.parseInt(sbR.getTruckCode()),
                         "Bus_" + sbR.getTruckCode(),
                         nbPersons,
-                        ((int) nbPersons / sbR.getCapacity() * 100),
+                        ((int) (1.0 * nbPersons / sbR.getCapacity() * 100)),
                         isResolved,
                         nbStops,
-                        0,
-                        0,
+                        input.getConfigParams().getEarliestDateTimePickupAtPoint() + extraTime,
+                        deliveryTime,
                         ((int)travelTime),
                         travelDistance,
                         updateFlag,
@@ -279,7 +311,7 @@ public class SBUtils {
         BusRoute[] busRoutesArr = new BusRoute[busRoutes.size()];
         busRoutes.toArray(busRoutesArr);
         return new SchoolBusRoutingSolution(busRoutesArr,
-                null,
+                new SchoolBusRequest[0],
                 new StatisticInformation(input.getRequests().length,
                         0,
                         0,
@@ -366,19 +398,34 @@ public class SBUtils {
         }
         int n = locationIdSet.size();
         GoogleMapsQuery GMQ = new GoogleMapsQuery();
-        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-07-24 07:30:00");
+        long departure_time = (long) DateTimeUtils.dateTime2Int("2020-08-17 07:30:00");
         for (int i = 0; i < input.getDistances().length; i++) {
             try {
                 DistanceElement de = input.getDistances()[i];
                 int src = de.getSrcCode();
                 int dest = de.getDestCode();
+                if (src != 2808 && dest != 2808 && src != 4264 && dest != 4264) {
+                    continue;
+                }
+                if (src == dest) {
+                    de.setTravelTime(0);
+                    de.setDistance(0);
+                    continue;
+                }
                 Pair<Double, Double> srcLatLng = mLocationId2LatLng.get(src);
                 Pair<Double, Double> destLatLng = mLocationId2LatLng.get(dest);
-                Direction direction = GMQ.getDirection(srcLatLng.first, srcLatLng.second, destLatLng.first, destLatLng.second, "driving", departure_time);
-                if (direction != null) {
-                    System.out.println(i + " -> duration = " + direction.getDurations() + " distance = " + direction.getDistances());
-                    de.setTravelTime(direction.getDurations());
-                    de.setDistance(direction.getDistances());
+                int cnt = 0;
+                while (cnt < 10) {
+                    Direction direction = GMQ.getDirection(srcLatLng.first, srcLatLng.second, destLatLng.first, destLatLng.second, "driving", departure_time);
+                    if (direction != null) {
+                        System.out.println(i + " -> duration = " + direction.getDurations() + " distance = " + direction.getDistances());
+                        if (direction.getDurations() > 0) {
+                            de.setTravelTime(direction.getDurations());
+                            de.setDistance(direction.getDistances());
+                            break;
+                        }
+                    }
+                    cnt++;
                 }
             } catch (Exception e) {
 

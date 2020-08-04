@@ -1,6 +1,7 @@
 package com.socolabs.mo.vrplib.search;
 
 import com.socolabs.mo.vrplib.core.VRPPoint;
+import com.socolabs.mo.vrplib.core.VRPRoute;
 import com.socolabs.mo.vrplib.core.VRPVarRoutes;
 import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
 import com.socolabs.mo.vrplib.entities.LexMultiValues;
@@ -116,20 +117,40 @@ public class GreedySearch {
 
     private void reset() {
         System.out.println("Reset ....................................");
-        ArrayList<VRPPoint> allPoints = vr.getAllPoints();
-        for (VRPPoint x : allPoints) {
-            if (!x.isDepot()) {
-                if (rand.nextInt(10) == 0) {
-                    VRPPoint y = allPoints.get(rand.nextInt(allPoints.size()));
-                    if (y.getRoute() != null && y != x && !y.isEndPoint()) {
-                        if (vr.exploreOnePointMove(x, y)) {
-                            System.out.println("Reset::" + x + " - " + y);
-                            vr.propagateOnePointMove(x, y);
-                        }
+        ArrayList<VRPPoint> refreshPoints = new ArrayList<>();
+        for (VRPRoute r : vr.getAllRoutes()) {
+            if (r.getNbPoints() > 0) {
+                int type = rand.nextInt(10);
+                if (type == 0) {
+                    for (VRPPoint p = r.getStartPoint().getNext(); p != r.getEndPoint(); p = p.getNext()) {
+                        refreshPoints.add(p);
                     }
                 }
             }
         }
+        for (VRPPoint x : refreshPoints) {
+            VRPPoint y = refreshPoints.get(rand.nextInt(refreshPoints.size()));
+            if (y.getRoute() != null && y != x && !y.isEndPoint()) {
+                if (vr.exploreOnePointMove(x, y)) {
+                    System.out.println("Reset::" + x + " - " + y);
+                    vr.propagateOnePointMove(x, y);
+                }
+            }
+        }
+//        ArrayList<VRPPoint> allPoints = vr.getAllPoints();
+//        for (VRPPoint x : allPoints) {
+//            if (!x.isDepot()) {
+//                if (rand.nextInt(10) == 0) {
+//                    VRPPoint y = allPoints.get(rand.nextInt(allPoints.size()));
+//                    if (y.getRoute() != null && y != x && !y.isEndPoint()) {
+//                        if (vr.exploreOnePointMove(x, y)) {
+//                            System.out.println("Reset::" + x + " - " + y);
+//                            vr.propagateOnePointMove(x, y);
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 
     public String name() {

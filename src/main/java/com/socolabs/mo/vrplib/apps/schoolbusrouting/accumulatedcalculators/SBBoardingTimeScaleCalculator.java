@@ -23,7 +23,7 @@ public class SBBoardingTimeScaleCalculator implements IAccumulatedCalculator {
     public double caclAccWeightAtPoint(double prevValue, VRPPoint point) {
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         if (p.getDirectTravelTimeToSchool() > 0 && p.getIndex() == 1) {
-            return Math.max(prevValue, revAccTravelTime.getWeightValueOfPoint(point) / p.getDirectTravelTimeToSchool());
+            return Math.max(prevValue, (revAccTravelTime.getWeightValueOfPoint(point) - point.getRoute().getNbPoints() * 120) / p.getDirectTravelTimeToSchool());
         }
         return prevValue;
     }
@@ -32,7 +32,7 @@ public class SBBoardingTimeScaleCalculator implements IAccumulatedCalculator {
     public double calcTmpAccWeightAtPoint(double prevValue, VRPPoint point) {
         SchoolBusPickupPoint p = (SchoolBusPickupPoint) point;
         if (p.getDirectTravelTimeToSchool() > 0 && p.getTmpIndex() == 1) {
-            return Math.max(prevValue, revAccTravelTime.getTmpWeightValueOfPoint(point) / p.getDirectTravelTimeToSchool());
+            return Math.max(prevValue, (revAccTravelTime.getTmpWeightValueOfPoint(point) - point.getTmpRoute().getTmpNbPoints() * 120) / p.getDirectTravelTimeToSchool());
         }
         return prevValue;
     }
