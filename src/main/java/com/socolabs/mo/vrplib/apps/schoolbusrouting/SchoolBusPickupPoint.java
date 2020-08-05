@@ -74,7 +74,8 @@ public class SchoolBusPickupPoint extends VRPPoint {
 
     public void addRequest(SchoolBusRequest r) {
         requests.add(r);
-        pickupServiceTime = Math.max(input.getConfigParams().getServicePickupDuration(), r.getServicePickupDuration());
+
+        pickupServiceTime = input.getConfigParams().getServicePickupDuration();
         groupId = Math.max(groupId, r.getGroupId());
         if (requests.size() == 1) {
             haversineDistanceToSchool = computeDistanceHaversine(r.getLat_pickup(), r.getLong_pickup(),

@@ -7,6 +7,7 @@ import com.socolabs.mo.vrplib.entities.LexMultiFunctions;
 import com.socolabs.mo.vrplib.entities.LexMultiValues;
 import com.socolabs.mo.vrplib.entities.VRPSolutionValue;
 import com.socolabs.mo.vrplib.moves.IVRPMove;
+import com.socolabs.mo.vrplib.moves.OnePointMove;
 import com.socolabs.mo.vrplib.neighborhoodexploration.*;
 
 import java.util.ArrayList;
@@ -117,30 +118,46 @@ public class GreedySearch {
 
     private void reset() {
         System.out.println("Reset ....................................");
-        ArrayList<VRPPoint> refreshPoints = new ArrayList<>();
-        for (VRPRoute r : vr.getAllRoutes()) {
-            if (r.getNbPoints() > 0) {
-                int type = rand.nextInt(10);
-                if (type == 0) {
-                    for (VRPPoint p = r.getStartPoint().getNext(); p != r.getEndPoint(); p = p.getNext()) {
-                        refreshPoints.add(p);
+//        ArrayList<VRPPoint> refreshPoints = new ArrayList<>();
+//        for (VRPRoute r : vr.getAllRoutes()) {
+//            if (r.getNbPoints() > 0) {
+//                int type = rand.nextInt(10);
+//                if (type == 0) {
+//                    for (VRPPoint p = r.getStartPoint().getNext(); p != r.getEndPoint(); p = p.getNext()) {
+//                        refreshPoints.add(p);
+//                    }
+//                }
+//            }
+//        }
+//        for (VRPPoint x : refreshPoints) {
+//            VRPPoint y = refreshPoints.get(rand.nextInt(refreshPoints.size()));
+//            if (y.getRoute() != null && y != x && !y.isEndPoint()) {
+//                if (vr.exploreOnePointMove(x, y)) {
+//                    System.out.println("Reset::" + x + " - " + y);
+//                    vr.propagateOnePointMove(x, y);
+//                }
+//            }
+//        }
+        ArrayList<VRPPoint> allPoints = vr.getAllPoints();
+        for (VRPPoint x : allPoints) {
+            if (!x.isDepot()) {
+                if (rand.nextInt(10) == 0) {
+                    OnePointMove bestMove = null;
+                    LexMultiValues bestEval = null;
+                    for (VRPPoint y : allPoints) {
+                        if (!y.isEndPoint() && y != x && y != x.getPrev()) {
+                            if (vr.exploreOnePointMove(x, y)) {
+                                LexMultiValues eval = objectiveFunc.evaluate();
+                                if (bestEval == null || objectiveFunc.compare(eval, bestEval) < 0) {
+                                    bestMove = new OnePointMove(vr, x, y, eval);
+                                    bestEval = eval;
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        }
-        for (VRPPoint x : refreshPoints) {
-            VRPPoint y = refreshPoints.get(rand.nextInt(refreshPoints.size()));
-            if (y.getRoute() != null && y != x && !y.isEndPoint()) {
-                if (vr.exploreOnePointMove(x, y)) {
-                    System.out.println("Reset::" + x + " - " + y);
-                    vr.propagateOnePointMove(x, y);
-                }
-            }
-        }
-//        ArrayList<VRPPoint> allPoints = vr.getAllPoints();
-//        for (VRPPoint x : allPoints) {
-//            if (!x.isDepot()) {
-//                if (rand.nextInt(10) == 0) {
+                    if (bestMove != null) {
+                        bestMove.move();
+                    }
 //                    VRPPoint y = allPoints.get(rand.nextInt(allPoints.size()));
 //                    if (y.getRoute() != null && y != x && !y.isEndPoint()) {
 //                        if (vr.exploreOnePointMove(x, y)) {
@@ -148,9 +165,9 @@ public class GreedySearch {
 //                            vr.propagateOnePointMove(x, y);
 //                        }
 //                    }
-//                }
-//            }
-//        }
+                }
+            }
+        }
     }
 
     public String name() {
