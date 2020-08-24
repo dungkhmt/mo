@@ -52,6 +52,11 @@ public class PQShortestPath {
         d.put(s, .0);
         while (!d.isEmpty()) {
             Pair p = pq.poll();
+//            if (p == null) {
+//                for (int aa : mark) {
+//                    System.out.println("aaa = " + aa);
+//                }
+//            }
             int u = p.u;
             if (mark.contains(u)) {
                 mark.remove(u);
