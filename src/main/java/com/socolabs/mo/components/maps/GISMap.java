@@ -15,6 +15,7 @@ import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.graphs.Arc;
 import com.socolabs.mo.components.maps.graphs.Graph;
 import com.socolabs.mo.components.maps.graphs.Node;
+import com.socolabs.mo.components.maps.graphs.Segment;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
 import com.socolabs.mo.components.maps.utils.LatLng;
 import com.socolabs.mo.components.movingobjects.ILocation;
@@ -255,6 +256,25 @@ public class GISMap {
 //				endIds[l++] = mLatLgng2Point.get(mId2LatLng.get(secondEntry.getKey())).getId();
 			}
 		}
+	}
+
+	public Segment[] getSegmentOnWindow(double latLower, double lngLower, double latUpper, double lngUpper) {
+		Collection<ILocation> pointsOnWindow = quadTree.getPointsOnWindow(latLower, lngLower, latUpper, lngUpper);
+		int len = 0;
+		for (ILocation p : pointsOnWindow) {
+			Node node = (Node) p;
+			len += g.getA()[node.getId()].size();
+		}
+		Segment[] segments = new Segment[len];
+		int i = 0;
+		for (ILocation p : pointsOnWindow) {
+			Node node = (Node) p;
+			for (Arc a : g.getA()[node.getId()]) {
+				segments[i] = new Segment(i, node.getLatLng(), points.get(a.getEndPoint()).getLatLng());
+				i++;
+			}
+		}
+		return segments;
 	}
 
 	public DistanceElement[] getDistanceElements(LatLngInput input) {

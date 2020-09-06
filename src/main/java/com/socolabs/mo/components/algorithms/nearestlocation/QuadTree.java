@@ -55,6 +55,12 @@ public class QuadTree {
         initTree();
     }
 
+    public Collection<ILocation> getPointsOnWindow(double latLower, double lngLower, double latUpper, double lngUpper) {
+        HashSet<ILocation> pointsOnWindow = new HashSet<>();
+        root.getPointsOnWindow(pointsOnWindow, latLower, lngLower, latUpper, lngUpper);
+        return pointsOnWindow;
+    }
+
     public ILocation findNearestPoint(double lat, double lng) {
         double minDist = 1e18;
         ILocation nearestPoint = null;

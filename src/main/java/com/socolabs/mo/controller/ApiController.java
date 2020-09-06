@@ -19,6 +19,7 @@ import com.socolabs.mo.components.maps.distanceelementquery.DistanceElementQuery
 import com.socolabs.mo.components.maps.distanceelementquery.GeneralDistanceElement;
 import com.socolabs.mo.components.maps.distanceelementquery.LatLngInput;
 import com.socolabs.mo.components.maps.Path;
+import com.socolabs.mo.components.maps.graphs.Segment;
 import com.socolabs.mo.components.maps.utils.GoogleMapsQuery;
 import com.socolabs.mo.components.movingobjects.IMovingObject;
 import com.socolabs.mo.components.movingobjects.IServicePoint;
@@ -291,6 +292,19 @@ public class ApiController {
 		gismap.calcDistanceElements(input);
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		String json = gson.toJson(input);
+		return json;
+	}
+
+	@PostMapping("/{region}/get-segments-on-window")
+	public String getSegmentOnWindow(@RequestBody MapWindow input, @PathVariable String region) {
+		if (!this.region.equals(region)) {
+			gismap = null;
+			gismap = new GISMap("data/" + region + "Road-connected.txt");
+			this.region = region;
+		}
+		Segment[] segments = gismap.getSegmentOnWindow(input.getMinlat(), input.getMinlng(), input.getMaxlat(), input.getMaxlng());
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String json = gson.toJson(segments);
 		return json;
 	}
 

@@ -62,6 +62,14 @@ public class Block {
         return latLower <= lat && lat <= latUpper && lngLower <= lng && lng <= lngUpper;
     }
 
+    public boolean isInside(double lat1, double lng1, double lat2, double lng2) {
+        return lat1 <= latLower && latUpper <= lat2 && lng1 <= lngLower && lngUpper <= lng2;
+    }
+
+    public boolean isOverlap(double lat1, double lng1, double lat2, double lng2) {
+        return lat1 <= latUpper && lat2 >= latLower && lng1 <= lngUpper && lng2 >= lngLower;
+    }
+
     public boolean contains(ILocation p) {
         if (isInRange(p)) {
             return points.contains(p);

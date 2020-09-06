@@ -7,4 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class Vertex {
     private int id;
+
+    public String toString() {
+        return "" + id;
+    }
 }

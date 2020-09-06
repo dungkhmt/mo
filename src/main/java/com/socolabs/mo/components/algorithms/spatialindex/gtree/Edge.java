@@ -9,4 +9,8 @@ public class Edge {
     private Vertex startPoint;
     private Vertex endPoint;
     private double weight;
+
+    public String toString() {
+        return "(" + startPoint + " -> " + endPoint + " :: " + weight + ")";
+    }
 }

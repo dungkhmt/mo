@@ -37,7 +37,7 @@ public class GTree {
     }
 
     public static void main(String[] args) throws IOException {
-
+        genVNMInput();
     }
 
     public static void genVNMInput() throws IOException {
@@ -79,7 +79,8 @@ public class GTree {
         mLocation2LatLng.put(1000000002, new Pair<> (10.8428112,106.7586882));
         mLocation2LatLng.put(1000000003, new Pair<> (10.9211894,106.8611579));
         mLocation2LatLng.put(1000000004, new Pair<> (10.8401923,106.7623801));
-
+        mLocation2LatLng.put(1000000005, new Pair<> (10.8239092,106.69073));
+        mLocation2LatLng.put(1000000006, new Pair<> (10.8160676,106.6781257));
         GoogleMapsQuery GMQ = new GoogleMapsQuery();
         long departure_time = (long) DateTimeUtils.dateTime2Int("2020-08-24 08:00:00");
         GeneralDistanceElement[] elements = new GeneralDistanceElement[mLocation2LatLng.size() * mLocation2LatLng.size()];
