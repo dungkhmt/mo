@@ -17,6 +17,9 @@ public class GNode {
 
     private GNode parent;
     private ArrayList<GNode> children;
+    private HashSet<GNode> occurrenceList;
+
+    private HashSet<Vertex> containingMOVertices;
 
     public GNode(int depth) {
         this.depth = depth;
@@ -24,6 +27,24 @@ public class GNode {
         borders = new HashSet<>();
         parent = null;
         children = new ArrayList<>();
+        occurrenceList = new HashSet<>();
+        containingMOVertices = new HashSet<>();
+    }
+
+    public void addMovingObjectChild(GNode c) {
+        occurrenceList.add(c);
+    }
+
+    public void removeMovingObjectChild(GNode c) {
+        occurrenceList.remove(c);
+    }
+
+    public void addMovingObjectVertex(Vertex v) {
+        containingMOVertices.add(v);
+    }
+
+    public void removeMovingObjectVertex(Vertex v) {
+        containingMOVertices.remove(v);
     }
 
     public void addBorder(Vertex v) {
@@ -32,5 +53,9 @@ public class GNode {
 
     public boolean isBorder(Vertex v) {
         return borders.contains(v);
+    }
+
+    public boolean isMovingObjectVertex(Vertex v) {
+        return containingMOVertices.contains(v);
     }
 }

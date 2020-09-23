@@ -16,6 +16,7 @@ public class Graph {
 
     private PriorityQueue<Pair<Vertex, Double>> pq;
 
+
     public Graph(ArrayList<Vertex> vertices, ArrayList<Edge> edges) {
         this.vertices = new ArrayList<>(vertices);
         this.edges = new ArrayList<>(edges);
