@@ -17,8 +17,10 @@ public class GNode {
 
     private GNode parent;
     private ArrayList<GNode> children;
-    private HashSet<GNode> occurrenceList;
 
+    private HashSet<GNode> shortcuts;
+
+    private HashSet<GNode> occurrenceList;
     private HashSet<Vertex> containingMOVertices;
 
     public GNode(int depth) {
@@ -27,6 +29,7 @@ public class GNode {
         borders = new HashSet<>();
         parent = null;
         children = new ArrayList<>();
+        shortcuts = new HashSet<>();
         occurrenceList = new HashSet<>();
         containingMOVertices = new HashSet<>();
     }
@@ -45,6 +48,18 @@ public class GNode {
 
     public void removeMovingObjectVertex(Vertex v) {
         containingMOVertices.remove(v);
+    }
+
+    public void addShortcutNode(GNode s) {
+        shortcuts.add(s);
+    }
+
+    public boolean containsMovingObject() {
+        return !containingMOVertices.isEmpty();
+    }
+
+    public boolean hasShortCut(GNode s) {
+        return shortcuts.contains(s);
     }
 
     public void addBorder(Vertex v) {

@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class Vertex extends Point {
     private int id;
+    private int index;
 
     public Vertex(int id, double lat, double lng) {
         super(lat, lng);

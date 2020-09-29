@@ -57,6 +57,16 @@ public class Graph {
         return mVertex2OutEdges.get(v);
     }
 
+    public HashSet<Vertex> getAdjVertices(Vertex v) {
+        HashSet<Vertex> adjVertices = new HashSet<>();
+        for (Edge e : mVertex2OutEdges.get(v)) {
+            adjVertices.add(e.getEndPoint());
+        }
+        for (Edge e : mVertex2InEdges.get(v)) {
+            adjVertices.add(e.getStartPoint());
+        }
+        return adjVertices;
+    }
     public ArrayList<Edge> getInEdgesOfVertex(Vertex v) {
         return mVertex2InEdges.get(v);
     }
