@@ -9,13 +9,23 @@ import java.util.*;
 public class Graph {
     private ArrayList<Vertex> vertices;
     private ArrayList<Edge> edges;
+
     private HashMap<Vertex, ArrayList<Edge>> mVertex2OutEdges;
+    private ArrayList<Edge>[] outEdgesOfVertex;
+
     private HashMap<Vertex, ArrayList<Edge>> mVertex2InEdges;
+    private ArrayList<Edge>[] inEdgesOfVertex;
+
     private HashMap<Vertex, HashMap<Vertex, Edge>> mVertices2Edge;
     private HashMap<Vertex, HashMap<Vertex, Double>> cacheDistanceMatrices;
 
+    private int num = 0;
+    private int[] mark;
+    private double[] dist;
+    private Vertex[] prev;
     private PriorityQueue<Pair<Vertex, Double>> pq;
 
+    private boolean setIndex = false;
 
     public Graph(ArrayList<Vertex> vertices, ArrayList<Edge> edges) {
         this.vertices = new ArrayList<>(vertices);
@@ -53,22 +63,47 @@ public class Graph {
         cacheDistanceMatrices = new HashMap<>();
     }
 
+    public void initDataStructure() {
+        outEdgesOfVertex = new ArrayList[vertices.size()];
+        inEdgesOfVertex = new ArrayList[vertices.size()];
+        int index = 0;
+        for (Vertex v : vertices) {
+            outEdgesOfVertex[index] = mVertex2OutEdges.get(v);
+            inEdgesOfVertex[index] = mVertex2InEdges.get(v);
+            v.setIndex(index++);
+        }
+        mark = new int[index];
+        dist = new double[index];
+        prev = new Vertex[index];
+        setIndex = true;
+    }
+
     public ArrayList<Edge> getEdgesOfVertex(Vertex v) {
-        return mVertex2OutEdges.get(v);
+        return setIndex ? outEdgesOfVertex[v.getIndex()] : mVertex2OutEdges.get(v);
+    }
+
+    public ArrayList<Edge> getInEdgesOfVertex(Vertex v) {
+        return setIndex ? inEdgesOfVertex[v.getIndex()] : mVertex2InEdges.get(v);
     }
 
     public HashSet<Vertex> getAdjVertices(Vertex v) {
         HashSet<Vertex> adjVertices = new HashSet<>();
-        for (Edge e : mVertex2OutEdges.get(v)) {
-            adjVertices.add(e.getEndPoint());
-        }
-        for (Edge e : mVertex2InEdges.get(v)) {
-            adjVertices.add(e.getStartPoint());
+        if (setIndex) {
+            for (Edge e : outEdgesOfVertex[v.getIndex()]) {
+                adjVertices.add(e.getEndPoint());
+            }
+            for (Edge e : inEdgesOfVertex[v.getIndex()]) {
+                adjVertices.add(e.getStartPoint());
+            }
+        } else {
+            for (Edge e : mVertex2OutEdges.get(v)) {
+                adjVertices.add(e.getEndPoint());
+            }
+            for (Edge e : mVertex2InEdges.get(v)) {
+                adjVertices.add(e.getStartPoint());
+            }
         }
         return adjVertices;
-    }
-    public ArrayList<Edge> getInEdgesOfVertex(Vertex v) {
-        return mVertex2InEdges.get(v);
     }
 
     public boolean containsEdge(Vertex u, Vertex v) {
@@ -83,17 +118,9 @@ public class Graph {
         return vertices.size();
     }
 
-    public void calculateCacheDistanceMatrices(Vertex s, HashSet<Vertex> cacheVertices) {
-        if (!cacheDistanceMatrices.containsKey(s)) {
-            cacheDistanceMatrices.put(s, new HashMap<>());
-        }
-        HashMap<Vertex, Double> distElememtsMap = cacheDistanceMatrices.get(s);
-
-//        long edgeCnt = 0;
-        HashMap<Vertex, Integer> nbVisitedEdges = new HashMap<>();
-        HashMap<Vertex, Double> dist = new HashMap<>();
-        nbVisitedEdges.put(s, 1);
-        dist.put(s, .0);
+    public double[] calculateCacheDistanceMatrices(Vertex s, HashSet<Vertex> cacheVertices) {
+        dist[s.getIndex()] = 0;
+        mark[s.getIndex()] = ++num;
         pq.clear();
         pq.add(new Pair<>(s, .0));
         int cnt = 0;
@@ -101,12 +128,10 @@ public class Graph {
             Vertex u = pq.peek().first;
             Double d = pq.peek().second;
             pq.poll();
-            if (d > dist.get(u)) {
+            if (d > dist[u.getIndex()]) {
                 continue;
             }
             if (cacheVertices.contains(u)) {
-//                edgeCnt += nbVisitedEdges.get(u);
-                distElememtsMap.put(u, d);
                 cnt++;
                 if (cnt == cacheVertices.size()) {
                     break;
@@ -115,30 +140,30 @@ public class Graph {
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
                 double w = e.getWeight();
-                if (!dist.containsKey(v) || dist.get(v) > d + w) {
-                    dist.put(v, d + w);
+                if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
+                    mark[v.getIndex()] = num;
+                    dist[v.getIndex()] = d + w;
                     pq.add(new Pair<>(v, d + w));
-                    nbVisitedEdges.put(v, nbVisitedEdges.get(u) + 1);
                 }
             }
         }
-//        return edgeCnt;
+        return dist;
     }
 
-    public double getSPDist(Vertex s, Vertex t) {
-        return cacheDistanceMatrices.get(s).get(t);
-    }
+//    public double getSPDist(Vertex s, Vertex t) {
+//        return cacheDistanceMatrices.get(s).get(t);
+//    }
 
     public double getShortestPathDistance(Vertex s, Vertex t) {
-        HashMap<Vertex, Double> dist = new HashMap<>();
-        dist.put(s, .0);
+        dist[s.getIndex()] = 0;
+        mark[s.getIndex()] = ++num;
         pq.clear();
         pq.add(new Pair<>(s, .0));
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
             Double d = pq.peek().second;
             pq.poll();
-            if (d > dist.get(u)) {
+            if (d > dist[u.getIndex()]) {
                 continue;
             }
             if (u == t) {
@@ -147,8 +172,9 @@ public class Graph {
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
                 double w = e.getWeight();
-                if (!dist.containsKey(v) || dist.get(v) > d + w) {
-                    dist.put(v, d + w);
+                if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
+                    mark[v.getIndex()] = num;
+                    dist[v.getIndex()] = d + w;
                     pq.add(new Pair<>(v, d + w));
                 }
             }
@@ -157,16 +183,16 @@ public class Graph {
     }
 
     public Path getShortestPath(Vertex s, Vertex t) {
-        HashMap<Vertex, Double> dist = new HashMap<>();
-        HashMap<Vertex, Vertex> prev = new HashMap<>();
-        dist.put(s, .0);
+        dist[s.getIndex()] = 0;
+        mark[s.getIndex()] = ++num;
+        prev[s.getIndex()] = null;
         pq.clear();
         pq.add(new Pair<>(s, .0));
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
             Double d = pq.peek().second;
             pq.poll();
-            if (d > dist.get(u)) {
+            if (d > dist[u.getIndex()]) {
                 continue;
             }
             if (u == t) {
@@ -174,7 +200,7 @@ public class Graph {
                 Vertex v = u;
                 while (v != s) {
                     verticesPath.add(v);
-                    v = prev.get(v);
+                    v = prev[v.getIndex()];
                 }
                 verticesPath.add(v);
                 Collections.reverse(verticesPath);
@@ -183,14 +209,16 @@ public class Graph {
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
                 double w = e.getWeight();
-                if (!dist.containsKey(v) || dist.get(v) > d + w) {
-                    dist.put(v, d + w);
+                if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
+                    mark[v.getIndex()] = num;
+                    prev[v.getIndex()] = u;
+                    dist[v.getIndex()] = d + w;
                     pq.add(new Pair<>(v, d + w));
-                    prev.put(v, u);
                 }
             }
         }
-        System.out.println("WARNING::Don't travel from s to t");
+        System.out.println("ERROR::Don't travel from s to t");
+        System.exit(-1);
         return null;
     }
 

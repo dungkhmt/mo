@@ -23,6 +23,8 @@ public class GNode {
     private HashSet<GNode> occurrenceList;
     private HashSet<Vertex> containingMOVertices;
 
+    private double[][] distMatrix;
+
     public GNode(int depth) {
         this.depth = depth;
         isLeaf = false;
@@ -32,6 +34,14 @@ public class GNode {
         shortcuts = new HashSet<>();
         occurrenceList = new HashSet<>();
         containingMOVertices = new HashSet<>();
+    }
+
+    public void setDist(int i, int j, double dist) {
+        distMatrix[i][j] = dist;
+    }
+
+    public double getDist(int i, int j) {
+        return distMatrix[i][j];
     }
 
     public void addMovingObjectChild(GNode c) {
@@ -66,8 +76,12 @@ public class GNode {
         borders.add(v);
     }
 
-    public boolean isBorder(Vertex v) {
+    public boolean containsBorder(Vertex v) {
         return borders.contains(v);
+    }
+
+    public boolean containsChildBorder(Vertex v) {
+        return childBorders.contains(v);
     }
 
     public boolean isMovingObjectVertex(Vertex v) {
