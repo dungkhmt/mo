@@ -22,8 +22,8 @@ import java.util.*;
 
 public class GTree {
 
-    private final static int NB_FANOUT = 1 << 2;
-    private final static int MAX_LEAF_SIZE = 1 << 8;
+    private int NB_FANOUT = 1 << 2;
+    private int MAX_LEAF_SIZE = 1 << 8;
     private final static int MAX_SHORTCUT = 1 << 20;
 
     private Graph G;
@@ -36,7 +36,9 @@ public class GTree {
     private QuadTree quadTree;
 
 
-    public GTree(Graph g) {
+    public GTree(Graph g, int fanout, int leafSize) {
+        this.NB_FANOUT = fanout;
+        this.MAX_LEAF_SIZE = leafSize;
         this.G = g;
         mVertex2LeafNode = new HashMap<>();
         mVertex2CacheVertices = new HashMap<>();
@@ -221,7 +223,7 @@ public class GTree {
             }
             dem++;
             cnt += cacheVertices.size();
-            System.out.println(dem + " " + cnt);
+//            System.out.println(dem + " " + cnt);
             double[] dist = G.calculateCacheDistanceMatrices(s, cacheVertices);
             g = leaf;
             while (g != null && g.containsChildBorder(s)) {
@@ -532,7 +534,7 @@ public class GTree {
 
     public void addMovingObject(IMovingObject o) {
         Vertex nearestVertex = (Vertex) quadTree.findNearestPoint(o.getLat(), o.getLng());
-        assert (nearestVertex.getId() + "" != o.getId());
+//        assert (nearestVertex.getId() + "" != o.getId());
         if (!mVertex2MovingObjects.containsKey(nearestVertex)) {
             mVertex2MovingObjects.put(nearestVertex, new HashSet<>());
         }
@@ -548,15 +550,33 @@ public class GTree {
         }
     }
 
+    public void clearMovingObjects() {
+        for (Vertex v : mVertex2MovingObjects.keySet()) {
+            if (mVertex2MovingObjects.get(v).size() > 0) {
+                GNode leaf = mVertex2LeafNode.get(v);
+                for (GNode node = leaf; node != null; node = node.getParent()) {
+                    node.clearMovingObjectChildList();
+                }
+                mVertex2MovingObjects.get(v).clear();
+            }
+        }
+    }
+
     public void removeMovingObject(IMovingObject o) {
         // to do
+
     }
 
     public ArrayList<Pair<IMovingObject, Double>> verifyKNNSearch(double lat, double lng, int k) {
         Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
         ArrayList<Pair<IMovingObject, Double>> res = new ArrayList<>();
-        HashMap<Vertex, Double> dist = new HashMap<>();
-        dist.put(s, .0);
+//        HashMap<Vertex, Double> dist = new HashMap<>();
+//        dist.put(s, .0);
+        double[] dist = new double[G.size() + 1];
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = 1e9;
+        }
+        dist[s.getIndex()] = 0;
         PriorityQueue<Pair<Vertex, Double>> pq = new PriorityQueue<>(new Comparator<Pair<Vertex, Double>>() {
             @Override
             public int compare(Pair<Vertex, Double> o1, Pair<Vertex, Double> o2) {
@@ -574,7 +594,8 @@ public class GTree {
             Vertex u = pq.peek().first;
             Double d = pq.peek().second;
             pq.poll();
-            if (d > dist.get(u)) {
+//            System.out.println(lat + " " + lng + " " + u + " " + d);
+            if (d > dist[u.getIndex()]) {//.get(u)) {
                 continue;
             }
             if (mVertex2MovingObjects.containsKey(u)) {
@@ -585,8 +606,9 @@ public class GTree {
             for (Edge e : G.getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
                 double w = e.getWeight();
-                if (!dist.containsKey(v) || dist.get(v) > d + w) {
-                    dist.put(v, d + w);
+                if (dist[v.getIndex()] > d + w) {
+                    //dist.put(v, d + w);
+                    dist[v.getIndex()] = d + w;
                     pq.add(new Pair<>(v, d + w));
                 }
             }
@@ -639,6 +661,7 @@ public class GTree {
             }
         }
 
+        int cnt = 0;
         GNode cur = leaf;
         while (res.size() < k && (!pq.isEmpty() || cur != root)) {
             PQData data = pq.peek();
@@ -646,6 +669,7 @@ public class GTree {
                 GNode parent = cur.getParent();
                 for (GNode g : parent.getOccurrenceList()) {
                     if (g != cur) {
+                        cnt++;
                         Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(curBorderDists, g, parent);
                         pq.add(new PQData(g, null, nextData.second, nextData.first));
                     }
@@ -665,13 +689,9 @@ public class GTree {
                         res.add(new Pair<>(mo, data.minDist));
                     }
                 } else {
-//                    System.out.println(data.node);
-//                    for (Pair<Vertex, Double> pair : data.borderDists) {
-//                        System.out.println("kNN " + pair.first + " " + pair.second);
-//                    }
-
                     if (!data.node.isLeaf()) {
                         for (GNode g : data.node.getOccurrenceList()) {
+                            cnt++;
                             Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(data.borderDists, g, data.node);
                             pq.add(new PQData(g, null, nextData.second, nextData.first));
                         }
@@ -693,6 +713,7 @@ public class GTree {
                 }
             }
         }
+//        System.out.println(cnt);
         return res;
     }
 
@@ -890,6 +911,9 @@ public class GTree {
 //        System.exit(0);
         String filename = "data\\BusHanoiCityRoad-connected.txt";
 //        String filename = "data\\HaiBaTrungRoad-connected.txt";
+        if (args.length > 0) {
+            filename = args[0];
+        }
         Scanner in = new Scanner(new File(filename));
         ArrayList<Vertex> vertices = new ArrayList<>();
         ArrayList<Edge> edges = new ArrayList<>();
@@ -912,74 +936,15 @@ public class GTree {
 //            edges.add(new Edge(mID2Vertex.get(endID), mID2Vertex.get(beginID), length));
         }
 
-        Graph g = new Graph(vertices, edges);
-        GTree gTree = new GTree(g);
-        System.out.println("building tree");
-        long startTime = System.currentTimeMillis();
-        gTree.buildTree();
-        long endTime = System.currentTimeMillis();
-        System.out.println("building time = " + (endTime - startTime));
-        System.out.println("build shortcut");
-        gTree.buildShortCut();
-        startTime = System.currentTimeMillis();
-        System.out.println("calculating dist matrices");
-        gTree.calculateDistanceMatrices();
-        endTime = System.currentTimeMillis();
-        System.out.println("calculating time = " + (endTime - startTime));
 
+
+        FileWriter myWriter;
         Random rand = new Random(1993);
-        HashMap<MovingObject, Vertex> mMO2Vertex = new HashMap<>();
-        for (Vertex v : g.getVertices()) {
-            if (rand.nextInt(100) == 0) {
-                MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
-                gTree.addMovingObject(o);
-                mMO2Vertex.put(o, v);
-            }
-        }
-        
-        ArrayList<Vertex> kNNVertices = new ArrayList<>();
-        for (int test = 1; test < 10000; test++) {
-            System.out.println("test " + test);
-            Vertex v = g.getVertices().get(rand.nextInt(g.getVertices().size()));
-            kNNVertices.add(v);
-        }
-        startTime = System.currentTimeMillis();
-        for (Vertex v : kNNVertices) {
-            ArrayList<Pair<IMovingObject, Double>> r1 = gTree.shortcutKNNSearch(v.getLat(), v.getLng(), 10);
-        }
-        long t1 = System.currentTimeMillis() - startTime;
-        startTime = System.currentTimeMillis();
-        for (Vertex v : kNNVertices) {
-            ArrayList<Pair<IMovingObject, Double>> r2 = gTree.verifyKNNSearch(v.getLat(), v.getLng(), 10);
-        }
-        long t2 = System.currentTimeMillis() - startTime;
-        startTime = System.currentTimeMillis();
-        for (Vertex v : kNNVertices) {
-            ArrayList<Pair<IMovingObject, Double>> r3 = gTree.kNNSearch(v.getLat(), v.getLng(), 10);
-        }
-        long t3 = System.currentTimeMillis() - startTime;
-        System.out.println(t1 + " : " + t2 + " : " + t3);
-//            if (r1.size() != r2.size()) {
-//                System.out.println("ERROR::1");
-//                System.exit(-1);
-//            }
-//            for (int i = 0; i < r1.size(); i++) {
-//                System.out.println(g.getShortestPathDistance(v, mMO2Vertex.get(r1.get(i).first)));
-//                System.out.println("debug " + i + " (" + r1.get(i).first + ", " + r1.get(i).second + ") - (" + r2.get(i).first + ", " + r2.get(i).second + ") - (" + r3.get(i).first + ", " + r3.get(i).second + ")");
-//            }
-//            for (int i = 0; i < r1.size(); i++) {
-//                if (Math.abs(r1.get(i).second - r2.get(i).second) > 1e-6) {
-//                    System.out.println("ERROR::2 " + i + " (" + r1.get(i).first + ", " + r1.get(i).second + ") - (" + r2.get(i).first + ", " + r2.get(i).second + ")");
-//                    System.exit(-1);
-//                }
-//            }
-//        }
-        System.exit(0);
-        int diff = 0;
+
         ArrayList<Pair<Vertex, Vertex>> queries = new ArrayList<>();
         ArrayList<Double> res1 = new ArrayList<>();
         ArrayList<Double> res2 = new ArrayList<>();
-        for (int iter = 0; iter < 50000; iter++) {
+        for (int iter = 0; iter < 100000; iter++) {
             int s = rand.nextInt(vertices.size());
             int t = rand.nextInt(vertices.size());
             while (s == t) {
@@ -988,77 +953,206 @@ public class GTree {
             }
             queries.add(new Pair<>(vertices.get(s), vertices.get(t)));
         }
-        startTime = System.currentTimeMillis();
-        for (Pair<Vertex, Vertex> p : queries) {
-            Vertex s = p.first;
-            Vertex t = p.second;
-//            System.out.println(vertices.get(s) + " " + vertices.get(t));
-//            Path p2 = g.getShortestPath(vertices.get(s), vertices.get(t));
-//            System.out.println("path: ");
-//            for (Vertex x : p2.getVertices()) {
-//                System.out.print(x + " ->");
-//            }
-//            System.out.println();
-//            double r1 = gTree.getShortCutShortestPathDistance(s, t);
-//            res1.add(r1);
-//            double r2 = g.getShortestPathDistance(s, t);
-//            if (Math.abs(r1 - r2) > 1e-6) {
-//                System.out.println(s + " -> " + t + " r1 = " + r1 + " r2 = " + r2);
-//            }
-            Path p1 = gTree.getShortestPath(s, t);
-            res1.add(p1.getLength());
-//            ArrayList<Vertex> verticesPath = p1.getVertices();
-//            if (s != verticesPath.get(0) || t != verticesPath.get(verticesPath.size() - 1)) {
-//                System.out.println("ERROR:: 1");
-//                System.exit(-1);
-//            }
-//            double recalcRes = 0;
-//            for (int i = 1; i < verticesPath.size(); i++) {
-//                if (!g.containsEdge(verticesPath.get(i - 1), verticesPath.get(i))) {
-//                    System.out.println("ERROR:: 2");
-//                    System.exit(-1);
+        int[] FANOUTList = new int[]{4, 8, 16};
+        int[] LEAFSIZEList = new int[] {32, 64, 128, 256};
+        if (args.length > 1) {
+            FANOUTList = new int[]{Integer.parseInt(args[1])};
+            LEAFSIZEList = new int[] {Integer.parseInt(args[2])};
+        }
+        int bestFanout = -1;
+        int bestLeafSize = -1;
+        long minRunningTime = 1L << 60;
+        for (int fanout : FANOUTList) {
+            for (int leafSize : LEAFSIZEList) {
+                Graph g = new Graph(vertices, edges);
+                System.out.println("fanout = " + fanout + " leafSize = " + leafSize);
+                myWriter = new FileWriter(filename + ".res", true);
+                myWriter.write("fanout = " + fanout + " leafSize = " + leafSize + "\n");
+                myWriter.close();
+
+                GTree gTree = new GTree(g, fanout, leafSize);
+                System.out.println("building tree");
+                long startTime = System.currentTimeMillis();
+                gTree.buildTree();
+                long endTime = System.currentTimeMillis();
+                System.out.println("building time = " + (endTime - startTime));
+                myWriter = new FileWriter(filename + ".res", true);
+                myWriter.write("building time = " + (endTime - startTime) + "\n");
+                myWriter.close();
+//        System.out.println("build shortcut");
+//        gTree.buildShortCut();
+//        startTime = System.currentTimeMillis();
+                System.out.println("calculating dist matrices");
+                gTree.calculateDistanceMatrices();
+                endTime = System.currentTimeMillis();
+                System.out.println("calculating time = " + (endTime - startTime));
+                myWriter = new FileWriter(filename + ".res", true);
+                myWriter.write("calculating time = " + (endTime - startTime) + "\n");
+                myWriter.close();
+
+                int[] occRate = new int[]{100, 200, 500, 1000};//, 500, 1000, 5000};
+                int[] kPars = new int[]{1};//, 5, 10, 20, 50};//, 5, 10, 20, 50, 100};
+                ArrayList<Vertex> kNNVertices = new ArrayList<>();
+                for (int test = 1; test < 50000; test++) {
+//            System.out.println("test " + test);
+                    Vertex v = g.getVertices().get(rand.nextInt(g.getVertices().size()));
+                    kNNVertices.add(v);
+                }
+//        HashMap<MovingObject, Vertex> mMO2Vertex = new HashMap<>();
+                for (int occ : occRate) {
+                    for (int k : kPars) {
+                        gTree.clearMovingObjects();
+                        for (Vertex v : g.getVertices()) {
+                            if (rand.nextInt(occ) == 0) {
+                                MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
+                                gTree.addMovingObject(o);
+//                mMO2Vertex.put(o, v);
+
+                            }
+                        }
+                        startTime = System.currentTimeMillis();
+                        for (Vertex v : kNNVertices) {
+                            ArrayList<Pair<IMovingObject, Double>> r1 = gTree.kNNSearch(v.getLat(), v.getLng(), k);
+                        }
+                        long t1 = System.currentTimeMillis() - startTime;
+                        startTime = System.currentTimeMillis();
+//                        for (Vertex v : kNNVertices) {
+//                            ArrayList<Pair<IMovingObject, Double>> r2 = gTree.verifyKNNSearch(v.getLat(), v.getLng(), k);
+//                        }
+                        long t2 = System.currentTimeMillis() - startTime;
+                        System.out.println("KNN Search::("+ "fanout = " + fanout + " leafSize = " + leafSize + ", " + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2);
+                        myWriter = new FileWriter(filename + ".res", true);
+                        myWriter.write("KNN Search::(" + "fanout = " + fanout + " leafSize = " + leafSize + ", " + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2 + "\n");
+                        myWriter.close();
+                    }
+                }
+
+//                int diff = 0;
+//
+//                startTime = System.currentTimeMillis();
+//                for (Pair<Vertex, Vertex> p : queries) {
+//                    Vertex s = p.first;
+//                    Vertex t = p.second;
+//                    Path p1 = gTree.getShortestPath(s, t);
 //                }
-//                recalcRes += g.getEdge(verticesPath.get(i - 1), verticesPath.get(i)).getWeight();
-//            }
-//            double res1 = p1.getLength();
-//            if (Math.abs(recalcRes - res1) > 1e-6) {
-//                System.out.println("ERROR:: 3");
-//                System.exit(-1);
-//            }
-//            System.out.println("r1 = " + res1 + " time = " + (endTime - startTime));
-//            startTime = System.currentTimeMillis();
-
-//            endTime = System.currentTimeMillis();
-//            t2 += endTime - startTime;
-//            System.out.println("r2 = " + res2 + " time = " + (endTime - startTime));
-
-        }
-        t1 = System.currentTimeMillis() - startTime;
-        startTime = System.currentTimeMillis();
-        for (Pair<Vertex, Vertex> p : queries) {
-            Vertex s = p.first;
-            Vertex t = p.second;
-            Path p2 = g.getShortestPath(s, t);
-            res2.add(p2.getLength());
-        }
-        t2 = System.currentTimeMillis() - startTime;
-        for (int i = 0; i < res1.size(); i++) {
-            if (Math.abs(res1.get(i) - res2.get(i)) > 1e-6) {
-                diff++;
+//                long t1 = System.currentTimeMillis() - startTime;
+//                startTime = System.currentTimeMillis();
+//                for (Pair<Vertex, Vertex> p : queries) {
+//                    Vertex s = p.first;
+//                    Vertex t = p.second;
+//                    Path p2 = g.getShortestPath(s, t);
+////            res2.add(p2.getLength());
+//                }
+//                long t2 = System.currentTimeMillis() - startTime;
+//                System.out.println("get path gtree = " + t1 + " ijk = " + t2);
+//                myWriter = new FileWriter(filename + ".res", true);
+//                myWriter.write("get path gtree = " + t1 + " ijk = " + t2 + "\n");
+//                myWriter.close();
+//                startTime = System.currentTimeMillis();
+//                for (Pair<Vertex, Vertex> p : queries) {
+//                    Vertex s = p.first;
+//                    Vertex t = p.second;
+//                    double p1 = gTree.getShortCutShortestPathDistance(s, t);
+//                }
+//                t1 = System.currentTimeMillis() - startTime;
+//                startTime = System.currentTimeMillis();
+//                for (Pair<Vertex, Vertex> p : queries) {
+//                    Vertex s = p.first;
+//                    Vertex t = p.second;
+//                    double p2 = g.getShortestPathDistance(s, t);
+////            res2.add(p2.getLength());
+//                }
+//                t2 = System.currentTimeMillis() - startTime;
+////        startTime = System.currentTimeMillis();
+////        for (Pair<Vertex, Vertex> p : queries) {
+////            Vertex s = p.first;
+////            Vertex t = p.second;
+////            double p1 = gTree.getShortestPathDistance(s, t);
+////        }
+////        t3 = System.currentTimeMillis() - startTime;
+//                System.out.println("dist gtree = " + t1 + " ijk = " + t2);
+//                myWriter = new FileWriter(filename + ".res", true);
+//                myWriter.write("dist gtree = " + t1 + " ijk = " + t2 + "\n");
+//                myWriter.close();
+//                if (t1  < minRunningTime) {
+//                    bestFanout = fanout;
+//                    bestLeafSize = leafSize;
+//                    minRunningTime = t1;
+//                }
             }
         }
-//        endTime = System.currentTimeMillis();
-//        t1 = endTime - startTime;
-//        startTime = System.currentTimeMillis();
-//        for (Pair<Vertex, Vertex> p : queries) {
-//            Vertex s = p.first;
-//            Vertex t = p.second;
-//            Path p2 = g.getShortestPath(s, t);
+
+//        if (args.length > 1) {
+//            return;
 //        }
-//        endTime = System.currentTimeMillis();
-//        t2 = endTime - startTime;
-        System.out.println("t1 = " + t1 + " t2 = " + t2 + " diff = " + diff);
+        /*
+        int bestFanout = 4;
+        int bestLeafSize = 512;
+        Graph g = new Graph(vertices, edges);
+        System.out.println("bestFanout = " + bestFanout + " bestLeafSize = " + bestLeafSize);
+        myWriter = new FileWriter(filename + ".res", true);
+        myWriter.write("bestFanout = " + bestFanout + " bestLeafSize = " + bestLeafSize + "\n");
+        myWriter.close();
+        GTree gTree = new GTree(g, bestFanout, bestLeafSize);
+        System.out.println("building tree");
+        long startTime = System.currentTimeMillis();
+        gTree.buildTree();
+        long endTime = System.currentTimeMillis();
+        System.out.println("building time = " + (endTime - startTime));
+        myWriter = new FileWriter(filename + ".res", true);
+        myWriter.write("building time = " + (endTime - startTime) + "\n");
+        myWriter.close();
+        System.out.println("build shortcut");
+        gTree.buildShortCut();
+        startTime = System.currentTimeMillis();
+        System.out.println("calculating dist matrices");
+        gTree.calculateDistanceMatrices();
+        endTime = System.currentTimeMillis();
+        System.out.println("calculating time = " + (endTime - startTime));
+        myWriter = new FileWriter(filename + ".res", true);
+        myWriter.write("calculating time = " + (endTime - startTime) + "\n");
+        myWriter.close();
+        int[] occRate = new int[]{100, 200, 500, 1000};//, 500, 1000, 5000};
+        int[] kPars = new int[]{1, 5, 10, 20, 50};//, 5, 10, 20, 50, 100};
+        ArrayList<Vertex> kNNVertices = new ArrayList<>();
+        for (int test = 1; test < 100000; test++) {
+//            System.out.println("test " + test);
+            Vertex v = g.getVertices().get(rand.nextInt(g.getVertices().size()));
+            kNNVertices.add(v);
+        }
+//        HashMap<MovingObject, Vertex> mMO2Vertex = new HashMap<>();
+        for (int occ : occRate) {
+            for (int k : kPars) {
+                gTree.clearMovingObjects();
+                for (Vertex v : g.getVertices()) {
+                    if (rand.nextInt(occ) == 0) {
+                        MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
+                        gTree.addMovingObject(o);
+//                mMO2Vertex.put(o, v);
+
+                    }
+                }
+                startTime = System.currentTimeMillis();
+                for (Vertex v : kNNVertices) {
+                    ArrayList<Pair<IMovingObject, Double>> r1 = gTree.kNNSearch(v.getLat(), v.getLng(), k);
+                }
+                long t1 = System.currentTimeMillis() - startTime;
+                startTime = System.currentTimeMillis();
+                for (Vertex v : kNNVertices) {
+                    ArrayList<Pair<IMovingObject, Double>> r2 = gTree.shortcutKNNSearch(v.getLat(), v.getLng(), k);
+                }
+                long t2 = System.currentTimeMillis() - startTime;
+                System.out.println("KNN Search::(" + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2);
+                myWriter = new FileWriter(filename + ".res", true);
+                myWriter.write("KNN Search::(" + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2 + "\n");
+                myWriter.close();
+            }
+        }
+
+//        myWriter.close();
 //        genVNMInput();
+
+         */
     }
 
     public static void genVNMInput() throws IOException {

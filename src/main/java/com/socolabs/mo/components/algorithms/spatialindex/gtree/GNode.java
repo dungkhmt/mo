@@ -48,6 +48,10 @@ public class GNode {
         occurrenceList.add(c);
     }
 
+    public void clearMovingObjectChildList() {
+        occurrenceList.clear();
+    }
+
     public void removeMovingObjectChild(GNode c) {
         occurrenceList.remove(c);
     }

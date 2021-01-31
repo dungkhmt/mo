@@ -34,6 +34,7 @@ public class Graph {
         mVertex2OutEdges = new HashMap<>();
         mVertices2Edge = new HashMap<>();
         for (Vertex v : vertices) {
+            v.clear();
             mVertex2OutEdges.put(v, new ArrayList<>());
             mVertex2InEdges.put(v, new ArrayList<>());
             mVertices2Edge.put(v, new HashMap<>());
