@@ -19,7 +19,12 @@ public class Route {
     }
 
     public void addParcel(Parcel p) {
+        System.out.println("addParcel " + weight + " " + p.getWeight());
         weight += p.getWeight();
         assert weight <= vehicle.getCapacity();
+    }
+
+    public int getRemainWeight() {
+        return vehicle.getCapacity() - weight;
     }
 }

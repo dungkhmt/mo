@@ -1,11 +1,13 @@
 package com.socolabs.mo.components.algorithms.spatialindex.gtree;
 
+import com.socolabs.mo.components.collectparcels.RouteElement;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 @Getter
 @Setter
@@ -25,6 +27,8 @@ public class GNode {
 
     private double[][] distMatrix;
 
+    private TreeSet<RouteElement> elements;
+
     public GNode(int depth) {
         this.depth = depth;
         isLeaf = false;
@@ -34,6 +38,7 @@ public class GNode {
         shortcuts = new HashSet<>();
         occurrenceList = new HashSet<>();
         containingMOVertices = new HashSet<>();
+        elements = new TreeSet<>();
     }
 
     public void setDist(int i, int j, double dist) {
@@ -90,5 +95,38 @@ public class GNode {
 
     public boolean isMovingObjectVertex(Vertex v) {
         return containingMOVertices.contains(v);
+    }
+
+    public void addRouteElement(RouteElement e) {
+//        int prevSize = elements.size();
+        elements.add(e);
+//        int afterSize = elements.size();
+//        System.out.println("addRouteElement " + afterSize);
+//        if (prevSize + 1 != afterSize) {
+//            e = null;
+//            e.getRoute();
+//        }
+    }
+
+    public void removeRouteElement(RouteElement e) {
+//        int prevSize = elements.size();
+        elements.remove(e);
+//        int afterSize = elements.size();
+//        if (prevSize - 1 != afterSize) {
+//            System.out.println("prev = " + prevSize + " after = " + afterSize);
+//            for (RouteElement re : elements) {
+//                System.out.println(re.getLocation() + " " + re.getParcel() + " " + re.getRoute().getRemainWeight() + " " + re.getRoute().getVehicle().getId());
+//            }
+//            System.out.println("e location " + e.getLocation() + " " + e.getRoute().getRemainWeight() + " " + e.getRoute().getVehicle().getId());
+//            e = null;
+//            e.getRoute();
+//        }
+    }
+
+    public boolean hasCandidateRouteElement(int remainWeight) {
+        if (!elements.isEmpty()) {
+            return elements.last().getRoute().getRemainWeight() >= remainWeight;
+        }
+        return false;
     }
 }
