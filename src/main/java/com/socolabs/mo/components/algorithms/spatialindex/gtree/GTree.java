@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -32,9 +33,12 @@ public class GTree {
     private HashMap<Vertex, GNode> mVertex2LeafNode;
     private HashMap<Vertex, HashSet<Vertex>> mVertex2CacheVertices;
 
-    private HashMap<Vertex, HashSet<IMovingObject>> mVertex2MovingObjects;
-    private QuadTree quadTree;
+//    private HashMap<Vertex, HashSet<IMovingObject>> mVertex2MovingObjects;
+//    private QuadTree quadTree;
 
+    private int nbQuery;
+    private int[] queryMark;
+    private double[] minDistArr;
 
     public GTree(Graph g, int fanout, int leafSize) {
         this.NB_FANOUT = fanout;
@@ -42,19 +46,19 @@ public class GTree {
         this.G = g;
         mVertex2LeafNode = new HashMap<>();
         mVertex2CacheVertices = new HashMap<>();
-        mVertex2MovingObjects = new HashMap<>();
-        quadTree = new QuadTree(new HashSet<>(g.getVertices()));
+//        mVertex2MovingObjects = new HashMap<>();
+//        quadTree = new QuadTree(new HashSet<>(g.getVertices()));
     }
 
     public void buildTree() {
         root = new GNode(0);
         Queue<Pair<Graph, GNode>> queue = new ArrayDeque<>();
         queue.add(new Pair<>(G, root));
-//        int maxDepth = 0;
+        int maxDepth = 0;
         while (!queue.isEmpty()) {
             Graph sg = queue.peek().first;
             GNode node = queue.peek().second;
-//            maxDepth = Math.max(maxDepth, node.getDepth());
+            maxDepth = Math.max(maxDepth, node.getDepth());
             queue.poll();
             if (sg.size() <= MAX_LEAF_SIZE) {
                 node.setLeaf(true);
@@ -96,7 +100,7 @@ public class GTree {
 //            }
         }
 
-//        System.out.println("max depth = " + maxDepth);
+        System.out.println("max depth = " + maxDepth);
 //        System.exit(0);
     }
 
@@ -183,6 +187,7 @@ public class GTree {
         }
     }
 
+
     private void initDistanceMatrices(GNode g) {
         int index = 0;
         for (Vertex v : g.getChildBorders()) {
@@ -201,11 +206,15 @@ public class GTree {
         for (GNode c : g.getChildren()) {
             initDistanceMatrices(c);
         }
+
     }
 
     public void calculateDistanceMatrices() {
         System.out.println(mVertex2LeafNode.size());
         G.initDataStructure();
+        minDistArr = new double[G.size() + 1];
+        queryMark = new int[G.size() + 1];
+        nbQuery = 0;
         initDistanceMatrices(root);
         int dem = 0;
         int cnt = 0;
@@ -231,6 +240,7 @@ public class GTree {
                 for (Vertex v : g.getChildBorders()) {
                     int vIndex = v.getGNodeIndex(g);
                     g.setDist(sIndex, vIndex, dist[v.getIndex()]);
+                    s.addShortcut(g, v, dist[v.getIndex()]);
                 }
                 for (GNode shortcut : g.getShortcuts()) {
                     for (Vertex v : shortcut.getBorders()) {
@@ -240,6 +250,7 @@ public class GTree {
                 }
                 g = g.getParent();
             }
+            s.sortShortcut();
         }
 //        System.exit(0);
 //        for (Vertex v : mVertex2CacheVertices.keySet()) {
@@ -377,6 +388,16 @@ public class GTree {
             for (Vertex b : lca.getChildBorders()) {
                 if (b != u && b != v) {
                     if (Math.abs(dist - getSPDist(u, b, lca) - getSPDist(b, v, lca)) < 1e-6) {
+                        System.out.println(u.inside(lca) + " " + v.inside(lca));
+                        System.out.println("-----------------------------");
+                        for (GNode g = mVertex2LeafNode.get(u); g != lca; g = g.getParent()) {
+                            System.out.println(g);
+                        }
+                        System.out.println("-----------------------------");
+                        for (GNode g = mVertex2LeafNode.get(v); g != lca; g = g.getParent()) {
+                            System.out.println(g);
+                        }
+                        System.out.println(lca);
                         return b;
                     }
                 }
@@ -396,6 +417,7 @@ public class GTree {
         double dist = getSPDist(u, v, lca);
         Vertex b = findBorder(u, v, lca, dist);
         shortestPathRecovery(u, b, path);
+        System.out.println("found border " + u + " " + v + " -> "  + b);
         path.add(b);
         shortestPathRecovery(b, v, path);
     }
@@ -532,15 +554,16 @@ public class GTree {
         return path;
     }
 
-    public void addMovingObject(IMovingObject o) {
-        Vertex nearestVertex = (Vertex) quadTree.findNearestPoint(o.getLat(), o.getLng());
+    public void addMovingObject(Vertex object) {
+//        Vertex nearestVertex = (Vertex) quadTree.findNearestPoint(o.getLat(), o.getLng());
+        object.setObject(true);
 //        assert (nearestVertex.getId() + "" != o.getId());
-        if (!mVertex2MovingObjects.containsKey(nearestVertex)) {
-            mVertex2MovingObjects.put(nearestVertex, new HashSet<>());
-        }
-        mVertex2MovingObjects.get(nearestVertex).add(o);
-        GNode leaf = mVertex2LeafNode.get(nearestVertex);
-        leaf.addMovingObjectVertex(nearestVertex);
+//        if (!mVertex2MovingObjects.containsKey(nearestVertex)) {
+//            mVertex2MovingObjects.put(nearestVertex, new HashSet<>());
+//        }
+//        mVertex2MovingObjects.get(nearestVertex).add(o);
+        GNode leaf = mVertex2LeafNode.get(object);
+        leaf.addMovingObjectVertex(object);
         GNode child = leaf;
         GNode parent = leaf.getParent();
         while (parent != null) {
@@ -551,15 +574,19 @@ public class GTree {
     }
 
     public void clearMovingObjects() {
-        for (Vertex v : mVertex2MovingObjects.keySet()) {
-            if (mVertex2MovingObjects.get(v).size() > 0) {
+//        System.out.println("clearMovingObjects");
+//        int cnt = 0;
+        for (Vertex v : G.getVertices()) {
+            if (v.isObject()) {
+//                cnt++;
+                v.setObject(false);
                 GNode leaf = mVertex2LeafNode.get(v);
                 for (GNode node = leaf; node != null; node = node.getParent()) {
                     node.clearMovingObjectChildList();
                 }
-                mVertex2MovingObjects.get(v).clear();
             }
         }
+//        System.out.println(cnt);
     }
 
     public void removeMovingObject(IMovingObject o) {
@@ -567,9 +594,9 @@ public class GTree {
 
     }
 
-    public ArrayList<Pair<IMovingObject, Double>> verifyKNNSearch(double lat, double lng, int k) {
-        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
-        ArrayList<Pair<IMovingObject, Double>> res = new ArrayList<>();
+    public ArrayList<Pair<Vertex, Double>> verifyKNNSearch(Vertex s, int k) {
+//        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
+        ArrayList<Pair<Vertex, Double>> res = new ArrayList<>();
 //        HashMap<Vertex, Double> dist = new HashMap<>();
 //        dist.put(s, .0);
         double[] dist = new double[G.size() + 1];
@@ -598,10 +625,13 @@ public class GTree {
             if (d > dist[u.getIndex()]) {//.get(u)) {
                 continue;
             }
-            if (mVertex2MovingObjects.containsKey(u)) {
-                for (IMovingObject mo : mVertex2MovingObjects.get(u)) {
-                    res.add(new Pair<>(mo, d));
-                }
+            if (u.isObject()) {
+                res.add(new Pair<>(u, d));
+//                if (mVertex2MovingObjects.containsKey(u)) {
+//                    for (IMovingObject mo : mVertex2MovingObjects.get(u)) {
+//
+//                    }
+//                }
             }
             for (Edge e : G.getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
@@ -616,11 +646,11 @@ public class GTree {
         return res;
     }
 
-    public ArrayList<Pair<IMovingObject, Double>> kNNSearch(double lat, double lng, int k) {
+    public ArrayList<Pair<Vertex, Double>> kNNSearch(Vertex s, int k) {
 //        System.out.println("kNNSearch");
-        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
+//        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
         GNode leaf = mVertex2LeafNode.get(s);
-        ArrayList<Pair<IMovingObject, Double>> res = new ArrayList<>();
+        ArrayList<Pair<Vertex, Double>> res = new ArrayList<>();
 
         class PQData{
             GNode node;
@@ -684,10 +714,10 @@ public class GTree {
 //                System.out.println("kNN dataDist = " + data.minDist);
 
                 if (data.mvVertex != null) {
-
-                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
-                        res.add(new Pair<>(mo, data.minDist));
-                    }
+                    res.add(new Pair<>(data.mvVertex, data.minDist));
+//                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
+//                        res.add(new Pair<>(mo, data.minDist));
+//                    }
                 } else {
                     if (!data.node.isLeaf()) {
                         for (GNode g : data.node.getOccurrenceList()) {
@@ -717,6 +747,209 @@ public class GTree {
         return res;
     }
 
+    public ArrayList<Pair<Vertex, Double>> newkNNSearch(Vertex s, int k) {
+        System.out.println("newkNNSearch:: " + s);
+//        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
+        GNode leaf = mVertex2LeafNode.get(s);
+        ArrayList<Pair<Vertex, Double>> res = new ArrayList<>();
+
+        class PQData implements Comparable <PQData> {
+            Vertex v;
+            Vertex startPoint;
+            double dist;
+            double startLen;
+            Iterator<Pair<Vertex, Double>> iter;
+            GNode node;
+
+            public PQData(Vertex v, Vertex startPoint, double startLen, double dist, Iterator<Pair<Vertex, Double>> iter, GNode node) {
+                this.v = v;
+                this.startPoint = startPoint;
+                this.startLen = startLen;
+                this.dist = dist;
+                this.iter = iter;
+                this.node = node;
+            }
+
+            @Override
+            public int compareTo(@NotNull PQData o) {
+                if (dist < o.dist) {
+                    return -1;
+                } else if (dist > o.dist) {
+                    return 1;
+                }
+                return 0;
+            }
+        }
+
+        nbQuery++;
+        PriorityQueue<PQData> pq = new PriorityQueue<>();
+
+        minDistArr[s.getIndex()] = 0;
+        queryMark[s.getIndex()] = nbQuery;
+        HashSet<GNode> gnodeMark = new HashSet<>();
+        Iterator<Pair<Vertex, Double>> iter;
+
+        int sidx = s.getIndex();
+        for (GNode p = leaf; p != null && s.inside(p); p = p.getParent()) {
+//            if (!p.containsMovingObject() && p.containsBorder(s)) {
+//                continue;
+//            }
+//            iter = s.getIterOfGNode(p);
+//            while (iter.hasNext()) {
+//                Pair<Vertex, Double> pair = iter.next();
+//                Vertex u = pair.first;
+//                int uidx = u.getIndex();
+//                if (queryMark[uidx] != nbQuery || minDistArr[uidx] > minDistArr[sidx] + pair.second) {
+//                    pq.add(new PQData(pair.first, null, 0, minDistArr[sidx] + pair.second, null, null));
+//                    minDistArr[uidx] = minDistArr[sidx] + pair.second;
+//                    queryMark[uidx] = nbQuery;
+//                    if (u.getId() == 16351) {
+//                        System.out.println("debug " + minDistArr[uidx]);
+//                        System.out.println("tmp = " + s);
+//                    }
+//                }
+//            }
+//
+            iter = s.getIterOfGNode(p);
+            while (iter.hasNext()) {
+                Pair<Vertex, Double> pair = iter.next();
+                Vertex u = pair.first;
+                int uidx = u.getIndex();
+                if (queryMark[uidx] != nbQuery || minDistArr[uidx] > minDistArr[sidx] + pair.second) {
+//                    if (!p.containsMovingObject() && !p.containsBorder(u)) {
+//                        continue;
+//                    }
+                    if (!p.isLeaf() || u.isObject() || p.containsBorder(u)) {
+                        minDistArr[uidx] = minDistArr[sidx] + pair.second;
+//                    System.out.println(p + " " + minDistArr[sidx] + " " + pair.second + " " + pair.first);
+                        queryMark[uidx] = nbQuery;
+                        pq.add(new PQData(u, s, minDistArr[sidx], minDistArr[uidx], iter, p));
+                        break;
+                    }
+                }
+            }
+//            gnodeMark.add(p);
+//            System.out.println("--a asdasdasda  ddd");
+        }
+//        System.exit(-1);
+        HashSet<Vertex> chosenObjects = new HashSet<>();
+        if (s.isObject()) {
+            res.add(new Pair<>(s, .0));
+            chosenObjects.add(s);
+        }
+        while (res.size() < k && !pq.isEmpty()) {
+            PQData dt = pq.poll();
+            Vertex v = dt.v;
+            double dist = dt.dist;
+            while (dt.iter.hasNext()) {
+                Pair<Vertex, Double> pair = dt.iter.next();
+                Vertex u = pair.first;
+//                System.out.println("next1 " + u);
+                int uidx = u.getIndex();
+//                System.out.println(dt.node + " " + dt.startPoint + " da den " + u + " dist = " + (dt.startLen + pair.second));
+                if (queryMark[uidx] != nbQuery || minDistArr[uidx] > dt.startLen + pair.second) {
+//                    System.out.println("da vao");
+                    if (!dt.node.isLeaf() || u.isObject() || dt.node.containsBorder(u)) {
+//                        System.out.println("add " + dt.node.isLeaf() + " " + u.isObject() + " " + dt.node.containsBorder(u));
+                        dt.dist = dt.startLen + pair.second;
+                        minDistArr[uidx] = dt.dist;
+                        queryMark[uidx] = nbQuery;
+                        dt.v = u;
+    //                    if (u.getId() == 17966) {
+    //                        System.out.println("debug " + minDistArr[uidx]);
+    //                        System.out.println("tmp = " + dt.startPoint);
+    //                        System.out.println("startLen = " + dt.startLen + " sp = " + getShortestPathDistance(dt.startPoint, u));
+    //                    }
+                        pq.add(dt);
+    //                        System.out.println(pq.size());
+                        break;
+                    }
+                }
+            }
+
+            int vidx = v.getIndex();
+//            System.out.println(v + " " + dist);
+            if (dist > minDistArr[vidx]) {
+                continue;
+            }
+//            System.out.println("vao");
+//            if (Math.abs(getShortestPathDistance(s, v) - dist) > 1e-5) {
+//                System.out.println("wrong " + v);
+//                System.out.println(getShortestPathDistance(s, v));
+//                System.out.println(dist);
+//                Path path = getShortestPath(s, v);
+//                System.out.println("path " + path);
+//                for (Vertex r : path.getVertices()) {
+//                    System.out.println(r + " " + mVertex2LeafNode.get(r));
+//                }
+//                System.out.println(mVertex2LeafNode.get(v));
+//                System.out.println(leaf.containsBorder(v));
+//                System.exit(-1);
+//            }
+            if (v.isObject() && !chosenObjects.contains(v)) {
+                res.add(new Pair<>(v, dist));
+                chosenObjects.add(v);
+            }
+//            System.out.println("b1 " + v + " " + dt.node);
+//            iter = dt.iter;
+
+//            System.exit(-1);
+            leaf = mVertex2LeafNode.get(v);
+            for (GNode p = leaf; p != null && v.inside(p); p = p.getParent()) {
+//                System.out.println("???? " + gnodeMark.contains(p) + " " + (!p.containsMovingObject()) + " " + p.containsBorder(v) + " " + p.getParent() + " " + v.inside(p.getParent()));
+//                if (gnodeMark.contains(p) || (!p.containsMovingObject() && p.containsBorder(v))) {
+//                    continue;
+//                }
+//                System.out.println("vao dc chua? " + p.containsBorder(v));
+//                if (v.getId() == 511) {
+//                    System.out.println(p);
+//                }
+//                iter = v.getIterOfGNode(p);
+//                while (iter.hasNext()) {
+//                    Pair<Vertex, Double> pair = iter.next();
+//                    Vertex u = pair.first;
+//                    int uidx = u.getIndex();
+//                    if (queryMark[uidx] != nbQuery || minDistArr[uidx] > minDistArr[vidx] + pair.second) {
+//                        pq.add(new PQData(pair.first, null, 0, minDistArr[vidx] + pair.second, null, null));
+//                        minDistArr[uidx] = minDistArr[vidx] + pair.second;
+//                        queryMark[uidx] = nbQuery;
+//                        if (u.getId() == 16351) {
+//                            System.out.println("debug " + minDistArr[uidx]);
+//                            System.out.println("tmp = " + v);
+//                        }
+//                    }
+//                }
+//                iter = v.getIterOfGNode(p);
+//            }
+                iter = v.getIterOfGNode(p);
+                while (iter.hasNext()) {
+                    Pair<Vertex, Double> pair = iter.next();
+                    Vertex u = pair.first;
+                    int uidx = u.getIndex();
+                    if (queryMark[uidx] != nbQuery || minDistArr[uidx] > minDistArr[vidx] + pair.second) {
+//                        if (!p.containsMovingObject() && !p.containsBorder(u)) {
+//                            continue;
+//                        }
+                        if (!p.isLeaf() || u.isObject() || p.containsBorder(u)) {
+                            minDistArr[uidx] = minDistArr[vidx] + pair.second;
+                            queryMark[uidx] = nbQuery;
+                            pq.add(new PQData(u, v, minDistArr[vidx], minDistArr[uidx], iter, p));
+//                            if (v.getId() == 9424) {
+//                                for (Pair<Vertex, Double> debug : v.getMGNode2Shortcuts().get(p)) {
+//                                    System.out.println(p + "debug " + v + " den " + debug.first + " dist = " + (minDistArr[vidx] + debug.second));
+//                                }
+//                                System.out.println(p + "debug " + v + " den " + u + " dist = " + (minDistArr[uidx]));
+//                            }
+                            break;
+                        }
+                    }
+                }
+                gnodeMark.add(p);
+            }
+        }
+        return res;
+    }
+
     private Pair<Double, ArrayList<Pair<Vertex, Double>>> calcBorderDists(
             ArrayList<Pair<Vertex, Double>> curBorderDists, GNode next, GNode parent) {
         ArrayList<Pair<Vertex, Double>> nextBorderDists = new ArrayList<>();
@@ -741,11 +974,11 @@ public class GTree {
     private int[] shortcutMark;
     private int shortcutNum;
 
-    public ArrayList<Pair<IMovingObject, Double>> shortcutKNNSearch(double lat, double lng, int k) {
+    public ArrayList<Pair<Vertex, Double>> shortcutKNNSearch(Vertex s, int k) {
 //        System.out.println("kNNSearch");
-        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
+//        Vertex s = (Vertex) quadTree.findNearestPoint(lat, lng);
         GNode leaf = mVertex2LeafNode.get(s);
-        ArrayList<Pair<IMovingObject, Double>> res = new ArrayList<>();
+        ArrayList<Pair<Vertex, Double>> res = new ArrayList<>();
         if (shortcutVertexMinDist == null) {
             shortcutVertexMinDist = new double[G.size()];
             shortcutMark = new int[G.size()];
@@ -831,9 +1064,10 @@ public class GTree {
                 pq.poll();
 //                System.out.println("shortcut dataDist = " + data.minDist);
                 if (data.mvVertex != null) {
-                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
-                        res.add(new Pair<>(mo, data.minDist));
-                    }
+                    res.add(new Pair<>(data.mvVertex, data.minDist));
+//                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
+//                        res.add(new Pair<>(mo, data.minDist));
+//                    }
                 } else {
                     if (mark.contains(data.node)) {
                         continue;
@@ -909,8 +1143,8 @@ public class GTree {
 //        pq.add(20);
 //        System.out.println(pq.poll());
 //        System.exit(0);
-        String filename = "data\\BusHanoiCityRoad-connected.txt";
-//        String filename = "data\\HaiBaTrungRoad-connected.txt";
+//        String filename = "data\\BusHanoiCityRoad-connected.txt";
+        String filename = "data\\HaiBaTrungRoad-connected.txt";
         if (args.length > 0) {
             filename = args[0];
         }
@@ -953,8 +1187,8 @@ public class GTree {
             }
             queries.add(new Pair<>(vertices.get(s), vertices.get(t)));
         }
-        int[] FANOUTList = new int[]{4, 8, 16};
-        int[] LEAFSIZEList = new int[] {32, 64, 128, 256};
+        int[] FANOUTList = new int[]{16};
+        int[] LEAFSIZEList = new int[] {64, 128, 256};
         if (args.length > 1) {
             FANOUTList = new int[]{Integer.parseInt(args[1])};
             LEAFSIZEList = new int[] {Integer.parseInt(args[2])};
@@ -990,42 +1224,70 @@ public class GTree {
                 myWriter.write("calculating time = " + (endTime - startTime) + "\n");
                 myWriter.close();
 
-                int[] occRate = new int[]{100, 200, 500, 1000};//, 500, 1000, 5000};
-                int[] kPars = new int[]{1};//, 5, 10, 20, 50};//, 5, 10, 20, 50, 100};
+//                int[] occRate = new int[]{100, 200, 500, 1000};//, 500, 1000, 5000};
+                int[] kPars = new int[]{50, 100, 200, 500};//, 5, 10, 20, 50};//, 5, 10, 20, 50, 100};
                 ArrayList<Vertex> kNNVertices = new ArrayList<>();
-                for (int test = 1; test < 50000; test++) {
+                HashSet<Vertex> verticesSet = new HashSet<>();
+                for (int test = 1; test < 5000; test++) {
 //            System.out.println("test " + test);
                     Vertex v = g.getVertices().get(rand.nextInt(g.getVertices().size()));
+                    while (verticesSet.contains(v)) {
+                        v = g.getVertices().get(rand.nextInt(g.getVertices().size()));
+                    }
                     kNNVertices.add(v);
+                    verticesSet.add(v);
                 }
 //        HashMap<MovingObject, Vertex> mMO2Vertex = new HashMap<>();
-                for (int occ : occRate) {
+//                for (int occ : occRate) {
                     for (int k : kPars) {
                         gTree.clearMovingObjects();
-                        for (Vertex v : g.getVertices()) {
-                            if (rand.nextInt(occ) == 0) {
-                                MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
-                                gTree.addMovingObject(o);
-//                mMO2Vertex.put(o, v);
-
-                            }
-                        }
+//                        for (Vertex v : g.getVertices()) {
+//                            if (rand.nextInt(occ) == 0) {
+//                                MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
+//                                gTree.addMovingObject(o);
+////                mMO2Vertex.put(o, v);
+//
+//                            }
+//                        }
                         startTime = System.currentTimeMillis();
                         for (Vertex v : kNNVertices) {
-                            ArrayList<Pair<IMovingObject, Double>> r1 = gTree.kNNSearch(v.getLat(), v.getLng(), k);
+                            ArrayList<Pair<Vertex, Double>> r1 = gTree.newkNNSearch(v, k);
+                            ArrayList<Pair<Vertex, Double>> r2 = gTree.kNNSearch(v, k);
+                            if (r1.size() != r2.size()) {
+                                System.out.println("size of two returnees are different " + r1.size() + " " + r2.size());
+                                System.exit(-1);
+                            }
+                            boolean stop = false;
+                            for (int i = 0; i < r1.size(); i++) {
+//                                System.out.println(r1.get(i).first + " " + r1.get(i).second);
+//                                System.out.println(r2.get(i).first + " " + r2.get(i).second);
+                                if (r1.get(i).first != r2.get(i).first) {
+                                    System.out.println("chosen vertex of " + i + "-th is different" + " " + r1.get(i).second + " " + r2.get(i).second);
+//                                    System.exit(-1);
+                                    stop = true;
+                                }
+                            }
+                            if (stop) {
+                                System.exit(-1);
+                            }
+//                            MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
+                            gTree.addMovingObject(v);
                         }
                         long t1 = System.currentTimeMillis() - startTime;
+                        gTree.clearMovingObjects();
                         startTime = System.currentTimeMillis();
-//                        for (Vertex v : kNNVertices) {
-//                            ArrayList<Pair<IMovingObject, Double>> r2 = gTree.verifyKNNSearch(v.getLat(), v.getLng(), k);
-//                        }
+                        for (Vertex v : kNNVertices) {
+                            ArrayList<Pair<Vertex, Double>> r2 = gTree.verifyKNNSearch(v, k);
+//                            MovingObject o = new MovingObject(v.getId() + "", v.getLat(), v.getLng());
+                            gTree.addMovingObject(v);
+                        }
                         long t2 = System.currentTimeMillis() - startTime;
-                        System.out.println("KNN Search::("+ "fanout = " + fanout + " leafSize = " + leafSize + ", " + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2);
+                        System.out.println("KNN Search::("+ "fanout = " + fanout + " leafSize = " + leafSize + ", " + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2);
                         myWriter = new FileWriter(filename + ".res", true);
-                        myWriter.write("KNN Search::(" + "fanout = " + fanout + " leafSize = " + leafSize + ", " + occ + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2 + "\n");
+                        myWriter.write("KNN Search::(" + "fanout = " + fanout + " leafSize = " + leafSize + ", " + ", " + k + ") -> kNN time = " + t1 + " shortcut time = " + t2 + "\n");
                         myWriter.close();
                     }
-                }
+//                }
 
 //                int diff = 0;
 //

@@ -26,7 +26,6 @@ public class GNode {
     private HashSet<Vertex> containingMOVertices;
 
     private double[][] distMatrix;
-
     private TreeSet<RouteElement> elements;
 
     public GNode(int depth) {
@@ -55,6 +54,7 @@ public class GNode {
 
     public void clearMovingObjectChildList() {
         occurrenceList.clear();
+        containingMOVertices.clear();
     }
 
     public void removeMovingObjectChild(GNode c) {
@@ -74,7 +74,7 @@ public class GNode {
     }
 
     public boolean containsMovingObject() {
-        return !containingMOVertices.isEmpty();
+        return !occurrenceList.isEmpty();
     }
 
     public boolean hasShortCut(GNode s) {

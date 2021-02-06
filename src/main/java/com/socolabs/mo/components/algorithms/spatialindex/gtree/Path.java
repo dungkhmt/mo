@@ -26,4 +26,12 @@ public class Path {
     public void add(Vertex v) {
         vertices.add(v);
     }
+
+    public String toString() {
+        String ret = "";
+        for (Vertex v : vertices) {
+            ret += v + ", ";
+        }
+        return ret;
+    }
 }

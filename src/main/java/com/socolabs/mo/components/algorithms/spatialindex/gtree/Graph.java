@@ -107,6 +107,10 @@ public class Graph {
         return adjVertices;
     }
 
+    public boolean containsVertex(Vertex u) {
+        return mVertices2Edge.containsKey(u);
+    }
+
     public boolean containsEdge(Vertex u, Vertex v) {
         return mVertices2Edge.get(u).containsKey(v);
     }
