@@ -17,13 +17,13 @@ public class Graph {
     private ArrayList<Edge>[] inEdgesOfVertex;
 
     private HashMap<Vertex, HashMap<Vertex, Edge>> mVertices2Edge;
-    private HashMap<Vertex, HashMap<Vertex, Double>> cacheDistanceMatrices;
+    private HashMap<Vertex, HashMap<Vertex, Long>> cacheDistanceMatrices;
 
     private int num = 0;
     private int[] mark;
-    private double[] dist;
+    private long[] dist;
     private Vertex[] prev;
-    private PriorityQueue<Pair<Vertex, Double>> pq;
+    private PriorityQueue<Pair<Vertex, Long>> pq;
 
     private boolean setIndex = false;
 
@@ -50,9 +50,9 @@ public class Graph {
                 mVertices2Edge.get(e.getStartPoint()).put(e.getEndPoint(), e);
             }
         }
-        pq = new PriorityQueue<>(new Comparator<Pair<Vertex, Double>>() {
+        pq = new PriorityQueue<>(new Comparator<Pair<Vertex, Long>>() {
             @Override
-            public int compare(Pair<Vertex, Double> o1, Pair<Vertex, Double> o2) {
+            public int compare(Pair<Vertex, Long> o1, Pair<Vertex, Long> o2) {
                 if (o1.second - o2.second < 0) {
                     return -1;
                 } else if (o1.second - o2.second > 0) {
@@ -74,7 +74,7 @@ public class Graph {
             v.setIndex(index++);
         }
         mark = new int[index];
-        dist = new double[index];
+        dist = new long[index];
         prev = new Vertex[index];
         setIndex = true;
     }
@@ -123,15 +123,15 @@ public class Graph {
         return vertices.size();
     }
 
-    public double[] calculateCacheDistanceMatrices(Vertex s, HashSet<Vertex> cacheVertices) {
+    public long[] calculateCacheDistanceMatrices(Vertex s, HashSet<Vertex> cacheVertices) {
         dist[s.getIndex()] = 0;
         mark[s.getIndex()] = ++num;
         pq.clear();
-        pq.add(new Pair<>(s, .0));
+        pq.add(new Pair<Vertex, Long>(s, 0L));
         int cnt = 0;
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
-            Double d = pq.peek().second;
+            long d = pq.peek().second;
             pq.poll();
             if (d > dist[u.getIndex()]) {
                 continue;
@@ -144,7 +144,7 @@ public class Graph {
             }
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
-                double w = e.getWeight();
+                long w = e.getWeight();
                 if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
                     mark[v.getIndex()] = num;
                     dist[v.getIndex()] = d + w;
@@ -155,18 +155,18 @@ public class Graph {
         return dist;
     }
 
-//    public double getSPDist(Vertex s, Vertex t) {
+//    public long getSPDist(Vertex s, Vertex t) {
 //        return cacheDistanceMatrices.get(s).get(t);
 //    }
 
-    public double getShortestPathDistance(Vertex s, Vertex t) {
+    public long getShortestPathDistance(Vertex s, Vertex t) {
         dist[s.getIndex()] = 0;
         mark[s.getIndex()] = ++num;
         pq.clear();
-        pq.add(new Pair<>(s, .0));
+        pq.add(new Pair<>(s, 0L));
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
-            Double d = pq.peek().second;
+            long d = pq.peek().second;
             pq.poll();
             if (d > dist[u.getIndex()]) {
                 continue;
@@ -176,7 +176,7 @@ public class Graph {
             }
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
-                double w = e.getWeight();
+                long w = e.getWeight();
                 if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
                     mark[v.getIndex()] = num;
                     dist[v.getIndex()] = d + w;
@@ -184,7 +184,32 @@ public class Graph {
                 }
             }
         }
-        return Double.MAX_VALUE;
+        return Long.MAX_VALUE;
+    }
+
+    public long[] bfs(Vertex s) {
+        dist[s.getIndex()] = 0;
+        mark[s.getIndex()] = ++num;
+        pq.clear();
+        pq.add(new Pair<>(s, 0L));
+        while (!pq.isEmpty()) {
+            Vertex u = pq.peek().first;
+            long d = pq.peek().second;
+            pq.poll();
+            if (d > dist[u.getIndex()]) {
+                continue;
+            }
+            for (Edge e : getEdgesOfVertex(u)) {
+                Vertex v = e.getEndPoint();
+                long w = e.getWeight();
+                if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
+                    mark[v.getIndex()] = num;
+                    dist[v.getIndex()] = d + w;
+                    pq.add(new Pair<>(v, d + w));
+                }
+            }
+        }
+        return dist;
     }
 
     public Path getShortestPath(Vertex s, Vertex t) {
@@ -192,10 +217,10 @@ public class Graph {
         mark[s.getIndex()] = ++num;
         prev[s.getIndex()] = null;
         pq.clear();
-        pq.add(new Pair<>(s, .0));
+        pq.add(new Pair<>(s, 0L));
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
-            Double d = pq.peek().second;
+            long d = pq.peek().second;
             pq.poll();
             if (d > dist[u.getIndex()]) {
                 continue;
@@ -213,7 +238,7 @@ public class Graph {
             }
             for (Edge e : getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
-                double w = e.getWeight();
+                long w = e.getWeight();
                 if (mark[v.getIndex()] != num || dist[v.getIndex()] > d + w) {
                     mark[v.getIndex()] = num;
                     prev[v.getIndex()] = u;
@@ -290,24 +315,24 @@ public class Graph {
             }
             for (Vertex v : tmpVertices) {
                 if (!mCompressVertex2Edge.containsKey(v)) {
-                    HashMap<Vertex, Double> mNewVertex2Weight = new HashMap<>();
+                    HashMap<Vertex, Long> mNewVertex2Weight = new HashMap<>();
                     for (Edge e : tmpGraph.getEdgesOfVertex(v)) {
                         if (!removedVertices.contains(e.getEndPoint())) {
                             tmpEdges.add(e);
                         } else {
-                            double weight = 0;
+                            long weight = 0;
                             if (mNewVertex2Weight.containsKey(mChildVertex2ParentVertex.get(e.getEndPoint()))) {
                                 weight = mNewVertex2Weight.get(mChildVertex2ParentVertex.get(e.getEndPoint()));
                             }
                             mNewVertex2Weight.put(mChildVertex2ParentVertex.get(e.getEndPoint()), weight + e.getWeight());
                         }
                     }
-                    for (Map.Entry<Vertex, Double> me : mNewVertex2Weight.entrySet()) {
+                    for (Map.Entry<Vertex, Long> me : mNewVertex2Weight.entrySet()) {
                         tmpEdges.add(new Edge(v, me.getKey(), me.getValue()));
                     }
                 } else {
                     Edge compressEdge = mCompressVertex2Edge.get(v);
-                    HashMap<Vertex, Double> mNewVertex2Weight = new HashMap<>();
+                    HashMap<Vertex, Long> mNewVertex2Weight = new HashMap<>();
                     for (Vertex rv : new Vertex[]{compressEdge.getStartPoint(), compressEdge.getEndPoint()}) {
                         for (Edge e : tmpGraph.getEdgesOfVertex(rv)) {
                             if ((e.getStartPoint() == compressEdge.getStartPoint() && e.getEndPoint() == compressEdge.getEndPoint()) ||
@@ -318,14 +343,14 @@ public class Graph {
                             if (removedVertices.contains(e.getEndPoint())) {
                                 inVertex = mChildVertex2ParentVertex.get(e.getEndPoint());
                             }
-                            double weight = 0;
+                            long weight = 0;
                             if (mNewVertex2Weight.containsKey(inVertex)) {
                                 weight = mNewVertex2Weight.get(inVertex);
                             }
                             mNewVertex2Weight.put(inVertex, weight + e.getWeight());
                         }
                     }
-                    for (Map.Entry<Vertex, Double> me : mNewVertex2Weight.entrySet()) {
+                    for (Map.Entry<Vertex, Long> me : mNewVertex2Weight.entrySet()) {
                         tmpEdges.add(new Edge(v, me.getKey(), me.getValue()));
                     }
                 }

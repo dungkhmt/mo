@@ -112,7 +112,7 @@ public class Simulator {
         if (maxRemainWeight < p.getWeight()) {
             return false;
         }
-        Pair<RouteElement, Pair<Double, Double>> ret = searcher.getNearestElement(p);
+        Pair<RouteElement, Pair<Long, Long>> ret = searcher.getNearestElement(p);
         RouteElement nearest = ret.first;
         if (nearest != null) {
             Route r = nearest.getRoute();
@@ -208,7 +208,7 @@ public class Simulator {
             int beginID = in.nextInt();
             if (beginID == -1) break;
             int endID = in.nextInt();
-            double length = in.nextDouble();
+            long length = (long) (in.nextDouble() * 1000);
             edges.add(new Edge(mID2Vertex.get(beginID), mID2Vertex.get(endID), length));
 //            edges.add(new Edge(mID2Vertex.get(endID), mID2Vertex.get(beginID), length));
         }

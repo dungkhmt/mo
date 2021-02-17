@@ -25,8 +25,11 @@ public class GNode {
     private HashSet<GNode> occurrenceList;
     private HashSet<Vertex> containingMOVertices;
 
-    private double[][] distMatrix;
-    private TreeSet<RouteElement> elements;
+    private long[][] distMatrix;
+//    private TreeSet<RouteElement> elements;
+
+    private int nbQuery = 0;
+    private int borderMark;
 
     public GNode(int depth) {
         this.depth = depth;
@@ -37,14 +40,14 @@ public class GNode {
         shortcuts = new HashSet<>();
         occurrenceList = new HashSet<>();
         containingMOVertices = new HashSet<>();
-        elements = new TreeSet<>();
+//        elements = new TreeSet<>();
     }
 
-    public void setDist(int i, int j, double dist) {
+    public void setDist(int i, int j, long dist) {
         distMatrix[i][j] = dist;
     }
 
-    public double getDist(int i, int j) {
+    public long getDist(int i, int j) {
         return distMatrix[i][j];
     }
 
@@ -74,7 +77,7 @@ public class GNode {
     }
 
     public boolean containsMovingObject() {
-        return !occurrenceList.isEmpty();
+        return !occurrenceList.isEmpty() || !containingMOVertices.isEmpty();
     }
 
     public boolean hasShortCut(GNode s) {
@@ -97,35 +100,50 @@ public class GNode {
         return containingMOVertices.contains(v);
     }
 
-    public void addRouteElement(RouteElement e) {
-//        int prevSize = elements.size();
-        elements.add(e);
-//        int afterSize = elements.size();
-//        System.out.println("addRouteElement " + afterSize);
-//        if (prevSize + 1 != afterSize) {
-//            e = null;
-//            e.getRoute();
+//    public void addRouteElement(RouteElement e) {
+////        int prevSize = elements.size();
+//        elements.add(e);
+////        int afterSize = elements.size();
+////        System.out.println("addRouteElement " + afterSize);
+////        if (prevSize + 1 != afterSize) {
+////            e = null;
+////            e.getRoute();
+////        }
+//    }
+//
+//    public void removeRouteElement(RouteElement e) {
+////        int prevSize = elements.size();
+//        elements.remove(e);
+////        int afterSize = elements.size();
+////        if (prevSize - 1 != afterSize) {
+////            System.out.println("prev = " + prevSize + " after = " + afterSize);
+////            for (RouteElement re : elements) {
+////                System.out.println(re.getLocation() + " " + re.getParcel() + " " + re.getRoute().getRemainWeight() + " " + re.getRoute().getVehicle().getId());
+////            }
+////            System.out.println("e location " + e.getLocation() + " " + e.getRoute().getRemainWeight() + " " + e.getRoute().getVehicle().getId());
+////            e = null;
+////            e.getRoute();
+////        }
+//    }
+//
+//    public boolean hasCandidateRouteElement(int remainWeight) {
+//        if (!elements.isEmpty()) {
+//            return elements.last().getRoute().getRemainWeight() >= remainWeight;
 //        }
+//        return false;
+//    }
+
+    public void increaseBorderMark(int nbQuery) {
+        if (this.nbQuery != nbQuery) {
+            this.nbQuery = nbQuery;
+            borderMark = 0;
+        }
+        borderMark++;
     }
 
-    public void removeRouteElement(RouteElement e) {
-//        int prevSize = elements.size();
-        elements.remove(e);
-//        int afterSize = elements.size();
-//        if (prevSize - 1 != afterSize) {
-//            System.out.println("prev = " + prevSize + " after = " + afterSize);
-//            for (RouteElement re : elements) {
-//                System.out.println(re.getLocation() + " " + re.getParcel() + " " + re.getRoute().getRemainWeight() + " " + re.getRoute().getVehicle().getId());
-//            }
-//            System.out.println("e location " + e.getLocation() + " " + e.getRoute().getRemainWeight() + " " + e.getRoute().getVehicle().getId());
-//            e = null;
-//            e.getRoute();
-//        }
-    }
-
-    public boolean hasCandidateRouteElement(int remainWeight) {
-        if (!elements.isEmpty()) {
-            return elements.last().getRoute().getRemainWeight() >= remainWeight;
+    public boolean visitedAllBorders(int nbQuery) {
+        if (this.nbQuery == nbQuery) {
+            return borderMark == borders.size();
         }
         return false;
     }

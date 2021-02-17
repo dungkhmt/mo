@@ -102,14 +102,14 @@ public class GTreeSearcher implements NearestSearcher{
         for (Vertex v : g.getChildBorders()) {
             v.setGNodeIndex(g, index++);
         }
-        double[][] distMatrix = new double[index][];
+        long[][] distMatrix = new long[index][];
         for (GNode shortcut : g.getShortcuts()) {
             for (Vertex v : shortcut.getBorders()) {
                 v.setGNodeIndex(g, index++);
             }
         }
         for (Vertex v : g.getChildBorders()) {
-            distMatrix[v.getGNodeIndex(g)] = new double[index];
+            distMatrix[v.getGNodeIndex(g)] = new long[index];
         }
         g.setDistMatrix(distMatrix);
         for (GNode c : g.getChildren()) {
@@ -142,7 +142,7 @@ public class GTreeSearcher implements NearestSearcher{
             dem++;
             cnt += cacheVertices.size();
 //            System.out.println(dem + " " + cnt);
-            double[] dist = G.calculateCacheDistanceMatrices(s, cacheVertices);
+            long[] dist = G.calculateCacheDistanceMatrices(s, cacheVertices);
             g = leaf;
             while (g != null && g.containsChildBorder(s)) {
                 int sIndex = s.getGNodeIndex(g);
@@ -201,27 +201,27 @@ public class GTreeSearcher implements NearestSearcher{
         return u;
     }
 
-    private double getSPDist(Vertex s, Vertex t, GNode g) {
+    private long getSPDist(Vertex s, Vertex t, GNode g) {
         return g.getDist(s.getGNodeIndex(g), t.getGNodeIndex(g));
     }
 
-    public double getShortestPathDistance(Vertex s, Vertex t) {
+    public long getShortestPathDistance(Vertex s, Vertex t) {
         GNode ns = mVertex2LeafNode.get(s);
         GNode nt = mVertex2LeafNode.get(t);
         if (ns == nt) {
             return getSPDist(s, t, ns);
         }
         GNode lca = getLCA(ns, nt);
-        ArrayList<Pair<Vertex, Double>> l = new ArrayList<>();
+        ArrayList<Pair<Vertex, Long>> l = new ArrayList<>();
         for (Vertex v : ns.getBorders()) {
             l.add(new Pair<>(v, getSPDist(s, v, ns)));
         }
         GNode next = ns.getParent();
         while (next != lca) {
-            ArrayList<Pair<Vertex, Double>> l2 = new ArrayList<>();
+            ArrayList<Pair<Vertex, Long>> l2 = new ArrayList<>();
             for (Vertex v : next.getBorders()) {
-                double minDist = Double.MAX_VALUE;
-                for (Pair<Vertex, Double> pair : l) {
+                long minDist = Long.MAX_VALUE;
+                for (Pair<Vertex, Long> pair : l) {
                     Vertex u = pair.first;
                     if (u == v) {
                         minDist = Math.min(minDist, pair.second);
@@ -234,16 +234,16 @@ public class GTreeSearcher implements NearestSearcher{
             l = l2;
             next = next.getParent();
         }
-        ArrayList<Pair<Vertex, Double>> r = new ArrayList<>();
+        ArrayList<Pair<Vertex, Long>> r = new ArrayList<>();
         for (Vertex v : nt.getBorders()) {
             r.add(new Pair<>(v, getSPDist(v, t, nt)));
         }
         GNode prev = nt.getParent();
         while (prev != lca) {
-            ArrayList<Pair<Vertex, Double>> r2 = new ArrayList<>();
+            ArrayList<Pair<Vertex, Long>> r2 = new ArrayList<>();
             for (Vertex u : prev.getBorders()) {
-                double minDist = Double.MAX_VALUE;
-                for (Pair<Vertex, Double> pair : r) {
+                long minDist = Long.MAX_VALUE;
+                for (Pair<Vertex, Long> pair : r) {
                     Vertex v = pair.first;
                     if (u == v) {
                         minDist = Math.min(minDist, pair.second);
@@ -256,10 +256,10 @@ public class GTreeSearcher implements NearestSearcher{
             r = r2;
             prev = prev.getParent();
         }
-        double res = Double.MAX_VALUE;
-        for (Pair<Vertex, Double> pl : l) {
+        long res = Long.MAX_VALUE;
+        for (Pair<Vertex, Long> pl : l) {
             Vertex u = pl.first;
-            for (Pair<Vertex, Double> pr : r) {
+            for (Pair<Vertex, Long> pr : r) {
                 Vertex v = pr.first;
                 res = Math.min(res, pl.second + pr.second + getSPDist(u, v, lca));
             }
@@ -267,7 +267,7 @@ public class GTreeSearcher implements NearestSearcher{
         return res;
     }
 
-    private Vertex findBorder(Vertex u, Vertex v, GNode lca, double dist) {
+    private Vertex findBorder(Vertex u, Vertex v, GNode lca, long dist) {
         while (lca != null) {
             for (Vertex b : lca.getChildBorders()) {
                 if (b != u && b != v) {
@@ -288,7 +288,7 @@ public class GTreeSearcher implements NearestSearcher{
         GNode lu = mVertex2LeafNode.get(u);
         GNode lv = mVertex2LeafNode.get(v);
         GNode lca = getLCA(lu, lv);
-        double dist = getSPDist(u, v, lca);
+        long dist = getSPDist(u, v, lca);
         Vertex b = findBorder(u, v, lca, dist);
         shortestPathRecovery(u, b, path);
         path.add(b);
@@ -299,25 +299,25 @@ public class GTreeSearcher implements NearestSearcher{
         GNode ns = mVertex2LeafNode.get(s);
         GNode nt = mVertex2LeafNode.get(t);
         ArrayList<Vertex> verticesPath = new ArrayList<>();
-        double len = 0;
+        long len = 0;
         if (ns == nt) {
             len = getSPDist(s, t, ns);
             verticesPath.add(s);
             verticesPath.add(t);
         } else {
             GNode lca = getLCA(ns, nt);
-            ArrayList<Pair<Vertex, Double>> l = new ArrayList<>();
+            ArrayList<Pair<Vertex, Long>> l = new ArrayList<>();
             for (Vertex v : ns.getBorders()) {
                 l.add(new Pair<>(v, getSPDist(s, v, ns)));
             }
             GNode next = ns.getParent();
             HashMap<Vertex, Vertex> prevTrace = new HashMap<>();
             while (next != lca) {
-                ArrayList<Pair<Vertex, Double>> l2 = new ArrayList<>();
+                ArrayList<Pair<Vertex, Long>> l2 = new ArrayList<>();
                 for (Vertex v : next.getBorders()) {
                     Vertex chosenVertex = null;
-                    double minDist = Double.MAX_VALUE;
-                    for (Pair<Vertex, Double> pair : l) {
+                    long minDist = Long.MAX_VALUE;
+                    for (Pair<Vertex, Long> pair : l) {
                         Vertex u = pair.first;
                         if (u == v) {
                             if (pair.second < minDist) {
@@ -325,7 +325,7 @@ public class GTreeSearcher implements NearestSearcher{
                                 chosenVertex = null;
                             }
                         } else {
-                            double d = pair.second + getSPDist(u, v, next);
+                            long d = pair.second + getSPDist(u, v, next);
                             if (d < minDist) {
                                 minDist = d;
                                 chosenVertex = u;
@@ -340,18 +340,18 @@ public class GTreeSearcher implements NearestSearcher{
                 l = l2;
                 next = next.getParent();
             }
-            ArrayList<Pair<Vertex, Double>> r = new ArrayList<>();
+            ArrayList<Pair<Vertex, Long>> r = new ArrayList<>();
             for (Vertex v : nt.getBorders()) {
                 r.add(new Pair<>(v, getSPDist(v, t, nt)));
             }
             GNode prev = nt.getParent();
             HashMap<Vertex, Vertex> nextTrace = new HashMap<>();
             while (prev != lca) {
-                ArrayList<Pair<Vertex, Double>> r2 = new ArrayList<>();
+                ArrayList<Pair<Vertex, Long>> r2 = new ArrayList<>();
                 for (Vertex u : prev.getBorders()) {
                     Vertex chosenVertex = null;
-                    double minDist = Double.MAX_VALUE;
-                    for (Pair<Vertex, Double> pair : r) {
+                    long minDist = Long.MAX_VALUE;
+                    for (Pair<Vertex, Long> pair : r) {
                         Vertex v = pair.first;
                         if (u == v) {
                             if (minDist > pair.second) {
@@ -359,7 +359,7 @@ public class GTreeSearcher implements NearestSearcher{
                                 chosenVertex = null;
                             }
                         } else {
-                            double d = pair.second + getSPDist(u, v, prev);
+                            long d = pair.second + getSPDist(u, v, prev);
                             if (minDist > d) {
                                 minDist = d;
                                 chosenVertex = v;
@@ -377,12 +377,12 @@ public class GTreeSearcher implements NearestSearcher{
 
             Vertex cu = null;
             Vertex cv = null;
-            len = Double.MAX_VALUE;
-            for (Pair<Vertex, Double> pl : l) {
+            len = Long.MAX_VALUE;
+            for (Pair<Vertex, Long> pl : l) {
                 Vertex u = pl.first;
-                for (Pair<Vertex, Double> pr : r) {
+                for (Pair<Vertex, Long> pr : r) {
                     Vertex v = pr.first;
-                    double d = pl.second + pr.second + getSPDist(u, v, lca);
+                    long d = pl.second + pr.second + getSPDist(u, v, lca);
                     if (len > d) {
                         len = d;
                         cu = u;
@@ -427,117 +427,117 @@ public class GTreeSearcher implements NearestSearcher{
         return path;
     }
 
-    public ArrayList<Pair<IMovingObject, Double>> kNNSearch(Parcel parcel, int k) {
+    public ArrayList<Pair<IMovingObject, Long>> kNNSearch(Parcel parcel, int k) {
 //        System.out.println("kNNSearch");
-        Vertex s = parcel.getLocation();
-        GNode leaf = mVertex2LeafNode.get(s);
-        ArrayList<Pair<IMovingObject, Double>> res = new ArrayList<>();
-
-        class PQData{
-            GNode node;
-            Vertex mvVertex;
-            ArrayList<Pair<Vertex, Double>> borderDists;
-            double minDist;
-
-            public PQData(GNode node, Vertex mvVertex, ArrayList<Pair<Vertex, Double>> borderDists, double dist) {
-                this.node = node;
-                this.mvVertex = mvVertex;
-                this.borderDists = borderDists;
-                this.minDist = dist;
-            }
-        }
-
-        PriorityQueue<PQData> pq = new PriorityQueue<>(new Comparator<PQData>() {
-            @Override
-            public int compare(PQData o1, PQData o2) {
-                if (o1.minDist < o2.minDist) {
-                    return -1;
-                } else if (o1.minDist > o2.minDist) {
-                    return 1;
-                }
-                return 0;
-            }
-        });
-
-        double minDist = Double.MAX_VALUE;
-        ArrayList<Pair<Vertex, Double>> curBorderDists = new ArrayList<>();
-        for (Vertex v : leaf.getChildBorders()) {
-            double dist = getSPDist(s, v, leaf);
-            if (leaf.isMovingObjectVertex(v)) {
-                pq.add(new PQData(null, v, null, dist));
-            }
-            if (leaf.containsBorder(v)) {
-                curBorderDists.add(new Pair<>(v, dist));
-                minDist = Math.min(minDist, dist);
-            }
-        }
-
-        int cnt = 0;
-        GNode cur = leaf;
-        while (res.size() < k && (!pq.isEmpty() || cur != root)) {
-            PQData data = pq.peek();
-            if (pq.isEmpty() || (data != null && data.minDist > minDist)) {
-                GNode parent = cur.getParent();
-                for (GNode g : parent.getChildren()) {
-                    if (!g.hasCandidateRouteElement(parcel.getWeight())) {
-                        continue;
-                    }
-                    if (g != cur ) {
-                        cnt++;
-                        Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(curBorderDists, g, parent);
-                        pq.add(new PQData(g, null, nextData.second, nextData.first));
-                    }
-                }
-                Pair<Double, ArrayList<Pair<Vertex, Double>>> parentData = calcBorderDists(curBorderDists, parent, parent);
-                curBorderDists = parentData.second;
-                minDist = parentData.first;
-                cur = parent;
-//                System.out.println("kNN minDist = " + minDist);
-            } else {
-                pq.poll();
-//                System.out.println("kNN dataDist = " + data.minDist);
-
-                if (data.mvVertex != null) {
-
-//                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
-//                        res.add(new Pair<>(mo, data.minDist));
+//        Vertex s = parcel.getLocation();
+//        GNode leaf = mVertex2LeafNode.get(s);
+//        ArrayList<Pair<IMovingObject, Long>> res = new ArrayList<>();
+//
+//        class PQData{
+//            GNode node;
+//            Vertex mvVertex;
+//            ArrayList<Pair<Vertex, Long>> borderDists;
+//            long minDist;
+//
+//            public PQData(GNode node, Vertex mvVertex, ArrayList<Pair<Vertex, Long>> borderDists, long dist) {
+//                this.node = node;
+//                this.mvVertex = mvVertex;
+//                this.borderDists = borderDists;
+//                this.minDist = dist;
+//            }
+//        }
+//
+//        PriorityQueue<PQData> pq = new PriorityQueue<>(new Comparator<PQData>() {
+//            @Override
+//            public int compare(PQData o1, PQData o2) {
+//                if (o1.minDist < o2.minDist) {
+//                    return -1;
+//                } else if (o1.minDist > o2.minDist) {
+//                    return 1;
+//                }
+//                return 0;
+//            }
+//        });
+//
+//        long minDist = Long.MAX_VALUE;
+//        ArrayList<Pair<Vertex, Long>> curBorderDists = new ArrayList<>();
+//        for (Vertex v : leaf.getChildBorders()) {
+//            long dist = getSPDist(s, v, leaf);
+//            if (leaf.isMovingObjectVertex(v)) {
+//                pq.add(new PQData(null, v, null, dist));
+//            }
+//            if (leaf.containsBorder(v)) {
+//                curBorderDists.add(new Pair<>(v, dist));
+//                minDist = Math.min(minDist, dist);
+//            }
+//        }
+//
+//        int cnt = 0;
+//        GNode cur = leaf;
+//        while (res.size() < k && (!pq.isEmpty() || cur != root)) {
+//            PQData data = pq.peek();
+//            if (pq.isEmpty() || (data != null && data.minDist > minDist)) {
+//                GNode parent = cur.getParent();
+//                for (GNode g : parent.getChildren()) {
+//                    if (!g.hasCandidateRouteElement(parcel.getWeight())) {
+//                        continue;
 //                    }
-                } else {
-                    if (!data.node.isLeaf()) {
-                        for (GNode g : data.node.getOccurrenceList()) {
-                            cnt++;
-                            Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(data.borderDists, g, data.node);
-                            pq.add(new PQData(g, null, nextData.second, nextData.first));
-                        }
-                    } else {
-                        for (Vertex v : data.node.getContainingMOVertices()) {
-                            double md = Double.MAX_VALUE;
-//                            Vertex chosenVertex = null;
-                            for (Pair<Vertex, Double> pair : data.borderDists) {
-//                                double old = md;
-                                md = Math.min(md, pair.second + getSPDist(pair.first, v, data.node));
-//                                if (old > md) {
-//                                    chosenVertex = pair.first;
-//                                }
-                            }
-                            pq.add(new PQData(null, v, null, md));
-//                            System.out.println("kNN calc vertex " + chosenVertex + " -> " + v + " d = " + md);
-                        }
-                    }
-                }
-            }
-        }
-//        System.out.println(cnt);
-        return res;
+//                    if (g != cur ) {
+//                        cnt++;
+//                        Pair<Long, ArrayList<Pair<Vertex, Long>>> nextData = calcBorderDists(curBorderDists, g, parent);
+//                        pq.add(new PQData(g, null, nextData.second, nextData.first));
+//                    }
+//                }
+//                Pair<Long, ArrayList<Pair<Vertex, Long>>> parentData = calcBorderDists(curBorderDists, parent, parent);
+//                curBorderDists = parentData.second;
+//                minDist = parentData.first;
+//                cur = parent;
+////                System.out.println("kNN minDist = " + minDist);
+//            } else {
+//                pq.poll();
+////                System.out.println("kNN dataDist = " + data.minDist);
+//
+//                if (data.mvVertex != null) {
+//
+////                    for (IMovingObject mo : mVertex2MovingObjects.get(data.mvVertex)) {
+////                        res.add(new Pair<>(mo, data.minDist));
+////                    }
+//                } else {
+//                    if (!data.node.isLeaf()) {
+//                        for (GNode g : data.node.getOccurrenceList()) {
+//                            cnt++;
+//                            Pair<Long, ArrayList<Pair<Vertex, Long>>> nextData = calcBorderDists(data.borderDists, g, data.node);
+//                            pq.add(new PQData(g, null, nextData.second, nextData.first));
+//                        }
+//                    } else {
+//                        for (Vertex v : data.node.getContainingMOVertices()) {
+//                            long md = Long.MAX_VALUE;
+////                            Vertex chosenVertex = null;
+//                            for (Pair<Vertex, Long> pair : data.borderDists) {
+////                                long old = md;
+//                                md = Math.min(md, pair.second + getSPDist(pair.first, v, data.node));
+////                                if (old > md) {
+////                                    chosenVertex = pair.first;
+////                                }
+//                            }
+//                            pq.add(new PQData(null, v, null, md));
+////                            System.out.println("kNN calc vertex " + chosenVertex + " -> " + v + " d = " + md);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+////        System.out.println(cnt);
+        return null;
     }
 
-    private Pair<Double, ArrayList<Pair<Vertex, Double>>> calcBorderDists(
-            ArrayList<Pair<Vertex, Double>> curBorderDists, GNode next, GNode parent) {
-        ArrayList<Pair<Vertex, Double>> nextBorderDists = new ArrayList<>();
-        double newMinDist = Double.MAX_VALUE;
+    private Pair<Long, ArrayList<Pair<Vertex, Long>>> calcBorderDists(
+            ArrayList<Pair<Vertex, Long>> curBorderDists, GNode next, GNode parent) {
+        ArrayList<Pair<Vertex, Long>> nextBorderDists = new ArrayList<>();
+        long newMinDist = Long.MAX_VALUE;
         for (Vertex v : next.getBorders()) {
-            double md = Double.MAX_VALUE;
-            for (Pair<Vertex, Double> pair : curBorderDists) {
+            long md = Long.MAX_VALUE;
+            for (Pair<Vertex, Long> pair : curBorderDists) {
                 Vertex u = pair.first;
                 if (u == v) {
                     md = Math.min(md, pair.second);
@@ -556,14 +556,14 @@ public class GTreeSearcher implements NearestSearcher{
         Vertex nearestVertex = e.getLocation();
         mVertex2RouteElement[nearestVertex.getIndex()].add(e);
         GNode leaf = mVertex2LeafNode.get(nearestVertex);
-        leaf.addRouteElement(e);
-        GNode child = leaf;
-        GNode parent = leaf.getParent();
-        while (parent != null) {
-            parent.addRouteElement(e);
-            child = parent;
-            parent = child.getParent();
-        }
+//        leaf.addRouteElement(e);
+//        GNode child = leaf;
+//        GNode parent = leaf.getParent();
+//        while (parent != null) {
+//            parent.addRouteElement(e);
+//            child = parent;
+//            parent = child.getParent();
+//        }
     }
 
     @Override
@@ -572,137 +572,137 @@ public class GTreeSearcher implements NearestSearcher{
 //        mVertex2RouteElement.put(nearestVertex, e);
         mVertex2RouteElement[nearestVertex.getIndex()].remove(e);
         GNode leaf = mVertex2LeafNode.get(nearestVertex);
-        leaf.removeRouteElement(e);
-        GNode child = leaf;
-        GNode parent = leaf.getParent();
-        while (parent != null) {
-            parent.removeRouteElement(e);
-            child = parent;
-            parent = child.getParent();
-        }
+//        leaf.removeRouteElement(e);
+//        GNode child = leaf;
+//        GNode parent = leaf.getParent();
+//        while (parent != null) {
+//            parent.removeRouteElement(e);
+//            child = parent;
+//            parent = child.getParent();
+//        }
     }
 
     @Override
-    public Pair<RouteElement, Pair<Double, Double>> getNearestElement(Parcel parcel) {
-        long startMoment = System.currentTimeMillis();
-
-        Vertex s = parcel.getLocation();
-        GNode leaf = mVertex2LeafNode.get(s);
-
-        class PQData{
-            GNode node;
-            Vertex mvVertex;
-            ArrayList<Pair<Vertex, Double>> borderDists;
-            double minDist;
-
-            public PQData(GNode node, Vertex mvVertex, ArrayList<Pair<Vertex, Double>> borderDists, double dist) {
-                this.node = node;
-                this.mvVertex = mvVertex;
-                this.borderDists = borderDists;
-                this.minDist = dist;
-            }
-        }
-
-        PriorityQueue<PQData> pq = new PriorityQueue<>(new Comparator<PQData>() {
-            @Override
-            public int compare(PQData o1, PQData o2) {
-                if (o1.minDist < o2.minDist) {
-                    return -1;
-                } else if (o1.minDist > o2.minDist) {
-                    return 1;
-                }
-                return 0;
-            }
-        });
-
-        double minDist = Double.MAX_VALUE;
-        ArrayList<Pair<Vertex, Double>> curBorderDists = new ArrayList<>();
-        for (Vertex v : leaf.getChildBorders()) {
-            double dist = getSPDist(s, v, leaf);
-            if (leaf.isMovingObjectVertex(v)) {
-                pq.add(new PQData(null, v, null, dist));
-            }
-            if (leaf.containsBorder(v)) {
-                curBorderDists.add(new Pair<>(v, dist));
-                minDist = Math.min(minDist, dist);
-            }
-        }
-
-        int cnt = 0;
-        GNode cur = leaf;
-        boolean found = false;
-
-        // cmp value
-        Vehicle vehicle = new Vehicle(-1, parcel.getWeight() - 1);
-        Route route = new Route(null, vehicle, null, null, 0);
-        RouteElement elementCmp = new RouteElement(route);
-
-        while (!found && (!pq.isEmpty() || cur != root)) {
-//            System.out.println("here");
-            PQData data = pq.peek();
-            if (pq.isEmpty() || (data != null && data.minDist > minDist)) {
-                GNode parent = cur.getParent();
-                for (GNode g : parent.getChildren()) {
-                    if (!g.hasCandidateRouteElement(parcel.getWeight())) {
-                        continue;
-                    }
-                    if (g != cur ) {
-                        cnt++;
-                        Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(curBorderDists, g, parent);
-                        pq.add(new PQData(g, null, nextData.second, nextData.first));
-                    }
-                }
-                Pair<Double, ArrayList<Pair<Vertex, Double>>> parentData = calcBorderDists(curBorderDists, parent, parent);
-                curBorderDists = parentData.second;
-                minDist = parentData.first;
-                cur = parent;
-//                System.out.println("kNN minDist = " + minDist);
-            } else {
-                pq.poll();
-//                System.out.println("kNN dataDist = " + data.minDist);
-
-                if (data.mvVertex != null) {
-//                    RouteElement res = mVertex2RouteElement.get(data.mvVertex);
-                    RouteElement res = mVertex2RouteElement[data.mvVertex.getIndex()].higher(elementCmp);
-                    double prevDist = data.minDist;
-                    double nextDist = getShortestPathDistance(data.mvVertex, res.getNext().getLocation());
-                    totalQueryTime += System.currentTimeMillis() - startMoment;
-                    return new Pair<>(res, new Pair<>(prevDist, nextDist));
-                } else {
-                    if (!data.node.isLeaf()) {
-                        for (GNode g : data.node.getChildren()) {
-                            cnt++;
-                            if (!g.hasCandidateRouteElement(parcel.getWeight())) {
-                                continue;
-                            }
-                            Pair<Double, ArrayList<Pair<Vertex, Double>>> nextData = calcBorderDists(data.borderDists, g, data.node);
-                            pq.add(new PQData(g, null, nextData.second, nextData.first));
-                        }
-                    } else {
-                        Iterator<RouteElement> revItr = data.node.getElements().descendingIterator();
-                        while (revItr.hasNext()) {
-                            RouteElement e = revItr.next();
-                            if (e.getRoute().getRemainWeight() < parcel.getWeight()) {
-                                break;
-                            }
-                            Vertex v = e.getLocation();
-                            double md = Double.MAX_VALUE;
-//                            Vertex chosenVertex = null;
-                            for (Pair<Vertex, Double> pair : data.borderDists) {
-//                                double old = md;
-                                md = Math.min(md, pair.second + getSPDist(pair.first, v, data.node));
-//                                if (old > md) {
-//                                    chosenVertex = pair.first;
-//                                }
-                            }
-                            pq.add(new PQData(null, v, null, md));
-                        }
-                    }
-                }
-            }
-        }
-        totalQueryTime += System.currentTimeMillis() - startMoment;
-        return new Pair<>(null, new Pair<>(.0, .0));
+    public Pair<RouteElement, Pair<Long, Long>> getNearestElement(Parcel parcel) {
+//        long startMoment = System.currentTimeMillis();
+//
+//        Vertex s = parcel.getLocation();
+//        GNode leaf = mVertex2LeafNode.get(s);
+//
+//        class PQData{
+//            GNode node;
+//            Vertex mvVertex;
+//            ArrayList<Pair<Vertex, Long>> borderDists;
+//            long minDist;
+//
+//            public PQData(GNode node, Vertex mvVertex, ArrayList<Pair<Vertex, Long>> borderDists, long dist) {
+//                this.node = node;
+//                this.mvVertex = mvVertex;
+//                this.borderDists = borderDists;
+//                this.minDist = dist;
+//            }
+//        }
+//
+//        PriorityQueue<PQData> pq = new PriorityQueue<>(new Comparator<PQData>() {
+//            @Override
+//            public int compare(PQData o1, PQData o2) {
+//                if (o1.minDist < o2.minDist) {
+//                    return -1;
+//                } else if (o1.minDist > o2.minDist) {
+//                    return 1;
+//                }
+//                return 0;
+//            }
+//        });
+//
+//        long minDist = Long.MAX_VALUE;
+//        ArrayList<Pair<Vertex, Long>> curBorderDists = new ArrayList<>();
+//        for (Vertex v : leaf.getChildBorders()) {
+//            long dist = getSPDist(s, v, leaf);
+//            if (leaf.isMovingObjectVertex(v)) {
+//                pq.add(new PQData(null, v, null, dist));
+//            }
+//            if (leaf.containsBorder(v)) {
+//                curBorderDists.add(new Pair<>(v, dist));
+//                minDist = Math.min(minDist, dist);
+//            }
+//        }
+//
+//        int cnt = 0;
+//        GNode cur = leaf;
+//        boolean found = false;
+//
+//        // cmp value
+//        Vehicle vehicle = new Vehicle(-1, parcel.getWeight() - 1);
+//        Route route = new Route(null, vehicle, null, null, 0);
+//        RouteElement elementCmp = new RouteElement(route);
+//
+//        while (!found && (!pq.isEmpty() || cur != root)) {
+////            System.out.println("here");
+//            PQData data = pq.peek();
+//            if (pq.isEmpty() || (data != null && data.minDist > minDist)) {
+//                GNode parent = cur.getParent();
+//                for (GNode g : parent.getChildren()) {
+//                    if (!g.hasCandidateRouteElement(parcel.getWeight())) {
+//                        continue;
+//                    }
+//                    if (g != cur ) {
+//                        cnt++;
+//                        Pair<Long, ArrayList<Pair<Vertex, Long>>> nextData = calcBorderDists(curBorderDists, g, parent);
+//                        pq.add(new PQData(g, null, nextData.second, nextData.first));
+//                    }
+//                }
+//                Pair<Long, ArrayList<Pair<Vertex, Long>>> parentData = calcBorderDists(curBorderDists, parent, parent);
+//                curBorderDists = parentData.second;
+//                minDist = parentData.first;
+//                cur = parent;
+////                System.out.println("kNN minDist = " + minDist);
+//            } else {
+//                pq.poll();
+////                System.out.println("kNN dataDist = " + data.minDist);
+//
+//                if (data.mvVertex != null) {
+////                    RouteElement res = mVertex2RouteElement.get(data.mvVertex);
+//                    RouteElement res = mVertex2RouteElement[data.mvVertex.getIndex()].higher(elementCmp);
+//                    long prevDist = data.minDist;
+//                    long nextDist = getShortestPathDistance(data.mvVertex, res.getNext().getLocation());
+//                    totalQueryTime += System.currentTimeMillis() - startMoment;
+//                    return new Pair<>(res, new Pair<>(prevDist, nextDist));
+//                } else {
+//                    if (!data.node.isLeaf()) {
+//                        for (GNode g : data.node.getChildren()) {
+//                            cnt++;
+//                            if (!g.hasCandidateRouteElement(parcel.getWeight())) {
+//                                continue;
+//                            }
+//                            Pair<Long, ArrayList<Pair<Vertex, Long>>> nextData = calcBorderDists(data.borderDists, g, data.node);
+//                            pq.add(new PQData(g, null, nextData.second, nextData.first));
+//                        }
+//                    } else {
+//                        Iterator<RouteElement> revItr = data.node.getElements().descendingIterator();
+//                        while (revItr.hasNext()) {
+//                            RouteElement e = revItr.next();
+//                            if (e.getRoute().getRemainWeight() < parcel.getWeight()) {
+//                                break;
+//                            }
+//                            Vertex v = e.getLocation();
+//                            long md = Long.MAX_VALUE;
+////                            Vertex chosenVertex = null;
+//                            for (Pair<Vertex, Long> pair : data.borderDists) {
+////                                long old = md;
+//                                md = Math.min(md, pair.second + getSPDist(pair.first, v, data.node));
+////                                if (old > md) {
+////                                    chosenVertex = pair.first;
+////                                }
+//                            }
+//                            pq.add(new PQData(null, v, null, md));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        totalQueryTime += System.currentTimeMillis() - startMoment;
+        return new Pair<>(null, new Pair<>(0L, 0L));
     }
 
     @Override

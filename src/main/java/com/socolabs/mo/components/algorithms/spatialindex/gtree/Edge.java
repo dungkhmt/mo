@@ -8,7 +8,7 @@ import lombok.Getter;
 public class Edge {
     private Vertex startPoint;
     private Vertex endPoint;
-    private double weight;
+    private long weight;
 
     public String toString() {
         return "(" + startPoint + " -> " + endPoint + " :: " + weight + ")";

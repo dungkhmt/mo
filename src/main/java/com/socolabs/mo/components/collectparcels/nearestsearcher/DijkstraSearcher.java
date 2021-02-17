@@ -17,7 +17,7 @@ public class DijkstraSearcher implements NearestSearcher {
 
     private Graph G;
     private TreeSet<RouteElement>[] elementOnVertex;
-    private PriorityQueue<Pair<Vertex, Double>> pq;
+    private PriorityQueue<Pair<Vertex, Long>> pq;
 
     private long totalQueryTime = 0;
 
@@ -28,9 +28,9 @@ public class DijkstraSearcher implements NearestSearcher {
         for (int i = 0; i < elementOnVertex.length; i++) {
             elementOnVertex[i] = new TreeSet<>();
         }
-        pq = new PriorityQueue<>(new Comparator<Pair<Vertex, Double>>() {
+        pq = new PriorityQueue<>(new Comparator<Pair<Vertex, Long>>() {
             @Override
-            public int compare(Pair<Vertex, Double> o1, Pair<Vertex, Double> o2) {
+            public int compare(Pair<Vertex, Long> o1, Pair<Vertex, Long> o2) {
                 if (o1.second - o2.second < 0) {
                     return -1;
                 } else if (o1.second - o2.second > 0) {
@@ -76,20 +76,20 @@ public class DijkstraSearcher implements NearestSearcher {
     }
 
     @Override
-    public Pair<RouteElement, Pair<Double, Double>> getNearestElement(Parcel p) {
+    public Pair<RouteElement, Pair<Long, Long>> getNearestElement(Parcel p) {
         long startMomment = System.currentTimeMillis();
 
         Vertex s = p.getLocation();
         RouteElement nearest = null;
-        double bestDist = 1e9;
+        long bestDist = 1L << 50;
         double[] dist = new double[G.size() + 1];
         for (int i = 0; i < dist.length; i++) {
-            dist[i] = 1e9;
+            dist[i] = 1L << 50;
         }
         dist[s.getIndex()] = 0;
 
         pq.clear();
-        pq.add(new Pair<>(s, .0));
+        pq.add(new Pair<>(s, 0L));
 
         // cmp value
         Vehicle vehicle = new Vehicle(-1, p.getWeight() - 1);
@@ -98,7 +98,7 @@ public class DijkstraSearcher implements NearestSearcher {
 
         while (!pq.isEmpty()) {
             Vertex u = pq.peek().first;
-            Double d = pq.peek().second;
+            long d = pq.peek().second;
             pq.poll();
 //            System.out.println(lat + " " + lng + " " + u + " " + d);
             if (d > bestDist) {
@@ -119,7 +119,7 @@ public class DijkstraSearcher implements NearestSearcher {
             }
             for (Edge e : G.getEdgesOfVertex(u)) {
                 Vertex v = e.getEndPoint();
-                double w = e.getWeight();
+                long w = e.getWeight();
                 if (dist[v.getIndex()] > d + w) {
                     //dist.put(v, d + w);
                     dist[v.getIndex()] = d + w;
@@ -128,12 +128,12 @@ public class DijkstraSearcher implements NearestSearcher {
             }
         }
         if (nearest == null) {
-            return new Pair<RouteElement, Pair<Double, Double>>(nearest, new Pair<Double, Double>(.0, .0));
+            return new Pair<RouteElement, Pair<Long, Long>>(nearest, new Pair<Long, Long>(0L, 0L));
         }
-        double nextDist = G.getShortestPathDistance(s, nearest.getNext().getLocation());
+        long nextDist = G.getShortestPathDistance(s, nearest.getNext().getLocation());
 
 //        assert nearest != nearest.getRoute().getEnd();
-//        double nextDist = 0;
+//        long nextDist = 0;
 //        try {
 //            nextDist = G.getShortestPathDistance(s, nearest.getNext().getLocation());
 //        } catch (Exception e) {

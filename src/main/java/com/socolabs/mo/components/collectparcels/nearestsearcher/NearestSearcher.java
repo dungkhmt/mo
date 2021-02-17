@@ -8,6 +8,6 @@ public interface NearestSearcher {
 
     void add(RouteElement e);
     void remove(RouteElement e);
-    Pair<RouteElement, Pair<Double, Double>> getNearestElement(Parcel p);
+    Pair<RouteElement, Pair<Long, Long>> getNearestElement(Parcel p);
     long getTotalQueryTime();
 }

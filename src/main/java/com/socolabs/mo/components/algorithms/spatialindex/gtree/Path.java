@@ -11,14 +11,14 @@ import java.util.ArrayList;
 @AllArgsConstructor
 public class Path {
     private ArrayList<Vertex> vertices;
-    private double length;
+    private long length;
 
     public Path() {
         vertices = new ArrayList<>();
         length = 0;
     }
 
-    public Path(double length) {
+    public Path(long length) {
         this.length = length;
         vertices = new ArrayList<>();
     }
